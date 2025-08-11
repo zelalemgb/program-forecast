@@ -83,7 +83,7 @@ const Validation: React.FC = () => {
     const programs = new Set(filteredRows.map((r) => r.program));
     const years = new Set(filteredRows.map((r) => r.year || ""));
     const uniqueProducts = new Set(filteredRows.map((r) => r.product_list));
-    const totalForecast = filteredRows.reduce((s, r) => s + (r.forecasted_total || 0), 0);
+    const totalForecast = filteredRows.reduce((s, r) => s + ((r.forecasted_quantity || 0) * (r.unit_price || 0)), 0);
     return {
       programs: programs.size,
       years: years.size,
