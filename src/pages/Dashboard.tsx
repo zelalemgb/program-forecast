@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
@@ -219,78 +218,53 @@ const filteredTotals = React.useMemo(() => {
             <CardHeader>
               <CardTitle>Filters</CardTitle>
             </CardHeader>
-<CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-  <div>
+<CardContent className="space-y-4">
+  <div className="space-y-2">
     <label className="text-sm text-muted-foreground">Programs</label>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-1 min-w-[160px] justify-start">
-          {selectedPrograms.length ? `Selected (${selectedPrograms.length})` : "All programs"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 p-2" align="start">
-        <div className="flex items-center justify-between mb-2">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms(dataset.programs)}>Select all</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms([])}>Clear</Button>
-        </div>
-        <div className="max-h-64 overflow-auto space-y-2">
-          {dataset.programs.map((p) => (
-            <label key={p} className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedPrograms.includes(p)}
-                onCheckedChange={(checked) => {
-                  const isChecked = checked === true;
-                  setSelectedPrograms((prev) =>
-                    isChecked ? (prev.includes(p) ? prev : [...prev, p]) : prev.filter((v) => v !== p)
-                  );
-                }}
-              />
-              <span className="text-sm">{p}</span>
-            </label>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <ToggleGroup
+      type="multiple"
+      variant="outline"
+      value={selectedPrograms}
+      onValueChange={(vals) => setSelectedPrograms(vals)}
+      className="flex flex-wrap gap-2"
+    >
+      {dataset.programs.map((p) => (
+        <ToggleGroupItem key={p} value={p} className="capitalize">
+          {p}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   </div>
-  <div>
+  <div className="space-y-2">
     <label className="text-sm text-muted-foreground">Years</label>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-1 min-w-[160px] justify-start">
-          {selectedYears.length ? `Selected (${selectedYears.length})` : "All years"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start">
-        <div className="flex items-center justify-between mb-2">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedYears(dataset.years)}>Select all</Button>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedYears([])}>Clear</Button>
-        </div>
-        <div className="max-h-64 overflow-auto space-y-2">
-          {dataset.years.map((y) => (
-            <label key={y} className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedYears.includes(y)}
-                onCheckedChange={(checked) => {
-                  const isChecked = checked === true;
-                  setSelectedYears((prev) =>
-                    isChecked ? (prev.includes(y) ? prev : [...prev, y]) : prev.filter((v) => v !== y)
-                  );
-                }}
-              />
-              <span className="text-sm">{y}</span>
-            </label>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <ToggleGroup
+      type="multiple"
+      variant="outline"
+      value={selectedYears}
+      onValueChange={(vals) => setSelectedYears(vals)}
+      className="flex flex-wrap gap-2"
+    >
+      {dataset.years.map((y) => (
+        <ToggleGroupItem key={y} value={y}>
+          {y}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   </div>
-  <div className="flex items-end">
-    {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
-      <Button variant="ghost" size="sm" onClick={() => { setSelectedPrograms([]); setSelectedYears([]); }}>
+  {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
+    <div className="pt-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          setSelectedPrograms([])
+          setSelectedYears([])
+        }}
+      >
         Clear all filters
       </Button>
-    )}
-  </div>
+    </div>
+  )}
 </CardContent>
           </Card>
         )}
