@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-1.5 rounded-md text-sm transition-colors ${
@@ -22,6 +23,22 @@ export const SiteHeader: React.FC = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  React.useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase.rpc('get_current_user_role').then(({ data, error }) => {
+      if (error) {
+        console.error('role check failed', error);
+        setIsAdmin(false);
+        return;
+      }
+      setIsAdmin(data === 'admin');
+    });
+  }, [user?.id]);
 
   const initials = user?.email?.[0]?.toUpperCase() || "U";
 
@@ -58,6 +75,11 @@ export const SiteHeader: React.FC = () => {
             <NavLink to="/approvals" className={navLinkCls}>
               Approvals
             </NavLink>
+            {isAdmin && (
+              <NavLink to="/admin" className={navLinkCls}>
+                Admin
+              </NavLink>
+            )}
           </nav>
         </div>
 
@@ -94,6 +116,11 @@ export const SiteHeader: React.FC = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/approvals">Approvals</Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">Admin</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>

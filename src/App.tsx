@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import RegisterFacility from "./pages/RegisterFacility";
 import Approvals from "./pages/Approvals";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/register" element={<RegisterFacility />} />
               <Route path="/approvals" element={<Approvals />} />
+              <Route path="/admin" element={<SuperAdminDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
