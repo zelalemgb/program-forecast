@@ -14,6 +14,7 @@ import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
 import { useAuth } from "@/context/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -23,6 +24,7 @@ const [selectedPrograms, setSelectedPrograms] = React.useState<string[]>([]);
 const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
 const [trendOpen, setTrendOpen] = React.useState(false);
 const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
+const [importOpen, setImportOpen] = React.useState(false);
 
   const { user } = useAuth();
 
@@ -60,18 +62,6 @@ const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
       mounted = false;
     };
   }, [user]);
-
-  const onMouseMoveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mx = ((e.clientX - rect.left) / rect.width) * 100;
-    const my = ((e.clientY - rect.top) / rect.height) * 100;
-    e.currentTarget.style.setProperty("--mx", `${mx}%`);
-    e.currentTarget.style.setProperty("--my", `${my}%`);
-    e.currentTarget.style.setProperty("--glow-alpha", `1`);
-  };
-  const onMouseLeaveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.setProperty("--glow-alpha", `0`);
-  };
 
 const filteredRows = React.useMemo(() => {
   if (!dataset) return [] as ForecastDataset["rows"];
@@ -173,23 +163,28 @@ const filteredTotals = React.useMemo(() => {
         <meta name="description" content="Analyze forecast data across health programs with import, charts, and drill-down." />
         <link rel="canonical" href={`${window.location.origin}/dashboard`} />
       </Helmet>
-      <header
-        className="pointer-glow relative overflow-hidden"
-        onMouseMove={onMouseMoveGlow}
-        onMouseLeave={onMouseLeaveGlow}
-      >
-        <div className="container py-10 sm:py-14">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Health Programs Forecast Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            Import forecast CSVs and analyze from program-level trends down to individual products.
-          </p>
-          <div className="mt-4">
-            <Button asChild variant="secondary">
-              <Link to="/validation">Open Validation Dashboard</Link>
-            </Button>
+      <header className="border-b">
+        <div className="container py-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Health Programs Forecast Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">
+              Import forecast CSVs and analyze from program-level trends down to individual products.
+            </p>
           </div>
+          <Dialog open={importOpen} onOpenChange={setImportOpen}>
+            <DialogTrigger asChild>
+              <Button>Import CSV</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Bulk import forecast CSV</DialogTitle>
+                <DialogDescription>Upload your CSV to update your dataset.</DialogDescription>
+              </DialogHeader>
+              <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -204,7 +199,7 @@ const filteredTotals = React.useMemo(() => {
           </Card>
         )}
 
-        <ImportForecast onData={setDataset} />
+        
 
         {dataset && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
