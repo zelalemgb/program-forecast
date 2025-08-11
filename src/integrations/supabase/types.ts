@@ -1105,6 +1105,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      can_update_registration_request: {
+        Args: { _user_id: string; _request_id: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1123,6 +1127,10 @@ export type Database = {
           total_products: number
           epss_percentage: number
         }[]
+      }
+      has_admin_scope_for_national: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       has_admin_scope_for_region: {
         Args: { _user_id: string; _region_id: number }
