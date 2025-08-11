@@ -205,7 +205,7 @@ const filteredTotals = React.useMemo(() => {
         {dataset && (
           <>
             <Card className="surface">
-              <CardHeader className="pb-0">
+              <CardHeader className="py-2">
                 <div className="flex items-center justify-end">
                   {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
                     <Button
@@ -222,9 +222,9 @@ const filteredTotals = React.useMemo(() => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+              <CardContent className="py-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="space-y-1">
                     <label className="text-sm text-muted-foreground">Select Program to filter</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -253,7 +253,7 @@ const filteredTotals = React.useMemo(() => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-sm text-muted-foreground">Select Forecast Years to filter</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
