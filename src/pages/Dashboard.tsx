@@ -10,6 +10,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -17,6 +18,8 @@ const Dashboard: React.FC = () => {
   const [dataset, setDataset] = React.useState<ForecastDataset | null>(null);
 const [selectedPrograms, setSelectedPrograms] = React.useState<string[]>([]);
 const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
+const [trendOpen, setTrendOpen] = React.useState(false);
+const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     document.title = "Health Programs Forecast Dashboard";
@@ -353,7 +356,15 @@ const filteredTotals = React.useMemo(() => {
                       const hasDiff = Math.abs(p.difference || 0) > 0;
                       const diffBorderCls = hasDiff ? "border border-destructive" : "";
                       return (
-                        <TableRow key={idx} className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""}`}>
+                        <TableRow
+                          key={idx}
+                          className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""} cursor-pointer`}
+                          onClick={() => {
+                            setTrendProduct(p.product);
+                            setTrendOpen(true);
+                          }}
+                          title={`View yearly trend for ${p.product}`}
+                        >
                           <TableCell>{p.product}</TableCell>
                           <TableCell>{p.unit}</TableCell>
                           <TableCell>{p.yearsLabel}</TableCell>
@@ -375,6 +386,7 @@ const filteredTotals = React.useMemo(() => {
             </CardContent>
           </Card>
         )}
+        <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
       </section>
     </main>
   );
