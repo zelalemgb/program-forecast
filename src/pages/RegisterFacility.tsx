@@ -14,7 +14,8 @@ const RegisterFacility: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [mode, setMode] = React.useState<"existing" | "new">("existing");
+  const [userLevel, setUserLevel] = React.useState<"facility" | "woreda" | "zonal" | "regional" | "national">("facility");
+  const [isNewFacility, setIsNewFacility] = React.useState<boolean>(false);
   const [facilityType, setFacilityType] = React.useState<string>("public");
 
   const [regions, setRegions] = React.useState<Array<{ region_id: number; region_name: string }>>([]);
@@ -76,24 +77,48 @@ const RegisterFacility: React.FC = () => {
     loadFacilities();
   }, [woredaId]);
 
-  const disabled = !user || !woredaId || (mode === "existing" ? !facilityId : facilityType === "public" && facilityName.trim().length === 0);
+  const disabled = !user || (
+    userLevel === "facility" ? (!woredaId || (!isNewFacility ? !facilityId : facilityName.trim().length === 0)) :
+    userLevel === "woreda" ? (!woredaId) :
+    userLevel === "zonal" ? (!zoneId) :
+    userLevel === "regional" ? (!regionId) :
+    false
+  );
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !woredaId) return;
+    if (!user) return;
 
     try {
       const payload: any = {
         user_id: user.id,
-        is_new_facility: mode === "new",
-        woreda_id: woredaId,
+        user_level: userLevel,
+        is_new_facility: userLevel === "facility" && isNewFacility,
       };
-      if (mode === "existing") {
-        payload.facility_id = facilityId;
-      } else {
-        payload.facility_name = facilityName || null;
-        payload.facility_code = facilityCode || null;
-        payload.facility_type = facilityType || null;
+
+      switch (userLevel) {
+        case "facility":
+          payload.woreda_id = woredaId;
+          if (!isNewFacility) {
+            payload.facility_id = facilityId;
+          } else {
+            payload.facility_name = facilityName || null;
+            payload.facility_code = facilityCode || null;
+            payload.facility_type = facilityType || null;
+          }
+          break;
+        case "woreda":
+          payload.woreda_id = woredaId;
+          break;
+        case "zonal":
+          payload.zone_id = zoneId;
+          break;
+        case "regional":
+          payload.region_id = regionId;
+          break;
+        case "national":
+          /* no location scope */
+          break;
       }
 
       const { error } = await (supabase as any).from("registration_requests").insert(payload);
@@ -103,7 +128,7 @@ const RegisterFacility: React.FC = () => {
       setFacilityName("");
       setFacilityCode("");
       setFacilityId(null);
-      setMode("existing");
+      setIsNewFacility(false);
       navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Submission failed", description: err.message, variant: "destructive" });
@@ -168,12 +193,21 @@ const RegisterFacility: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button type="button" variant={mode === "existing" ? "default" : "outline"} onClick={() => setMode("existing")}>Existing facility</Button>
-                <Button type="button" variant={mode === "new" ? "default" : "outline"} onClick={() => setMode("new")}>New facility</Button>
+              <div className="space-y-1">
+                <label className="text-sm">User Level</label>
+                <Select value={userLevel} onValueChange={(v) => { setUserLevel(v as any); setIsNewFacility(false); }}>
+                  <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="facility">Facility</SelectItem>
+                    <SelectItem value="woreda">Woreda</SelectItem>
+                    <SelectItem value="zonal">Zonal</SelectItem>
+                    <SelectItem value="regional">Regional</SelectItem>
+                    <SelectItem value="national">National</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {mode === "existing" ? (
+              {userLevel === "facility" && !isNewFacility ? (
                 <div className="space-y-1">
                   <label className="text-sm">Facility</label>
                   <div className="flex items-center gap-2">
@@ -185,10 +219,10 @@ const RegisterFacility: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setMode("new")}>New</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setIsNewFacility(true)}>New</Button>
                   </div>
                 </div>
-              ) : (
+              ) : userLevel === "facility" && isNewFacility ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-sm">Facility type</label>
@@ -209,7 +243,7 @@ const RegisterFacility: React.FC = () => {
                     <Input value={facilityCode} onChange={(e) => setFacilityCode(e.target.value)} placeholder="Code if available" />
                   </div>
                 </div>
-              )}
+              ) : null}
 
               <div>
                 <Button type="submit" disabled={disabled}>Submit registration</Button>

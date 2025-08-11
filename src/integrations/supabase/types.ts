@@ -810,10 +810,13 @@ export type Database = {
           facility_type: string | null
           id: string
           is_new_facility: boolean
+          region_id: number | null
           status: string
           updated_at: string
           user_id: string
-          woreda_id: number
+          user_level: string
+          woreda_id: number | null
+          zone_id: number | null
         }
         Insert: {
           approved_at?: string | null
@@ -825,10 +828,13 @@ export type Database = {
           facility_type?: string | null
           id?: string
           is_new_facility?: boolean
+          region_id?: number | null
           status?: string
           updated_at?: string
           user_id: string
-          woreda_id: number
+          user_level?: string
+          woreda_id?: number | null
+          zone_id?: number | null
         }
         Update: {
           approved_at?: string | null
@@ -840,10 +846,13 @@ export type Database = {
           facility_type?: string | null
           id?: string
           is_new_facility?: boolean
+          region_id?: number | null
           status?: string
           updated_at?: string
           user_id?: string
-          woreda_id?: number
+          user_level?: string
+          woreda_id?: number | null
+          zone_id?: number | null
         }
         Relationships: []
       }
@@ -1115,8 +1124,16 @@ export type Database = {
           epss_percentage: number
         }[]
       }
+      has_admin_scope_for_region: {
+        Args: { _user_id: string; _region_id: number }
+        Returns: boolean
+      }
       has_admin_scope_for_woreda: {
         Args: { _user_id: string; _woreda_id: number }
+        Returns: boolean
+      }
+      has_admin_scope_for_zone: {
+        Args: { _user_id: string; _zone_id: number }
         Returns: boolean
       }
       has_role: {
