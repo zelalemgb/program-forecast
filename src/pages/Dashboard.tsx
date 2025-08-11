@@ -1,0 +1,223 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { ImportForecast } from "@/components/forecast/ImportForecast";
+import { ForecastDataset } from "@/types/forecast";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+
+const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+const Dashboard: React.FC = () => {
+  const [dataset, setDataset] = React.useState<ForecastDataset | null>(null);
+  const [program, setProgram] = React.useState<string>("All");
+  const [year, setYear] = React.useState<string>("All");
+
+  React.useEffect(() => {
+    document.title = "Health Programs Forecast Dashboard";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "Analyze forecast data across health programs with import, charts, and drill-down.");
+  }, []);
+
+  const onMouseMoveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / rect.width) * 100;
+    const my = ((e.clientY - rect.top) / rect.height) * 100;
+    e.currentTarget.style.setProperty("--mx", `${mx}%`);
+    e.currentTarget.style.setProperty("--my", `${my}%`);
+    e.currentTarget.style.setProperty("--glow-alpha", `1`);
+  };
+  const onMouseLeaveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.setProperty("--glow-alpha", `0`);
+  };
+
+  const filteredRows = React.useMemo(() => {
+    if (!dataset) return [] as ForecastDataset["rows"];
+    return dataset.rows.filter((r) => (program === "All" || r.Program === program) && (year === "All" || r.Year === year));
+  }, [dataset, program, year]);
+
+  const programsAgg = React.useMemo(() => {
+    const map = new Map<string, { program: string; total: number }>();
+    filteredRows.forEach((r) => {
+      const key = r.Program;
+      const prev = map.get(key)?.total || 0;
+      map.set(key, { program: key, total: prev + (r["Forecasted Total"] || 0) });
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [filteredRows]);
+
+  const yearsAgg = React.useMemo(() => {
+    const map = new Map<string, { year: string; total: number }>();
+    filteredRows.forEach((r) => {
+      const key = r.Year;
+      const prev = map.get(key)?.total || 0;
+      map.set(key, { year: key, total: prev + (r["Forecasted Total"] || 0) });
+    });
+    return Array.from(map.values()).sort((a, b) => a.year.localeCompare(b.year));
+  }, [filteredRows]);
+
+  return (
+    <main className="min-h-screen bg-background">
+      <header
+        className="pointer-glow relative overflow-hidden"
+        onMouseMove={onMouseMoveGlow}
+        onMouseLeave={onMouseLeaveGlow}
+      >
+        <div className="container py-10 sm:py-14">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+            Health Programs Forecast Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-2xl">
+            Import forecast CSVs and analyze from program-level trends down to individual products.
+          </p>
+        </div>
+      </header>
+
+      <section className="container space-y-6 pb-10">
+        <ImportForecast onData={setDataset} />
+
+        {dataset && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="surface">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Total Forecasted Value</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalForecastedValue)}</CardContent>
+            </Card>
+            <Card className="surface">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Value</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalObservedValue)}</CardContent>
+            </Card>
+            <Card className="surface">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Difference</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalObservedDiff)}</CardContent>
+            </Card>
+            <Card className="surface">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Programs / Items</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">{dataset.totals.totalPrograms} / {dataset.totals.totalItems}</CardContent>
+            </Card>
+          </div>
+        )}
+
+        {dataset && (
+          <Card className="surface">
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-muted-foreground">Program</label>
+                <Select value={program} onValueChange={setProgram}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select program" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {dataset.programs.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Year</label>
+                <Select value={year} onValueChange={setYear}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select year" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    {dataset.years.map((y) => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {dataset && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="surface overflow-hidden">
+              <CardHeader>
+                <CardTitle>Forecasted Total by Program</CardTitle>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={programsAgg} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="program" tickLine={false} axisLine={false} hide={programsAgg.length > 8} />
+                    <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => `$${currency(v)}`} cursor={{ fill: "hsl(var(--muted) / 0.5)" as unknown as string }} />
+                    <Bar dataKey="total" fill={`hsl(var(--brand))`} onClick={(d) => setProgram((d as any).program)} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="surface overflow-hidden">
+              <CardHeader>
+                <CardTitle>Forecasted Total by Year</CardTitle>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={yearsAgg} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => `$${currency(v)}`} cursor={{ fill: "hsl(var(--muted) / 0.5)" as unknown as string }} />
+                    <Bar dataKey="total" fill={`hsl(var(--brand))`} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {dataset && (
+          <Card className="surface">
+            <CardHeader>
+              <CardTitle>Detailed Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Program</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Year</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Unit Price</TableHead>
+                      <TableHead className="text-right">Forecasted</TableHead>
+                      <TableHead className="text-right">Observed</TableHead>
+                      <TableHead className="text-right">Difference</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRows.map((r, idx) => (
+                      <TableRow key={idx} className="hover:bg-accent/50 cursor-pointer" onClick={() => setProgram(r.Program)}>
+                        <TableCell>{r.Program}</TableCell>
+                        <TableCell>{r["Product List"]}</TableCell>
+                        <TableCell>{r.Unit}</TableCell>
+                        <TableCell>{r.Year}</TableCell>
+                        <TableCell className="text-right">{currency(r["Forecasted Quantity"])}</TableCell>
+                        <TableCell className="text-right">${currency(r["unit price"])}</TableCell>
+                        <TableCell className="text-right">${currency(r["Forecasted Total"] || 0)}</TableCell>
+                        <TableCell className="text-right">${currency(r["Opian Total"] || 0)}</TableCell>
+                        <TableCell className="text-right">${currency(r["Observed difference"] || 0)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <Separator className="my-4" />
+              <div className="text-sm text-muted-foreground">
+                Tip: Click a bar or row to filter by program. Combine with year filter for deeper analysis.
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+    </main>
+  );
+};
+
+export default Dashboard;
