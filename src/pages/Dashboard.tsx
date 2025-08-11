@@ -204,36 +204,19 @@ const filteredTotals = React.useMemo(() => {
 
         {dataset && (
           <>
-            <Card className="surface">
-              <CardHeader className="py-2">
-                <div className="flex items-center justify-end">
-                  {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedPrograms([])
-                        setSelectedYears([])
-                      }}
-                      aria-label="Clear all filters"
-                    >
-                      Clear all filters
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
+            <Card className="surface max-w-3xl mx-auto">
               <CardContent className="py-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <label className="text-sm text-muted-foreground">Select Program to filter</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="min-w-[220px] justify-between">
+                        <Button variant="outline" size="sm" className="min-w-[180px] justify-between w-auto">
                           {selectedPrograms.length ? `${selectedPrograms.length} selected` : "All programs"}
                           <ChevronDown className="h-4 w-4 opacity-70" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-64 z-50">
+                      <DropdownMenuContent className="w-56 z-50">
                         <DropdownMenuLabel>Programs</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {dataset.programs.map((p) => (
@@ -255,31 +238,46 @@ const filteredTotals = React.useMemo(() => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm text-muted-foreground">Select Forecast Years to filter</label>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="min-w-[220px] justify-between">
-                          {selectedYears.length ? `${selectedYears.length} selected` : "All years"}
-                          <ChevronDown className="h-4 w-4 opacity-70" />
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="min-w-[180px] justify-between w-auto">
+                            {selectedYears.length ? `${selectedYears.length} selected` : "All years"}
+                            <ChevronDown className="h-4 w-4 opacity-70" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 z-50">
+                          <DropdownMenuLabel>Years</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {dataset.years.map((y) => (
+                            <DropdownMenuCheckboxItem
+                              key={y}
+                              checked={selectedYears.includes(y)}
+                              onCheckedChange={(checked) => {
+                                setSelectedYears((prev) =>
+                                  checked ? Array.from(new Set([...(prev || []), y])) : (prev || []).filter((v) => v !== y)
+                                )
+                              }}
+                            >
+                              {y}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPrograms([])
+                            setSelectedYears([])
+                          }}
+                          aria-label="Clear all filters"
+                        >
+                          Clear all filters
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-64 z-50">
-                        <DropdownMenuLabel>Years</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {dataset.years.map((y) => (
-                          <DropdownMenuCheckboxItem
-                            key={y}
-                            checked={selectedYears.includes(y)}
-                            onCheckedChange={(checked) => {
-                              setSelectedYears((prev) =>
-                                checked ? Array.from(new Set([...(prev || []), y])) : (prev || []).filter((v) => v !== y)
-                              )
-                            }}
-                          >
-                            {y}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
