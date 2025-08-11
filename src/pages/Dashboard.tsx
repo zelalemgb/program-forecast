@@ -5,10 +5,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
-import { ForecastDataset } from "@/types/forecast";
+import { ForecastDataset, ForecastRow, buildDataset } from "@/types/forecast";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -21,6 +22,40 @@ const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
     document.title = "Health Programs Forecast Dashboard";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", "Analyze forecast data across health programs with import, charts, and drill-down.");
+  }, []);
+
+  // Auto-load previously imported forecast data from Supabase on mount
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("forecast_rows")
+        .select(
+          "program,product_list,unit,year,forecasted_quantity,unit_price,forecasted_total,opian_total,observed_difference"
+        );
+      if (error) {
+        console.error("Failed to load saved forecast rows:", error);
+        return;
+      }
+      if (!mounted) return;
+      if (data && data.length > 0) {
+        const rows: ForecastRow[] = data.map((r: any) => ({
+          Program: r.program?.toString() || "",
+          "Product List": r.product_list?.toString() || "",
+          Unit: (r.unit ?? "").toString(),
+          Year: (r.year ?? "").toString(),
+          "Forecasted Quantity": Number(r.forecasted_quantity ?? 0),
+          "unit price": Number(r.unit_price ?? 0),
+          "Forecasted Total": Number(r.forecasted_total ?? 0),
+          "Opian Total": Number(r.opian_total ?? 0),
+          "Observed difference": Number(r.observed_difference ?? 0),
+        }));
+        setDataset(buildDataset(rows));
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const onMouseMoveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
