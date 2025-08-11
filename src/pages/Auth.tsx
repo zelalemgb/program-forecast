@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 const Auth: React.FC = () => {
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [showPwd, setShowPwd] = React.useState(false);
 
   React.useEffect(() => {
     document.title = "Sign in or create an account";
@@ -63,7 +65,21 @@ const Auth: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm">Password</label>
-                    <Input name="password" type="password" placeholder="••••••••" required />
+                    <div className="relative">
+                      <Input name="password" type={showPwd ? "text" : "password"} placeholder="••••••••" required />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((v) => !v)}
+                        aria-label={showPwd ? "Hide password" : "Show password"}
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground hover:text-foreground"
+                      >
+                        {showPwd ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
                 </form>
