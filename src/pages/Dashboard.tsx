@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
 import { ForecastDataset } from "@/types/forecast";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -91,6 +93,11 @@ const Dashboard: React.FC = () => {
           <p className="text-muted-foreground mt-2 max-w-2xl">
             Import forecast CSVs and analyze from program-level trends down to individual products.
           </p>
+          <div className="mt-4">
+            <Button asChild variant="secondary">
+              <Link to="/validation">Open Validation Dashboard</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
