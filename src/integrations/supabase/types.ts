@@ -174,6 +174,51 @@ export type Database = {
           },
         ]
       }
+      forecast_rows: {
+        Row: {
+          created_at: string
+          forecasted_quantity: number | null
+          forecasted_total: number | null
+          id: string
+          observed_difference: number | null
+          opian_total: number | null
+          product_list: string
+          program: string
+          unit: string | null
+          unit_price: number | null
+          updated_at: string
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          forecasted_quantity?: number | null
+          forecasted_total?: number | null
+          id?: string
+          observed_difference?: number | null
+          opian_total?: number | null
+          product_list: string
+          program: string
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          forecasted_quantity?: number | null
+          forecasted_total?: number | null
+          id?: string
+          observed_difference?: number | null
+          opian_total?: number | null
+          product_list?: string
+          program?: string
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
       import_errors: {
         Row: {
           created_at: string | null
