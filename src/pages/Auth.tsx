@@ -3,12 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 
 const Auth: React.FC = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -32,19 +33,6 @@ const Auth: React.FC = () => {
     }
   };
 
-  const onSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
-    const { error } = await signUp(email, password);
-    if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Check your email", description: "Confirm your email to finish sign up" });
-      navigate("/");
-    }
-  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -62,7 +50,10 @@ const Auth: React.FC = () => {
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signup" disabled>
+                  <span>Sign Up</span>
+                  <Badge variant="secondary" className="ml-2">Soon</Badge>
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="signin" className="mt-4">
                 <form onSubmit={onSignIn} className="space-y-3">
@@ -78,17 +69,9 @@ const Auth: React.FC = () => {
                 </form>
               </TabsContent>
               <TabsContent value="signup" className="mt-4">
-                <form onSubmit={onSignUp} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-sm">Email</label>
-                    <Input name="email" type="email" placeholder="you@example.com" required />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm">Password</label>
-                    <Input name="password" type="password" placeholder="At least 6 characters" required />
-                  </div>
-                  <Button type="submit" className="w-full">Create account</Button>
-                </form>
+                <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                  Registration is temporarily disabled. Coming soon.
+                </div>
               </TabsContent>
             </Tabs>
             <div className="text-xs text-muted-foreground mt-4">
