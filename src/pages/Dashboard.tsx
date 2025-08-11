@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
+import ProgramInsights from "@/components/dashboard/ProgramInsights";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -293,6 +294,7 @@ const filteredTotals = React.useMemo(() => {
 </CardContent>
           </Card>
         )}
+        {dataset && <ProgramInsights rows={filteredRows} />}
 
         {dataset && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -388,13 +390,15 @@ const filteredTotals = React.useMemo(() => {
           </Card>
         )}
         {dataset && (
-          <AbruptChangesTable
-            rows={filteredRows}
-            onPickProduct={(p) => {
-              setTrendProduct(p);
-              setTrendOpen(true);
-            }}
-          />
+          <div id="abrupt-changes">
+            <AbruptChangesTable
+              rows={filteredRows}
+              onPickProduct={(p) => {
+                setTrendProduct(p);
+                setTrendOpen(true);
+              }}
+            />
+          </div>
         )}
         <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
       </section>
