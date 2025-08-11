@@ -175,7 +175,7 @@ const filteredTotals = React.useMemo(() => {
           </div>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
-              <Button>Import CSV</Button>
+              <Button>Import Forecast</Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
@@ -188,7 +188,7 @@ const filteredTotals = React.useMemo(() => {
         </div>
       </header>
 
-      <section className="container space-y-6 pb-10">
+      <section className="container mt-6 space-y-6 pb-10">
         {/* Auth CTA when not signed in */}
         {!user && (
           <Card className="surface border-dashed">
