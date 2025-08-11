@@ -5,6 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { ForecastRow, buildDataset, parseNumber } from "@/types/forecast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface ImportForecastProps {
   onData(dataset: ReturnType<typeof buildDataset>): void;
@@ -27,6 +39,29 @@ const SAMPLE_CSV = `Program,Product List,Unit,Year,Forecasted Quantity,unit pric
 
 export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [userRole, setUserRole] = React.useState<'admin' | 'analyst' | 'viewer' | null>(null);
+
+  const isAuthenticated = !!session?.user;
+  const isAdmin = userRole === 'admin';
+
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    if (!session?.user) { setUserRole(null); return; }
+    setTimeout(async () => {
+      const { data, error } = await supabase.rpc('get_current_user_role');
+      if (!error) setUserRole(data as any);
+    }, 0);
+  }, [session?.user?.id]);
 
   const handleFile = (file: File) => {
     Papa.parse<ForecastRow>(file, {
@@ -85,7 +120,13 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
     });
   };
 
-  const onUploadClick = () => fileInputRef.current?.click();
+const onUploadClick = () => {
+  if (!isAuthenticated) {
+    toast({ title: "Sign in required", description: "Please sign in to upload forecast data." });
+    return;
+  }
+  fileInputRef.current?.click();
+};
 
   const downloadTemplate = () => {
     const blob = new Blob([SAMPLE_CSV], { type: "text/csv;charset=utf-8;" });
@@ -97,14 +138,18 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
     URL.revokeObjectURL(url);
   };
 
-  const clearData = async () => {
-    const { error } = await supabase.from("forecast_rows").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (error) {
-      toast({ title: "Clear failed", description: error.message });
-    } else {
-      toast({ title: "Table cleared", description: "All forecast rows have been deleted." });
-    }
-  };
+const clearData = async () => {
+  if (!isAdmin) {
+    toast({ title: "Not authorized", description: "Only admins can clear all forecast data." });
+    return;
+  }
+  const { error } = await supabase.from("forecast_rows").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (error) {
+    toast({ title: "Clear failed", description: error.message });
+  } else {
+    toast({ title: "Table cleared", description: "All forecast rows have been deleted." });
+  }
+};
 
   return (
     <Card className="bg-card border border-border shadow-sm">
@@ -123,15 +168,31 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
             if (file) handleFile(file);
           }}
         />
-        <Button variant="default" onClick={onUploadClick}>
+<Button variant="default" onClick={onUploadClick} disabled={!isAuthenticated}>
           Upload CSV
         </Button>
         <Button variant="secondary" onClick={downloadTemplate}>
           Download Template
         </Button>
-        <Button variant="destructive" onClick={clearData}>
-          Clear Data
-        </Button>
+{isAdmin && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Clear Data</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear all forecast rows?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will permanently delete all forecast rows and cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={clearData}>Confirm</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </CardContent>
     </Card>
   );
