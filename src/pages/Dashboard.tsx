@@ -1,7 +1,8 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
@@ -225,37 +226,60 @@ const filteredTotals = React.useMemo(() => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Select Program to filter</label>
-                    <ToggleGroup
-                      type="multiple"
-                      variant="outline"
-                      size="sm"
-                      value={selectedPrograms}
-                      onValueChange={(vals) => setSelectedPrograms(vals)}
-                      className="flex flex-wrap gap-2"
-                    >
-                      {dataset.programs.map((p) => (
-                        <ToggleGroupItem key={p} value={p} className="capitalize">
-                          {p}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="min-w-[220px] justify-between">
+                          {selectedPrograms.length ? `${selectedPrograms.length} selected` : "All programs"}
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-64 z-50">
+                        <DropdownMenuLabel>Programs</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {dataset.programs.map((p) => (
+                          <DropdownMenuCheckboxItem
+                            key={p}
+                            checked={selectedPrograms.includes(p)}
+                            onCheckedChange={(checked) => {
+                              setSelectedPrograms((prev) =>
+                                checked ? Array.from(new Set([...(prev || []), p])) : (prev || []).filter((v) => v !== p)
+                              )
+                            }}
+                            className="capitalize"
+                          >
+                            {p}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Select Forecast Years to filter</label>
-                    <ToggleGroup
-                      type="multiple"
-                      variant="outline"
-                      size="sm"
-                      value={selectedYears}
-                      onValueChange={(vals) => setSelectedYears(vals)}
-                      className="flex flex-wrap gap-2"
-                    >
-                      {dataset.years.map((y) => (
-                        <ToggleGroupItem key={y} value={y}>
-                          {y}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="min-w-[220px] justify-between">
+                          {selectedYears.length ? `${selectedYears.length} selected` : "All years"}
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-64 z-50">
+                        <DropdownMenuLabel>Years</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {dataset.years.map((y) => (
+                          <DropdownMenuCheckboxItem
+                            key={y}
+                            checked={selectedYears.includes(y)}
+                            onCheckedChange={(checked) => {
+                              setSelectedYears((prev) =>
+                                checked ? Array.from(new Set([...(prev || []), y])) : (prev || []).filter((v) => v !== y)
+                              )
+                            }}
+                          >
+                            {y}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
