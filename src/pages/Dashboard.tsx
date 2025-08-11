@@ -10,7 +10,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-
+import { ProgramInsights } from "@/components/dashboard/ProgramInsights";
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
 const Dashboard: React.FC = () => {
@@ -99,12 +99,11 @@ const filteredRows = React.useMemo(() => {
     return Array.from(map.values()).sort((a, b) => a.year.localeCompare(b.year));
   }, [filteredRows]);
 
-const top20ByObserved = React.useMemo(() => {
+const top20ByValue = React.useMemo(() => {
   const map = new Map<string, {
     product: string;
     unit: string;
-    totalObserved: number;
-    totalForecasted: number;
+    totalValue: number;
     totalQty: number;
     sumPrice: number;
     priceCount: number;
@@ -116,15 +115,13 @@ const top20ByObserved = React.useMemo(() => {
     const entry = map.get(key) ?? {
       product: key,
       unit: r.Unit,
-      totalObserved: 0,
-      totalForecasted: 0,
+      totalValue: 0,
       totalQty: 0,
       sumPrice: 0,
       priceCount: 0,
       years: new Set<string>(),
     };
-    entry.totalObserved += r["Opian Total"] || 0;
-    entry.totalForecasted += r["Forecasted Total"] || 0;
+    entry.totalValue += r["Forecasted Total"] || 0;
     entry.totalQty += r["Forecasted Quantity"] || 0;
     entry.sumPrice += r["unit price"] || 0;
     entry.priceCount += 1;
@@ -136,29 +133,28 @@ const top20ByObserved = React.useMemo(() => {
     ...e,
     avgUnitPrice: e.priceCount ? e.sumPrice / e.priceCount : 0,
     yearsLabel: Array.from(e.years).sort().join(", "),
-    difference: e.totalObserved - e.totalForecasted,
   }));
 
-  arr.sort((a, b) => b.totalObserved - a.totalObserved);
+  arr.sort((a, b) => b.totalValue - a.totalValue);
   return arr.slice(0, 20);
 }, [filteredRows]);
 
 const filteredTotals = React.useMemo(() => {
     const programSet = new Set<string>();
-    let totalForecastedValue = 0;
-    let totalObservedValue = 0;
-    let totalObservedDiff = 0;
+    const yearSet = new Set<string>();
+    const productSet = new Set<string>();
+    let totalValue = 0;
     filteredRows.forEach((r) => {
       programSet.add(r.Program);
-      totalForecastedValue += r["Forecasted Total"] || 0;
-      totalObservedValue += r["Opian Total"] || 0;
-      totalObservedDiff += r["Observed difference"] || 0;
+      yearSet.add(r.Year);
+      productSet.add(r["Product List"]);
+      totalValue += r["Forecasted Total"] || 0;
     });
     return {
-      totalForecastedValue,
-      totalObservedValue,
-      totalObservedDiff,
+      totalValue,
       totalPrograms: programSet.size,
+      totalYears: yearSet.size,
+      totalProducts: productSet.size,
       totalItems: filteredRows.length,
     };
   }, [filteredRows]);
@@ -188,23 +184,23 @@ const filteredTotals = React.useMemo(() => {
       <section className="container space-y-6 pb-10">
         <ImportForecast onData={setDataset} />
 
-        {dataset && (
+{dataset && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Total Forecasted Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalForecastedValue)}</CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Total Value</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalValue)}</CardContent>
             </Card>
             <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedValue)}</CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Programs</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">{filteredTotals.totalPrograms}</CardContent>
             </Card>
             <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Difference</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedDiff)}</CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Years</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">{filteredTotals.totalYears}</CardContent>
             </Card>
             <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Programs / Items</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">{filteredTotals.totalPrograms} / {filteredTotals.totalItems}</CardContent>
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Products</CardTitle></CardHeader>
+              <CardContent className="text-2xl font-semibold">{filteredTotals.totalProducts}</CardContent>
             </Card>
           </div>
         )}
@@ -294,7 +290,7 @@ const filteredTotals = React.useMemo(() => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="surface overflow-hidden">
               <CardHeader>
-                <CardTitle>Forecasted Total by Program</CardTitle>
+                <CardTitle>Total Value by Program</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -311,7 +307,7 @@ const filteredTotals = React.useMemo(() => {
 
             <Card className="surface overflow-hidden">
               <CardHeader>
-                <CardTitle>Forecasted Total by Year</CardTitle>
+                <CardTitle>Total Value by Year</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -327,11 +323,14 @@ const filteredTotals = React.useMemo(() => {
             </Card>
           </div>
         )}
+        {dataset && (
+          <ProgramInsights rows={filteredRows} />
+        )}
 
         {dataset && (
           <Card className="surface">
             <CardHeader>
-              <CardTitle>Top 20 Products by Observed Value</CardTitle>
+              <CardTitle>Top 20 Products by Total Value</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -343,28 +342,20 @@ const filteredTotals = React.useMemo(() => {
                       <TableHead>Years</TableHead>
                       <TableHead className="text-right">Total Qty</TableHead>
                       <TableHead className="text-right">Avg Unit Price</TableHead>
-                      <TableHead className="text-right">Forecasted Total</TableHead>
-                      <TableHead className="text-right">Observed Total</TableHead>
-                      <TableHead className="text-right">Difference</TableHead>
+                      <TableHead className="text-right">Total Value</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {top20ByObserved.map((p, idx) => {
-                      const hasDiff = Math.abs(p.difference || 0) > 0;
-                      const diffBorderCls = hasDiff ? "border border-destructive" : "";
-                      return (
-                        <TableRow key={idx} className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""}`}>
-                          <TableCell>{p.product}</TableCell>
-                          <TableCell>{p.unit}</TableCell>
-                          <TableCell>{p.yearsLabel}</TableCell>
-                          <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
-                          <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
-                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalForecasted)}</TableCell>
-                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalObserved)}</TableCell>
-                          <TableCell className={`text-right ${hasDiff ? "font-semibold border border-destructive" : ""}`}>${currency(p.difference)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {top20ByValue.map((p, idx) => (
+                      <TableRow key={idx} className="hover:bg-accent/50">
+                        <TableCell>{p.product}</TableCell>
+                        <TableCell>{p.unit}</TableCell>
+                        <TableCell>{p.yearsLabel}</TableCell>
+                        <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
+                        <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
+                        <TableCell className="text-right">${currency(p.totalValue)}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>
