@@ -205,8 +205,7 @@ const filteredTotals = React.useMemo(() => {
           <>
             <Card className="surface">
               <CardHeader className="pb-0">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Filters</CardTitle>
+                <div className="flex items-center justify-end">
                   {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
                     <Button
                       variant="ghost"
@@ -215,6 +214,7 @@ const filteredTotals = React.useMemo(() => {
                         setSelectedPrograms([])
                         setSelectedYears([])
                       }}
+                      aria-label="Clear all filters"
                     >
                       Clear all filters
                     </Button>
@@ -224,7 +224,7 @@ const filteredTotals = React.useMemo(() => {
               <CardContent className="pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Programs</label>
+                    <label className="text-sm text-muted-foreground">Select Program to filter</label>
                     <ToggleGroup
                       type="multiple"
                       variant="outline"
@@ -241,7 +241,7 @@ const filteredTotals = React.useMemo(() => {
                     </ToggleGroup>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Years</label>
+                    <label className="text-sm text-muted-foreground">Select Forecast Years to filter</label>
                     <ToggleGroup
                       type="multiple"
                       variant="outline"
