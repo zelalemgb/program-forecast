@@ -17,19 +17,22 @@ export const AbruptChangesTable: React.FC<AbruptChangesTableProps> = ({ rows, on
 
   const items = React.useMemo(() => {
     const byProduct = new Map<string, Map<string, number>>();
+    const productPrograms = new Map<string, Set<string>>();
 
     rows.forEach((r) => {
       const p = r["Product List"];
       const y = r.Year || "";
       const qty = r["Forecasted Quantity"] || 0;
       if (!byProduct.has(p)) byProduct.set(p, new Map());
+      if (!productPrograms.has(p)) productPrograms.set(p, new Set());
+      productPrograms.get(p)!.add(r.Program || "");
       const map = byProduct.get(p)!;
       map.set(y, (map.get(y) || 0) + qty);
     });
 
     type Flag = { fromYear: string; toYear: string; ratio: number; fromQty: number; toQty: number };
 
-    const results: { product: string; years: string[]; flags: Flag[]; score: number }[] = [];
+    const results: { product: string; programs: string[]; years: string[]; flags: Flag[]; score: number }[] = [];
 
     for (const [product, yearMap] of byProduct.entries()) {
       const years = Array.from(yearMap.keys()).sort((a, b) => parseInt(a) - parseInt(b));
@@ -46,7 +49,8 @@ export const AbruptChangesTable: React.FC<AbruptChangesTableProps> = ({ rows, on
       }
       if (flags.length) {
         const maxAbs = Math.max(...flags.map((f) => Math.abs(f.ratio - 1)));
-        results.push({ product, years, flags, score: maxAbs });
+        const programs = Array.from(productPrograms.get(product) || new Set<string>()).sort();
+        results.push({ product, programs, years, flags, score: maxAbs });
       }
     }
 
@@ -74,6 +78,7 @@ export const AbruptChangesTable: React.FC<AbruptChangesTableProps> = ({ rows, on
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
+                <TableHead>Program(s)</TableHead>
                 <TableHead>Years</TableHead>
                 <TableHead>Notable change</TableHead>
                 <TableHead>Description</TableHead>
@@ -93,6 +98,7 @@ export const AbruptChangesTable: React.FC<AbruptChangesTableProps> = ({ rows, on
                     onClick={() => onPickProduct(it.product)}
                   >
                     <TableCell className="font-medium">{it.product}</TableCell>
+                    <TableCell>{it.programs?.join(", ")}</TableCell>
                     <TableCell>{it.years.join(", ")}</TableCell>
                     <TableCell className="text-destructive">{top ? formatChange(top) : ""}{others}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
