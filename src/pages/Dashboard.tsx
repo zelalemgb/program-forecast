@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
+import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -385,6 +386,15 @@ const filteredTotals = React.useMemo(() => {
               </div>
             </CardContent>
           </Card>
+        )}
+        {dataset && (
+          <AbruptChangesTable
+            rows={filteredRows}
+            onPickProduct={(p) => {
+              setTrendProduct(p);
+              setTrendOpen(true);
+            }}
+          />
         )}
         <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
       </section>
