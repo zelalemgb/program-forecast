@@ -47,6 +47,69 @@ export type Database = {
         }
         Relationships: []
       }
+      course_rules: {
+        Row: {
+          base_unit: string
+          created_at: string
+          formula_json: Json
+          id: string
+          rule_name: string
+          updated_at: string
+        }
+        Insert: {
+          base_unit: string
+          created_at?: string
+          formula_json: Json
+          id?: string
+          rule_name: string
+          updated_at?: string
+        }
+        Update: {
+          base_unit?: string
+          created_at?: string
+          formula_json?: Json
+          id?: string
+          rule_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      epi_assumptions: {
+        Row: {
+          created_at: string
+          id: string
+          indicator: string
+          program: string | null
+          source_url: string | null
+          unit: string | null
+          updated_at: string
+          value: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          indicator: string
+          program?: string | null
+          source_url?: string | null
+          unit?: string | null
+          updated_at?: string
+          value: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          indicator?: string
+          program?: string | null
+          source_url?: string | null
+          unit?: string | null
+          updated_at?: string
+          value?: number
+          year?: number
+        }
+        Relationships: []
+      }
       ethiopia_2025_2026: {
         Row: {
           cost: number | null
@@ -531,6 +594,100 @@ export type Database = {
         }
         Relationships: []
       }
+      product_mappings: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          forecast_product_list: string
+          id: string
+          notes: string | null
+          product_reference_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          forecast_product_list: string
+          id?: string
+          notes?: string | null
+          product_reference_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          forecast_product_list?: string
+          id?: string
+          notes?: string | null
+          product_reference_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_mappings_product_reference_id_fkey"
+            columns: ["product_reference_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reference: {
+        Row: {
+          atc_code: string | null
+          base_unit: string
+          canonical_name: string
+          course_rule_id: string | null
+          created_at: string
+          default_unit: string | null
+          id: string
+          price_benchmark_high: number | null
+          price_benchmark_low: number | null
+          program: string | null
+          recommended_formulation: string | null
+          unit_to_base_factor: number
+          updated_at: string
+        }
+        Insert: {
+          atc_code?: string | null
+          base_unit: string
+          canonical_name: string
+          course_rule_id?: string | null
+          created_at?: string
+          default_unit?: string | null
+          id?: string
+          price_benchmark_high?: number | null
+          price_benchmark_low?: number | null
+          program?: string | null
+          recommended_formulation?: string | null
+          unit_to_base_factor?: number
+          updated_at?: string
+        }
+        Update: {
+          atc_code?: string | null
+          base_unit?: string
+          canonical_name?: string
+          course_rule_id?: string | null
+          created_at?: string
+          default_unit?: string | null
+          id?: string
+          price_benchmark_high?: number | null
+          price_benchmark_low?: number | null
+          program?: string | null
+          recommended_formulation?: string | null
+          unit_to_base_factor?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reference_course_rule_id_fkey"
+            columns: ["course_rule_id"]
+            isOneToOne: false
+            referencedRelation: "course_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -656,6 +813,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      validation_results: {
+        Row: {
+          checks_run: string[] | null
+          computed_fields: Json | null
+          coverage_ratio: number | null
+          created_at: string
+          duplication_adjustment: Json | null
+          flags: string[] | null
+          forecast_row_id: string | null
+          id: string
+          paired_ratio_check: Json | null
+          price_zscore: number | null
+          updated_at: string
+        }
+        Insert: {
+          checks_run?: string[] | null
+          computed_fields?: Json | null
+          coverage_ratio?: number | null
+          created_at?: string
+          duplication_adjustment?: Json | null
+          flags?: string[] | null
+          forecast_row_id?: string | null
+          id?: string
+          paired_ratio_check?: Json | null
+          price_zscore?: number | null
+          updated_at?: string
+        }
+        Update: {
+          checks_run?: string[] | null
+          computed_fields?: Json | null
+          coverage_ratio?: number | null
+          created_at?: string
+          duplication_adjustment?: Json | null
+          flags?: string[] | null
+          forecast_row_id?: string | null
+          id?: string
+          paired_ratio_check?: Json | null
+          price_zscore?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validation_results_forecast_row_id_fkey"
+            columns: ["forecast_row_id"]
+            isOneToOne: false
+            referencedRelation: "forecast_rows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       woreda: {
         Row: {

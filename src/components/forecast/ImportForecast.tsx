@@ -3,7 +3,8 @@ import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { ForecastRow, buildDataset } from "@/types/forecast";
+import { ForecastRow, buildDataset, parseNumber } from "@/types/forecast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImportForecastProps {
   onData(dataset: ReturnType<typeof buildDataset>): void;
@@ -52,6 +53,28 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
           return;
         }
 
+        // Persist rows into Supabase (in parallel with local dataset build)
+        const rows = (results.data as ForecastRow[]).map((r) => ({
+          program: String(r["Program"] || "").trim(),
+          product_list: String(r["Product List"] || "").trim(),
+          unit: r["Unit"] ? String(r["Unit"]) : null,
+          year: r["Year"] ? String(r["Year"]) : null,
+          forecasted_quantity: parseNumber((r as any)["Forecasted Quantity"]),
+          unit_price: parseNumber((r as any)["unit price"]),
+          forecasted_total: parseNumber((r as any)["Forecasted Total"]),
+          opian_total: parseNumber((r as any)["Opian Total"]),
+          observed_difference: parseNumber((r as any)["Observed difference"]),
+        }));
+
+        (async () => {
+          const { error } = await supabase.from("forecast_rows").insert(rows);
+          if (error) {
+            toast({ title: "Database insert failed", description: error.message });
+          } else {
+            toast({ title: "Saved to database", description: `${rows.length} rows stored in Supabase.` });
+          }
+        })().catch((e) => console.error(e));
+
         const dataset = buildDataset(results.data as ForecastRow[]);
         onData(dataset);
         toast({
@@ -74,10 +97,13 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
     URL.revokeObjectURL(url);
   };
 
-  const loadSample = () => {
-    const dataset = buildDataset(Papa.parse<ForecastRow>(SAMPLE_CSV, { header: true }).data as ForecastRow[]);
-    onData(dataset);
-    toast({ title: "Sample loaded", description: "You can explore the dashboard now." });
+  const clearData = async () => {
+    const { error } = await supabase.from("forecast_rows").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) {
+      toast({ title: "Clear failed", description: error.message });
+    } else {
+      toast({ title: "Table cleared", description: "All forecast rows have been deleted." });
+    }
   };
 
   return (
@@ -103,8 +129,8 @@ export const ImportForecast: React.FC<ImportForecastProps> = ({ onData }) => {
         <Button variant="secondary" onClick={downloadTemplate}>
           Download Template
         </Button>
-        <Button variant="outline" onClick={loadSample}>
-          Load Sample Data
+        <Button variant="destructive" onClick={clearData}>
+          Clear Data
         </Button>
       </CardContent>
     </Card>
