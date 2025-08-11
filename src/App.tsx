@@ -13,6 +13,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import RegisterFacility from "./pages/RegisterFacility";
+import Approvals from "./pages/Approvals";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +32,8 @@ const App = () => (
               <Route path="/validation" element={<Validation />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/register" element={<RegisterFacility />} />
+              <Route path="/approvals" element={<Approvals />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

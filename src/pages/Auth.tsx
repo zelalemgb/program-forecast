@@ -10,7 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 
 const Auth: React.FC = () => {
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showPwd, setShowPwd] = React.useState(false);
@@ -35,6 +35,19 @@ const Auth: React.FC = () => {
     }
   };
 
+  const onSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+    const { error } = await signUp(email, password);
+    if (error) {
+      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Account created", description: "Check your email to confirm, then complete registration." });
+      navigate("/register");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -52,10 +65,7 @@ const Auth: React.FC = () => {
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" disabled>
-                  <span>Sign Up</span>
-                  <Badge variant="secondary" className="ml-2">Soon</Badge>
-                </TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
               <TabsContent value="signin" className="mt-4">
                 <form onSubmit={onSignIn} className="space-y-3">
@@ -85,9 +95,18 @@ const Auth: React.FC = () => {
                 </form>
               </TabsContent>
               <TabsContent value="signup" className="mt-4">
-                <div className="rounded-md border p-3 text-sm text-muted-foreground">
-                  Registration is temporarily disabled. Coming soon.
-                </div>
+                <form onSubmit={onSignUp} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-sm">Email</label>
+                    <Input name="email" type="email" placeholder="you@example.com" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm">Password</label>
+                    <Input name="password" type="password" placeholder="••••••••" minLength={6} required />
+                  </div>
+                  <Button type="submit" className="w-full">Create Account</Button>
+                  <p className="text-xs text-muted-foreground">After confirming your email, you’ll be redirected to register your facility.</p>
+                </form>
               </TabsContent>
             </Tabs>
             <div className="text-xs text-muted-foreground mt-4">

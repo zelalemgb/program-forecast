@@ -52,6 +52,12 @@ export const SiteHeader: React.FC = () => {
             <NavLink to="/validation" className={navLinkCls}>
               Validation
             </NavLink>
+            <NavLink to="/register" className={navLinkCls}>
+              Register
+            </NavLink>
+            <NavLink to="/approvals" className={navLinkCls}>
+              Approvals
+            </NavLink>
           </nav>
         </div>
 
@@ -81,6 +87,12 @@ export const SiteHeader: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/validation">Validation</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/register">Register Facility</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/approvals">Approvals</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
