@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
+import { useAuth } from "@/context/AuthContext";
 
 const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
@@ -28,10 +29,13 @@ const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
     if (meta) meta.setAttribute("content", "Analyze forecast data across health programs with import, charts, and drill-down.");
   }, []);
 
+  const { user } = useAuth();
+
   // Auto-load previously imported forecast data from Supabase on mount
   React.useEffect(() => {
     let mounted = true;
     (async () => {
+      if (!user) return; // Only fetch after login so RLS returns your rows
       const { data, error } = await supabase
         .from("forecast_rows")
         .select(
@@ -60,7 +64,7 @@ const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [user]);
 
   const onMouseMoveGlow = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -190,6 +194,16 @@ const filteredTotals = React.useMemo(() => {
       </header>
 
       <section className="container space-y-6 pb-10">
+        {/* Auth CTA when not signed in */}
+        {!user && (
+          <Card className="surface border-dashed">
+            <CardContent className="py-4 flex items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">Sign in to load and see your uploaded forecast data.</div>
+              <Button asChild variant="secondary"><Link to="/auth">Sign in</Link></Button>
+            </CardContent>
+          </Card>
+        )}
+
         <ImportForecast onData={setDataset} />
 
         {dataset && (
