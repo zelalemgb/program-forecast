@@ -57,6 +57,26 @@ const Dashboard: React.FC = () => {
     return Array.from(map.values()).sort((a, b) => a.year.localeCompare(b.year));
   }, [filteredRows]);
 
+  const filteredTotals = React.useMemo(() => {
+    const programSet = new Set<string>();
+    let totalForecastedValue = 0;
+    let totalObservedValue = 0;
+    let totalObservedDiff = 0;
+    filteredRows.forEach((r) => {
+      programSet.add(r.Program);
+      totalForecastedValue += r["Forecasted Total"] || 0;
+      totalObservedValue += r["Opian Total"] || 0;
+      totalObservedDiff += r["Observed difference"] || 0;
+    });
+    return {
+      totalForecastedValue,
+      totalObservedValue,
+      totalObservedDiff,
+      totalPrograms: programSet.size,
+      totalItems: filteredRows.length,
+    };
+  }, [filteredRows]);
+
   return (
     <main className="min-h-screen bg-background">
       <header
@@ -81,19 +101,19 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="surface">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Total Forecasted Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalForecastedValue)}</CardContent>
+              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalForecastedValue)}</CardContent>
             </Card>
             <Card className="surface">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalObservedValue)}</CardContent>
+              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedValue)}</CardContent>
             </Card>
             <Card className="surface">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Difference</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(dataset.totals.totalObservedDiff)}</CardContent>
+              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedDiff)}</CardContent>
             </Card>
             <Card className="surface">
               <CardHeader className="pb-2"><CardTitle className="text-sm">Programs / Items</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">{dataset.totals.totalPrograms} / {dataset.totals.totalItems}</CardContent>
+              <CardContent className="text-2xl font-semibold">{filteredTotals.totalPrograms} / {filteredTotals.totalItems}</CardContent>
             </Card>
           </div>
         )}
