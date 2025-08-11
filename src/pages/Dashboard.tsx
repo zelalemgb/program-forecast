@@ -100,8 +100,46 @@ const filteredRows = React.useMemo(() => {
   }, [filteredRows]);
 
 const top20ByObserved = React.useMemo(() => {
-  const arr = [...filteredRows];
-  arr.sort((a, b) => Number((b as any)["Opian Total"] ?? 0) - Number((a as any)["Opian Total"] ?? 0));
+  const map = new Map<string, {
+    product: string;
+    unit: string;
+    totalObserved: number;
+    totalForecasted: number;
+    totalQty: number;
+    sumPrice: number;
+    priceCount: number;
+    years: Set<string>;
+  }>();
+
+  filteredRows.forEach((r) => {
+    const key = r["Product List"];
+    const entry = map.get(key) ?? {
+      product: key,
+      unit: r.Unit,
+      totalObserved: 0,
+      totalForecasted: 0,
+      totalQty: 0,
+      sumPrice: 0,
+      priceCount: 0,
+      years: new Set<string>(),
+    };
+    entry.totalObserved += r["Opian Total"] || 0;
+    entry.totalForecasted += r["Forecasted Total"] || 0;
+    entry.totalQty += r["Forecasted Quantity"] || 0;
+    entry.sumPrice += r["unit price"] || 0;
+    entry.priceCount += 1;
+    entry.years.add(r.Year);
+    map.set(key, entry);
+  });
+
+  const arr = Array.from(map.values()).map((e) => ({
+    ...e,
+    avgUnitPrice: e.priceCount ? e.sumPrice / e.priceCount : 0,
+    yearsLabel: Array.from(e.years).sort().join(", "),
+    difference: e.totalObserved - e.totalForecasted,
+  }));
+
+  arr.sort((a, b) => b.totalObserved - a.totalObserved);
   return arr.slice(0, 20);
 }, [filteredRows]);
 
@@ -300,29 +338,27 @@ const filteredTotals = React.useMemo(() => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Program</TableHead>
                       <TableHead>Product</TableHead>
                       <TableHead>Unit</TableHead>
-                      <TableHead>Year</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Unit Price</TableHead>
-                      <TableHead className="text-right">Forecasted</TableHead>
-                      <TableHead className="text-right">Observed</TableHead>
+                      <TableHead>Years</TableHead>
+                      <TableHead className="text-right">Total Qty</TableHead>
+                      <TableHead className="text-right">Avg Unit Price</TableHead>
+                      <TableHead className="text-right">Forecasted Total</TableHead>
+                      <TableHead className="text-right">Observed Total</TableHead>
                       <TableHead className="text-right">Difference</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {top20ByObserved.map((r, idx) => (
+                    {top20ByObserved.map((p, idx) => (
                       <TableRow key={idx} className="hover:bg-accent/50">
-                        <TableCell>{r.Program}</TableCell>
-                        <TableCell>{r["Product List"]}</TableCell>
-                        <TableCell>{r.Unit}</TableCell>
-                        <TableCell>{r.Year}</TableCell>
-                        <TableCell className="text-right">{currency(r["Forecasted Quantity"])}</TableCell>
-                        <TableCell className="text-right">${currency(r["unit price"])}</TableCell>
-                        <TableCell className="text-right">${currency(r["Forecasted Total"] || 0)}</TableCell>
-                        <TableCell className="text-right">${currency(r["Opian Total"] || 0)}</TableCell>
-                        <TableCell className="text-right">${currency(r["Observed difference"] || 0)}</TableCell>
+                        <TableCell>{p.product}</TableCell>
+                        <TableCell>{p.unit}</TableCell>
+                        <TableCell>{p.yearsLabel}</TableCell>
+                        <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
+                        <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
+                        <TableCell className="text-right">${currency(p.totalForecasted)}</TableCell>
+                        <TableCell className="text-right">${currency(p.totalObserved)}</TableCell>
+                        <TableCell className="text-right">${currency(p.difference)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
