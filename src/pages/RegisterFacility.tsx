@@ -176,14 +176,17 @@ const RegisterFacility: React.FC = () => {
               {mode === "existing" ? (
                 <div className="space-y-1">
                   <label className="text-sm">Facility</label>
-                  <Select onValueChange={(v) => setFacilityId(Number(v))} value={facilityId?.toString() || undefined}>
-                    <SelectTrigger><SelectValue placeholder={woredaId ? "Select facility" : "Select woreda first"} /></SelectTrigger>
-                    <SelectContent>
-                      {facilities.map(f => (
-                        <SelectItem key={f.facility_id} value={f.facility_id.toString()}>{f.facility_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select onValueChange={(v) => setFacilityId(Number(v))} value={facilityId?.toString() || undefined}>
+                      <SelectTrigger><SelectValue placeholder={woredaId ? "Select facility" : "Select woreda first"} /></SelectTrigger>
+                      <SelectContent>
+                        {facilities.map(f => (
+                          <SelectItem key={f.facility_id} value={f.facility_id.toString()}>{f.facility_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setMode("new")}>New</Button>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
