@@ -202,81 +202,86 @@ const filteredTotals = React.useMemo(() => {
         
 
         {dataset && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <>
             <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Total Forecasted Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalForecastedValue)}</CardContent>
+              <CardHeader className="pb-0">
+                <div className="flex items-center justify-between">
+                  <CardTitle>Filters</CardTitle>
+                  {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPrograms([])
+                        setSelectedYears([])
+                      }}
+                    >
+                      Clear all filters
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Programs</label>
+                    <ToggleGroup
+                      type="multiple"
+                      variant="outline"
+                      size="sm"
+                      value={selectedPrograms}
+                      onValueChange={(vals) => setSelectedPrograms(vals)}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {dataset.programs.map((p) => (
+                        <ToggleGroupItem key={p} value={p} className="capitalize">
+                          {p}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Years</label>
+                    <ToggleGroup
+                      type="multiple"
+                      variant="outline"
+                      size="sm"
+                      value={selectedYears}
+                      onValueChange={(vals) => setSelectedYears(vals)}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {dataset.years.map((y) => (
+                        <ToggleGroupItem key={y} value={y}>
+                          {y}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
-            <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Value</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedValue)}</CardContent>
-            </Card>
-            <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Difference</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedDiff)}</CardContent>
-            </Card>
-            <Card className="surface">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Programs / Items</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-semibold">{filteredTotals.totalPrograms} / {filteredTotals.totalItems}</CardContent>
-            </Card>
-          </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="surface">
+                <CardHeader className="pb-2"><CardTitle className="text-sm">Total Forecasted Value</CardTitle></CardHeader>
+                <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalForecastedValue)}</CardContent>
+              </Card>
+              <Card className="surface">
+                <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Value</CardTitle></CardHeader>
+                <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedValue)}</CardContent>
+              </Card>
+              <Card className="surface">
+                <CardHeader className="pb-2"><CardTitle className="text-sm">Observed Difference</CardTitle></CardHeader>
+                <CardContent className="text-2xl font-semibold">${currency(filteredTotals.totalObservedDiff)}</CardContent>
+              </Card>
+              <Card className="surface">
+                <CardHeader className="pb-2"><CardTitle className="text-sm">Programs / Items</CardTitle></CardHeader>
+                <CardContent className="text-2xl font-semibold">{filteredTotals.totalPrograms} / {filteredTotals.totalItems}</CardContent>
+              </Card>
+            </div>
+          </>
         )}
 
-        {dataset && (
-          <Card className="surface">
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-            </CardHeader>
-<CardContent className="space-y-4">
-  <div className="space-y-2">
-    <label className="text-sm text-muted-foreground">Programs</label>
-    <ToggleGroup
-      type="multiple"
-      variant="outline"
-      value={selectedPrograms}
-      onValueChange={(vals) => setSelectedPrograms(vals)}
-      className="flex flex-wrap gap-2"
-    >
-      {dataset.programs.map((p) => (
-        <ToggleGroupItem key={p} value={p} className="capitalize">
-          {p}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
-  </div>
-  <div className="space-y-2">
-    <label className="text-sm text-muted-foreground">Years</label>
-    <ToggleGroup
-      type="multiple"
-      variant="outline"
-      value={selectedYears}
-      onValueChange={(vals) => setSelectedYears(vals)}
-      className="flex flex-wrap gap-2"
-    >
-      {dataset.years.map((y) => (
-        <ToggleGroupItem key={y} value={y}>
-          {y}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
-  </div>
-  {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
-    <div className="pt-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => {
-          setSelectedPrograms([])
-          setSelectedYears([])
-        }}
-      >
-        Clear all filters
-      </Button>
-    </div>
-  )}
-</CardContent>
-          </Card>
-        )}
         {dataset && <ProgramInsights rows={filteredRows} />}
 
         {dataset && (
