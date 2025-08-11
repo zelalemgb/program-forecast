@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ForecastRowDb {
   program: string;
@@ -29,6 +32,8 @@ const Validation: React.FC = () => {
   const [rows, setRows] = React.useState<ForecastRowDb[]>([]);
   const [assumptions, setAssumptions] = React.useState<EpiAssumptionDb[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [selectedPrograms, setSelectedPrograms] = React.useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     document.title = "Forecast Validation Dashboard";
@@ -56,27 +61,52 @@ const Validation: React.FC = () => {
     };
   }, []);
 
+  const programOptions = React.useMemo(() => {
+    const set = new Set(rows.map((r) => r.program).filter(Boolean) as string[]);
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const yearOptions = React.useMemo(() => {
+    const set = new Set(rows.map((r) => String(r.year ?? "")).filter((y) => y !== ""));
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const filteredRows = React.useMemo(() => {
+    const prSet = new Set(selectedPrograms);
+    const yrSet = new Set(selectedYears);
+    return rows.filter(
+      (r) => (selectedPrograms.length ? prSet.has(r.program) : true) && (selectedYears.length ? yrSet.has(String(r.year ?? "")) : true)
+    );
+  }, [rows, selectedPrograms, selectedYears]);
+
   const stats = React.useMemo(() => {
-    const programs = new Set(rows.map((r) => r.program));
-    const years = new Set(rows.map((r) => r.year || ""));
-    const uniqueProducts = new Set(rows.map((r) => r.product_list));
-    const totalForecast = rows.reduce((s, r) => s + (r.forecasted_total || 0), 0);
+    const programs = new Set(filteredRows.map((r) => r.program));
+    const years = new Set(filteredRows.map((r) => r.year || ""));
+    const uniqueProducts = new Set(filteredRows.map((r) => r.product_list));
+    const totalForecast = filteredRows.reduce((s, r) => s + (r.forecasted_total || 0), 0);
     return {
       programs: programs.size,
       years: years.size,
       products: uniqueProducts.size,
-      rows: rows.length,
+      rows: filteredRows.length,
       totalForecast,
     };
-  }, [rows]);
+  }, [filteredRows]);
 
   const issues = React.useMemo(() => {
-    const missingUnit = rows.filter((r) => !r.unit || String(r.unit).trim() === "");
-    const noYear = rows.filter((r) => !r.year || String(r.year).trim() === "");
-    const zeroOrNegPrice = rows.filter((r) => (r.unit_price ?? 0) <= 0);
-    const zeroOrNegTotal = rows.filter((r) => (r.forecasted_total ?? 0) <= 0);
+    const missingUnit = filteredRows.filter((r) => !r.unit || String(r.unit).trim() === "");
+    const noYear = filteredRows.filter((r) => !r.year || String(r.year).trim() === "");
+    const zeroOrNegPrice = filteredRows.filter((r) => (r.unit_price ?? 0) <= 0);
+    const zeroOrNegTotal = filteredRows.filter((r) => (r.forecasted_total ?? 0) <= 0);
     return { missingUnit, noYear, zeroOrNegPrice, zeroOrNegTotal };
-  }, [rows]);
+  }, [filteredRows]);
+
+  const filteredAssumptions = React.useMemo(() => {
+    return assumptions.filter((a) =>
+      (selectedPrograms.length ? (a.program ? selectedPrograms.includes(a.program) : false) : true) &&
+      (selectedYears.length ? selectedYears.includes(String(a.year)) : true)
+    );
+  }, [assumptions, selectedPrograms, selectedYears]);
 
   return (
     <main className="min-h-screen bg-background">
@@ -90,6 +120,82 @@ const Validation: React.FC = () => {
       </header>
 
       <section className="container space-y-6 pb-10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-w-[160px] justify-start">
+                  Programs {selectedPrograms.length ? `(${selectedPrograms.length})` : "(All)"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-2" align="start">
+                <div className="flex items-center justify-between mb-2">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms(programOptions)}>Select all</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms([])}>Clear</Button>
+                </div>
+                <div className="max-h-64 overflow-auto space-y-2">
+                  {programOptions.map((p) => (
+                    <label key={p} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedPrograms.includes(p)}
+                        onCheckedChange={(checked) => {
+                          const isChecked = checked === true;
+                          setSelectedPrograms((prev) =>
+                            isChecked ? (prev.includes(p) ? prev : [...prev, p]) : prev.filter((v) => v !== p)
+                          );
+                        }}
+                      />
+                      <span className="text-sm">{p}</span>
+                    </label>
+                  ))}
+                  {programOptions.length === 0 && (
+                    <div className="text-sm text-muted-foreground">No programs found</div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-w-[160px] justify-start">
+                  Years {selectedYears.length ? `(${selectedYears.length})` : "(All)"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <div className="flex items-center justify-between mb-2">
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedYears(yearOptions)}>Select all</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedYears([])}>Clear</Button>
+                </div>
+                <div className="max-h-64 overflow-auto space-y-2">
+                  {yearOptions.map((y) => (
+                    <label key={y} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedYears.includes(y)}
+                        onCheckedChange={(checked) => {
+                          const isChecked = checked === true;
+                          setSelectedYears((prev) =>
+                            isChecked ? (prev.includes(y) ? prev : [...prev, y]) : prev.filter((v) => v !== y)
+                          );
+                        }}
+                      />
+                      <span className="text-sm">{y}</span>
+                    </label>
+                  ))}
+                  {yearOptions.length === 0 && (
+                    <div className="text-sm text-muted-foreground">No years found</div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
+            <Button variant="ghost" size="sm" onClick={() => { setSelectedPrograms([]); setSelectedYears([]); }}>
+              Clear all filters
+            </Button>
+          )}
+        </div>
+
         <Card className="surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Overview</CardTitle>
@@ -131,7 +237,7 @@ const Validation: React.FC = () => {
             <CardDescription>Basic validations on the imported forecast rows</CardDescription>
           </CardHeader>
           <CardContent>
-            {rows.length === 0 ? (
+            {filteredRows.length === 0 ? (
               <div className="text-sm text-muted-foreground">No forecast data found. Import data to see validations.</div>
             ) : (
               <div className="space-y-6">
@@ -230,7 +336,7 @@ const Validation: React.FC = () => {
             <CardDescription>Epidemiology inputs currently stored</CardDescription>
           </CardHeader>
           <CardContent>
-            {assumptions.length === 0 ? (
+            {filteredAssumptions.length === 0 ? (
               <div className="text-sm text-muted-foreground">No assumptions found.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -245,7 +351,7 @@ const Validation: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {assumptions.slice(0, 12).map((a, i) => (
+                    {filteredAssumptions.slice(0, 12).map((a, i) => (
                       <TableRow key={`ea-${i}`}>
                         <TableCell>{a.year}</TableCell>
                         <TableCell>{a.indicator}</TableCell>
