@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
@@ -13,8 +14,8 @@ const currency = (n: number) => n.toLocaleString(undefined, { maximumFractionDig
 
 const Dashboard: React.FC = () => {
   const [dataset, setDataset] = React.useState<ForecastDataset | null>(null);
-  const [program, setProgram] = React.useState<string>("All");
-  const [year, setYear] = React.useState<string>("All");
+const [selectedPrograms, setSelectedPrograms] = React.useState<string[]>([]);
+const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     document.title = "Health Programs Forecast Dashboard";
@@ -34,10 +35,14 @@ const Dashboard: React.FC = () => {
     e.currentTarget.style.setProperty("--glow-alpha", `0`);
   };
 
-  const filteredRows = React.useMemo(() => {
-    if (!dataset) return [] as ForecastDataset["rows"];
-    return dataset.rows.filter((r) => (program === "All" || r.Program === program) && (year === "All" || r.Year === year));
-  }, [dataset, program, year]);
+const filteredRows = React.useMemo(() => {
+  if (!dataset) return [] as ForecastDataset["rows"];
+  const prSet = new Set(selectedPrograms);
+  const yrSet = new Set(selectedYears);
+  return dataset.rows.filter(
+    (r) => (selectedPrograms.length ? prSet.has(r.Program) : true) && (selectedYears.length ? yrSet.has(r.Year) : true)
+  );
+}, [dataset, selectedPrograms, selectedYears]);
 
   const programsAgg = React.useMemo(() => {
     const map = new Map<string, { program: string; total: number }>();
@@ -130,32 +135,79 @@ const Dashboard: React.FC = () => {
             <CardHeader>
               <CardTitle>Filters</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground">Program</label>
-                <Select value={program} onValueChange={setProgram}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select program" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    {dataset.programs.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Year</label>
-                <Select value={year} onValueChange={setYear}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select year" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
-                    {dataset.years.map((y) => (
-                      <SelectItem key={y} value={y}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
+<CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div>
+    <label className="text-sm text-muted-foreground">Programs</label>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="mt-1 min-w-[160px] justify-start">
+          {selectedPrograms.length ? `Selected (${selectedPrograms.length})` : "All programs"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-2" align="start">
+        <div className="flex items-center justify-between mb-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms(dataset.programs)}>Select all</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedPrograms([])}>Clear</Button>
+        </div>
+        <div className="max-h-64 overflow-auto space-y-2">
+          {dataset.programs.map((p) => (
+            <label key={p} className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedPrograms.includes(p)}
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true;
+                  setSelectedPrograms((prev) =>
+                    isChecked ? (prev.includes(p) ? prev : [...prev, p]) : prev.filter((v) => v !== p)
+                  );
+                }}
+              />
+              <span className="text-sm">{p}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  </div>
+  <div>
+    <label className="text-sm text-muted-foreground">Years</label>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="mt-1 min-w-[160px] justify-start">
+          {selectedYears.length ? `Selected (${selectedYears.length})` : "All years"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="start">
+        <div className="flex items-center justify-between mb-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedYears(dataset.years)}>Select all</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedYears([])}>Clear</Button>
+        </div>
+        <div className="max-h-64 overflow-auto space-y-2">
+          {dataset.years.map((y) => (
+            <label key={y} className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedYears.includes(y)}
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true;
+                  setSelectedYears((prev) =>
+                    isChecked ? (prev.includes(y) ? prev : [...prev, y]) : prev.filter((v) => v !== y)
+                  );
+                }}
+              />
+              <span className="text-sm">{y}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  </div>
+  <div className="flex items-end">
+    {(selectedPrograms.length > 0 || selectedYears.length > 0) && (
+      <Button variant="ghost" size="sm" onClick={() => { setSelectedPrograms([]); setSelectedYears([]); }}>
+        Clear all filters
+      </Button>
+    )}
+  </div>
+</CardContent>
           </Card>
         )}
 
@@ -172,7 +224,7 @@ const Dashboard: React.FC = () => {
                     <XAxis dataKey="program" tickLine={false} axisLine={false} hide={programsAgg.length > 8} />
                     <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
                     <Tooltip formatter={(v: number) => `$${currency(v)}`} cursor={{ fill: "hsl(var(--muted) / 0.5)" as unknown as string }} />
-                    <Bar dataKey="total" fill={`hsl(var(--brand))`} onClick={(d) => setProgram((d as any).program)} />
+                    <Bar dataKey="total" fill={`hsl(var(--brand))`} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -220,7 +272,7 @@ const Dashboard: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {filteredRows.map((r, idx) => (
-                      <TableRow key={idx} className="hover:bg-accent/50 cursor-pointer" onClick={() => setProgram(r.Program)}>
+                      <TableRow key={idx} className="hover:bg-accent/50">
                         <TableCell>{r.Program}</TableCell>
                         <TableCell>{r["Product List"]}</TableCell>
                         <TableCell>{r.Unit}</TableCell>
@@ -237,7 +289,7 @@ const Dashboard: React.FC = () => {
               </div>
               <Separator className="my-4" />
               <div className="text-sm text-muted-foreground">
-                Tip: Click a bar or row to filter by program. Combine with year filter for deeper analysis.
+                Tip: Use the filters above to analyze by multiple programs and years.
               </div>
             </CardContent>
           </Card>
