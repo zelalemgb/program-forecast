@@ -99,9 +99,9 @@ const filteredRows = React.useMemo(() => {
     return Array.from(map.values()).sort((a, b) => a.year.localeCompare(b.year));
   }, [filteredRows]);
 
-const top20ByPrice = React.useMemo(() => {
+const top20ByObserved = React.useMemo(() => {
   const arr = [...filteredRows];
-  arr.sort((a, b) => Number((b as any)["unit price"] ?? 0) - Number((a as any)["unit price"] ?? 0));
+  arr.sort((a, b) => Number((b as any)["Opian Total"] ?? 0) - Number((a as any)["Opian Total"] ?? 0));
   return arr.slice(0, 20);
 }, [filteredRows]);
 
@@ -293,7 +293,7 @@ const filteredTotals = React.useMemo(() => {
         {dataset && (
           <Card className="surface">
             <CardHeader>
-              <CardTitle>Top 20 Products by Price</CardTitle>
+              <CardTitle>Top 20 Products by Observed Value</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -312,7 +312,7 @@ const filteredTotals = React.useMemo(() => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {top20ByPrice.map((r, idx) => (
+                    {top20ByObserved.map((r, idx) => (
                       <TableRow key={idx} className="hover:bg-accent/50">
                         <TableCell>{r.Program}</TableCell>
                         <TableCell>{r["Product List"]}</TableCell>
