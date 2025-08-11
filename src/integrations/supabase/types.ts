@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          region_id: number | null
+          updated_at: string
+          user_id: string
+          woreda_id: number | null
+          zone_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          region_id?: number | null
+          updated_at?: string
+          user_id: string
+          woreda_id?: number | null
+          zone_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          region_id?: number | null
+          updated_at?: string
+          user_id?: string
+          woreda_id?: number | null
+          zone_id?: number | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -769,6 +799,54 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_requests: {
+        Row: {
+          approved_at: string | null
+          approver_id: string | null
+          created_at: string
+          facility_code: string | null
+          facility_id: number | null
+          facility_name: string | null
+          facility_type: string | null
+          id: string
+          is_new_facility: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          woreda_id: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id?: string | null
+          created_at?: string
+          facility_code?: string | null
+          facility_id?: number | null
+          facility_name?: string | null
+          facility_type?: string | null
+          id?: string
+          is_new_facility?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          woreda_id: number
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string | null
+          created_at?: string
+          facility_code?: string | null
+          facility_id?: number | null
+          facility_name?: string | null
+          facility_type?: string | null
+          id?: string
+          is_new_facility?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          woreda_id?: number
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           contact_info: Json | null
@@ -790,6 +868,36 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_facility_memberships: {
+        Row: {
+          created_at: string
+          facility_id: number
+          id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: number
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: number
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -984,6 +1092,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_registration_request: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1002,6 +1114,10 @@ export type Database = {
           total_products: number
           epss_percentage: number
         }[]
+      }
+      has_admin_scope_for_woreda: {
+        Args: { _user_id: string; _woreda_id: number }
+        Returns: boolean
       }
       has_role: {
         Args: {
