@@ -31,7 +31,7 @@ const Auth: React.FC = () => {
       toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Welcome back", description: "Signed in successfully" });
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
