@@ -1,4 +1,5 @@
 import React from "react";
+import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,12 +23,6 @@ const [selectedPrograms, setSelectedPrograms] = React.useState<string[]>([]);
 const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
 const [trendOpen, setTrendOpen] = React.useState(false);
 const [trendProduct, setTrendProduct] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    document.title = "Health Programs Forecast Dashboard";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Analyze forecast data across health programs with import, charts, and drill-down.");
-  }, []);
 
   const { user } = useAuth();
 
@@ -173,6 +168,11 @@ const filteredTotals = React.useMemo(() => {
 
   return (
     <main className="min-h-screen bg-background">
+      <Helmet>
+        <title>Health Programs Forecast Dashboard</title>
+        <meta name="description" content="Analyze forecast data across health programs with import, charts, and drill-down." />
+        <link rel="canonical" href={`${window.location.origin}/dashboard`} />
+      </Helmet>
       <header
         className="pointer-glow relative overflow-hidden"
         onMouseMove={onMouseMoveGlow}
