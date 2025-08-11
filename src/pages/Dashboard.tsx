@@ -351,6 +351,7 @@ const filteredTotals = React.useMemo(() => {
                   <TableBody>
                     {top20ByObserved.map((p, idx) => {
                       const hasDiff = Math.abs(p.difference || 0) > 0;
+                      const diffBorderCls = hasDiff ? "border border-destructive" : "";
                       return (
                         <TableRow key={idx} className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""}`}>
                           <TableCell>{p.product}</TableCell>
@@ -358,9 +359,9 @@ const filteredTotals = React.useMemo(() => {
                           <TableCell>{p.yearsLabel}</TableCell>
                           <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
                           <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
-                          <TableCell className="text-right">${currency(p.totalForecasted)}</TableCell>
-                          <TableCell className="text-right">${currency(p.totalObserved)}</TableCell>
-                          <TableCell className={`text-right ${hasDiff ? "font-semibold" : ""}`}>${currency(p.difference)}</TableCell>
+                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalForecasted)}</TableCell>
+                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalObserved)}</TableCell>
+                          <TableCell className={`text-right ${hasDiff ? "font-semibold border border-destructive" : ""}`}>${currency(p.difference)}</TableCell>
                         </TableRow>
                       );
                     })}
