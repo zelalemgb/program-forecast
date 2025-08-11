@@ -349,18 +349,21 @@ const filteredTotals = React.useMemo(() => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {top20ByObserved.map((p, idx) => (
-                      <TableRow key={idx} className="hover:bg-accent/50">
-                        <TableCell>{p.product}</TableCell>
-                        <TableCell>{p.unit}</TableCell>
-                        <TableCell>{p.yearsLabel}</TableCell>
-                        <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
-                        <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
-                        <TableCell className="text-right">${currency(p.totalForecasted)}</TableCell>
-                        <TableCell className="text-right">${currency(p.totalObserved)}</TableCell>
-                        <TableCell className="text-right">${currency(p.difference)}</TableCell>
-                      </TableRow>
-                    ))}
+                    {top20ByObserved.map((p, idx) => {
+                      const hasDiff = Math.abs(p.difference || 0) > 0;
+                      return (
+                        <TableRow key={idx} className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""}`}>
+                          <TableCell>{p.product}</TableCell>
+                          <TableCell>{p.unit}</TableCell>
+                          <TableCell>{p.yearsLabel}</TableCell>
+                          <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
+                          <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
+                          <TableCell className="text-right">${currency(p.totalForecasted)}</TableCell>
+                          <TableCell className="text-right">${currency(p.totalObserved)}</TableCell>
+                          <TableCell className={`text-right ${hasDiff ? "font-semibold" : ""}`}>${currency(p.difference)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
