@@ -208,7 +208,7 @@ const filteredTotals = React.useMemo(() => {
               <CardContent className="py-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-sm text-muted-foreground">Select Program</label>
+                    <label className="block text-sm text-muted-foreground">Select Program</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="min-w-[180px] justify-between w-auto">
@@ -237,7 +237,7 @@ const filteredTotals = React.useMemo(() => {
                     </DropdownMenu>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-sm text-muted-foreground">Select Forecast Years</label>
+                    <label className="block text-sm text-muted-foreground">Select Forecast Years</label>
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
