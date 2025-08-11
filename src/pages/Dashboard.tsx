@@ -212,7 +212,7 @@ const filteredTotals = React.useMemo(() => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="min-w-[180px] justify-between w-auto">
-                          {selectedPrograms.length ? `${selectedPrograms.length} selected` : "All programs"}
+                          <span className="truncate">{selectedPrograms.length ? selectedPrograms.join(", ") : "All programs"}</span>
                           <ChevronDown className="h-4 w-4 opacity-70" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -242,7 +242,7 @@ const filteredTotals = React.useMemo(() => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" size="sm" className="min-w-[180px] justify-between w-auto">
-                            {selectedYears.length ? `${selectedYears.length} selected` : "All years"}
+                            <span className="truncate">{selectedYears.length ? selectedYears.join(", ") : "All years"}</span>
                             <ChevronDown className="h-4 w-4 opacity-70" />
                           </Button>
                         </DropdownMenuTrigger>
