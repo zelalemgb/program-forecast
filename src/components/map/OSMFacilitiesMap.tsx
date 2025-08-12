@@ -1,5 +1,5 @@
 import React from "react";
-import { MapContainer, TileLayer, Marker, Tooltip, GeoJSON, LayersControl, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, GeoJSON, LayersControl } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -213,7 +213,7 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
   return (
     <div className="absolute inset-0">
       <MapContainer {...({ center, zoom } as any)} className="h-full w-full">
-        <LayersControl position="topright">
+        <LayersControl>
           <LayersControl.BaseLayer checked name="Minimal">
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" />
           </LayersControl.BaseLayer>
@@ -222,7 +222,7 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
           </LayersControl.BaseLayer>
 
           <LayersControl.Overlay name="Labels">
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" opacity={0.9} />
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png" />
           </LayersControl.Overlay>
 
           <LayersControl.Overlay checked name="Regions - Choropleth">
@@ -248,24 +248,14 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
 
           <LayersControl.Overlay checked name="Major Cities">
             {majorCities.map((c) => (
-              <CircleMarker
-                key={c.name}
-                center={[c.lat, c.lng] as LatLngExpression}
-                radius={5}
-                pathOptions={{
-                  color: "hsl(var(--primary))",
-                  fillColor: "hsl(var(--primary))",
-                  fillOpacity: 0.9,
-                  weight: 1,
-                }}
-              >
+              <Marker key={c.name} position={[c.lat, c.lng] as LatLngExpression}>
                 <Tooltip>
                   <div className="text-xs">
                     <div className="font-medium">{c.name}</div>
                     <div className="text-muted-foreground">City</div>
                   </div>
                 </Tooltip>
-              </CircleMarker>
+              </Marker>
             ))}
           </LayersControl.Overlay>
 
