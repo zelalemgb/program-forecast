@@ -75,7 +75,9 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
   return (
     <div className="absolute inset-0">
       <MapContainer {...({ center, zoom } as any)} className="h-full w-full">
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer 
+          url="https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+        />
         {facilities.map((f) => (
           <Marker key={f.id} position={[f.lat, f.lng] as LatLngExpression}>
             <Tooltip>
