@@ -293,34 +293,10 @@ export default function RequestWizard() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-sm">Program</label>
-                <Select value={selectedProgramName} onValueChange={(name) => {
-                  setSelectedProgramName(name);
-                  const match = programs.find(p => p.name === name);
-                  setSelectedProgramId(match?.id || "");
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select program" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-popover">
-                    {programOptions.map(name => (
-                      <SelectItem key={name} value={name}>{name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelect label="Programs" options={programOptions} values={filterPrograms} onChange={setFilterPrograms} />
               </div>
               <div>
-                <label className="text-sm">Year</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-popover">
-                    {yearOptions.map(y => (
-                      <SelectItem key={y} value={y}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultiSelect label="Years" options={yearOptions} values={filterYears} onChange={setFilterYears} />
               </div>
               <div>
                 <label className="text-sm">Funding Source</label>
@@ -344,10 +320,6 @@ export default function RequestWizard() {
               <CardTitle>Step 2: Select Items from Forecast</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-3 flex flex-wrap gap-2">
-                <MultiSelect label="Programs" options={programOptions} values={filterPrograms} onChange={setFilterPrograms} />
-                <MultiSelect label="Years" options={yearOptions} values={filterYears} onChange={setFilterYears} />
-              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
