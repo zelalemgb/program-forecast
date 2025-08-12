@@ -11,6 +11,7 @@ import {
   useSidebar,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { 
   Home,
   PencilRuler,
@@ -19,6 +20,8 @@ import {
   ShoppingCart,
   Settings,
   FolderKanban,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Item {
@@ -76,10 +79,17 @@ function Group({ label, items }: { label: string; items: Item[] }) {
 }
 
 const AppSidebar = () => {
+  const { state, toggleSidebar } = useSidebar();
+  const Collapser = state === "collapsed" ? ChevronRight : ChevronLeft;
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
       <SidebarContent>
+        <div className="p-2 flex justify-end">
+          <Button variant="ghost" size="icon" aria-label="Toggle sidebar" onClick={toggleSidebar}>
+            <Collapser className="h-4 w-4" />
+          </Button>
+        </div>
         <Group label="Data Collection" items={dataCollection} />
         <Group label="Guardrails" items={guardrails} />
         <Group label="Forecasting & Procurement" items={forecasting} />
