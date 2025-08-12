@@ -25,18 +25,22 @@ export const SiteHeader: React.FC = () => {
   const navigate = useNavigate();
 
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isPower, setIsPower] = React.useState(false); // admin or analyst
   React.useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      setIsPower(false);
       return;
     }
     supabase.rpc('get_current_user_role').then(({ data, error }) => {
       if (error) {
         console.error('role check failed', error);
         setIsAdmin(false);
+        setIsPower(false);
         return;
       }
       setIsAdmin(data === 'admin');
+      setIsPower(data === 'admin' || data === 'analyst');
     });
   }, [user?.id]);
 
@@ -75,6 +79,14 @@ export const SiteHeader: React.FC = () => {
             <NavLink to="/approvals" className={navLinkCls}>
               Approvals
             </NavLink>
+            <NavLink to="/requests" className={navLinkCls}>
+              Requests
+            </NavLink>
+            {isPower && (
+              <NavLink to="/program-settings" className={navLinkCls}>
+                Program Settings
+              </NavLink>
+            )}
             {isAdmin && (
               <NavLink to="/admin" className={navLinkCls}>
                 Admin
