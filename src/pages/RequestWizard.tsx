@@ -127,7 +127,7 @@ export default function RequestWizard() {
       .insert({
         program_id: selectedProgramId,
         year: selectedYear,
-        funding_source_id: fundingSourceId || null,
+        funding_source_id: (fundingSourceId === "pooled" || fundingSourceId === "") ? null : fundingSourceId,
         psm_percent: psmPercent || 0,
         status,
         current_stage: status,
@@ -194,7 +194,7 @@ export default function RequestWizard() {
                   <SelectTrigger>
                     <SelectValue placeholder="Select program" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-popover">
                     {programs.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
@@ -207,7 +207,7 @@ export default function RequestWizard() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-popover">
                     {years.map(y => (
                       <SelectItem key={y} value={y}>{y}</SelectItem>
                     ))}
@@ -220,8 +220,8 @@ export default function RequestWizard() {
                   <SelectTrigger>
                     <SelectValue placeholder="Undesignated (pooled)" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Undesignated (pooled)</SelectItem>
+                  <SelectContent className="z-50 bg-popover">
+                    <SelectItem value="pooled">Undesignated (pooled)</SelectItem>
                     {fundingSources.map(fs => (
                       <SelectItem key={fs.id} value={fs.id}>{fs.name}</SelectItem>
                     ))}

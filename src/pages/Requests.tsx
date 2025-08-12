@@ -27,7 +27,7 @@ export default function RequestsPage() {
   useEffect(() => {
     const fetchRows = async () => {
       let q = supabase.from("procurement_requests").select("*").order("created_at", { ascending: false });
-      if (selectedProgramId) q = q.eq("program_id", selectedProgramId);
+      if (selectedProgramId && selectedProgramId !== "__all__") q = q.eq("program_id", selectedProgramId);
       if (selectedYear) q = q.eq("year", selectedYear);
       const { data } = await q;
       setRows(data || []);
@@ -60,8 +60,8 @@ export default function RequestsPage() {
               <SelectTrigger>
                 <SelectValue placeholder="All" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All</SelectItem>
+              <SelectContent className="z-50 bg-popover">
+                <SelectItem value="__all__">All</SelectItem>
                 {programs.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
@@ -74,7 +74,7 @@ export default function RequestsPage() {
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50 bg-popover">
                 {years.map(y => (
                   <SelectItem key={y} value={y}>{y}</SelectItem>
                 ))}

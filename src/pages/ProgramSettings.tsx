@@ -203,7 +203,7 @@ const ProgramSettingsPage: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select program" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-popover">
                     {programs.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
@@ -216,7 +216,7 @@ const ProgramSettingsPage: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-popover">
                     {years.map(y => (
                       <SelectItem key={y} value={y}>{y}</SelectItem>
                     ))}
