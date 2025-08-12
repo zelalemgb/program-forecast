@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import { 
   Sidebar,
   SidebarContent,
@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
   SidebarRail,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -84,6 +85,14 @@ const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
+      <SidebarHeader>
+        <Link to="/" className="flex items-center gap-2 px-2 py-1.5">
+          <LineChart className="h-5 w-5" />
+          {state !== "collapsed" && (
+            <span className="text-base font-semibold tracking-tight">Forlab+</span>
+          )}
+        </Link>
+      </SidebarHeader>
       <SidebarContent>
         <div className="p-2 flex justify-end">
           <Button variant="ghost" size="icon" aria-label="Toggle sidebar" onClick={toggleSidebar}>
