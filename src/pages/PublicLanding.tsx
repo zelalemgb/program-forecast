@@ -3,31 +3,10 @@ import { Helmet } from "react-helmet-async";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import OSMFacilitiesMap from "@/components/map/OSMFacilitiesMap";
-import { supabase } from "@/integrations/supabase/client";
 
 const PublicLanding: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
-
-  const [regionMetrics, setRegionMetrics] = React.useState<Record<string, number>>({});
-
-  React.useEffect(() => {
-    const load = async () => {
-      try {
-        const { data, error } = await supabase.from('ethiopia_2025_2026').select('region,cost');
-        if (error) return;
-        const map: Record<string, number> = {};
-        for (const row of data || []) {
-          const name = (row as any).region as string | null;
-          const cost = Number((row as any).cost) || 0;
-          if (!name) continue;
-          map[name] = (map[name] || 0) + cost;
-        }
-        setRegionMetrics(map);
-      } catch {}
-    };
-    load();
-  }, []);
 
   return (
     <main className="min-h-screen">
@@ -55,7 +34,7 @@ const PublicLanding: React.FC = () => {
         {/* Spacer for header height */}
         <div className="h-14" />
         <div className="fixed inset-0 top-14">
-          <OSMFacilitiesMap regionMetrics={regionMetrics} metricLabel="Total Cost" />
+          <OSMFacilitiesMap />
         </div>
       </section>
     </main>
