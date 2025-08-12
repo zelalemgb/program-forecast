@@ -20,6 +20,14 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+const CityIcon = L.divIcon({
+  className: "city-icon",
+  html: '<div style="width:10px;height:10px;border-radius:50%;background:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--background));opacity:.95"></div>',
+  iconSize: [10, 10],
+  iconAnchor: [5, 5],
+  tooltipAnchor: [0, -6],
+});
+
 export type FacilityPoint = {
   id: string;
   name: string;
