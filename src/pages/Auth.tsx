@@ -51,10 +51,6 @@ const Auth: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="container py-10">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Account</h1>
-        <p className="text-muted-foreground mt-2">Sign in or create an account to manage your forecast data.</p>
-      </header>
       <section className="container pb-10">
         <Card className="max-w-md mx-auto surface">
           <CardHeader>

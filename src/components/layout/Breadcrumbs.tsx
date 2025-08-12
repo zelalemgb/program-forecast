@@ -24,7 +24,7 @@ const labels: Record<string, string> = {
 const Breadcrumbs: React.FC = () => {
   const location = useLocation();
   const parts = location.pathname.split("/").filter(Boolean);
-  if (parts.length === 0) return null;
+  if (parts.length === 0 || parts[0] === "auth") return null;
   const items = parts.map((seg, idx) => {
     const path = "/" + parts.slice(0, idx + 1).join("/");
     const isLast = idx === parts.length - 1;
