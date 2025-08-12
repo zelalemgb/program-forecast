@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { 
   Home,
@@ -77,6 +78,7 @@ function Group({ label, items }: { label: string; items: Item[] }) {
 const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
+      <SidebarRail />
       <SidebarContent>
         <Group label="Data Collection" items={dataCollection} />
         <Group label="Guardrails" items={guardrails} />
