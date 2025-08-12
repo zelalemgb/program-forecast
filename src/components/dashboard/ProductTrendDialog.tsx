@@ -1,6 +1,6 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Scatter } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Scatter, LabelList } from "recharts";
 import type { ForecastDataset } from "@/types/forecast";
 
 export type ProductTrendDialogProps = {
@@ -74,7 +74,14 @@ export const ProductTrendDialog: React.FC<ProductTrendDialogProps> = ({ open, on
                   }}
                   cursor={{ fill: "hsl(var(--muted) / 0.5)" as unknown as string }}
                 />
-                <Line type="monotone" dataKey="qty" stroke={`hsl(var(--brand))`} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="qty" stroke={`hsl(var(--brand))`} dot={{ r: 3 }} activeDot={{ r: 5 }}>
+                  <LabelList
+                    dataKey="qty"
+                    position="top"
+                    formatter={(value) => numberFmt(value as number)}
+                    fill={`hsl(var(--foreground))`}
+                  />
+                </Line>
                 <Scatter data={series.filter((d) => d.flagged)} fill={`hsl(var(--destructive))`} />
               </LineChart>
             </ResponsiveContainer>
