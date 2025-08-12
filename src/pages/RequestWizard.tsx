@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import ContextPanel from "@/components/requests/ContextPanel";
+import MultiSelect from "@/components/ui/multi-select";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,8 @@ export default function RequestWizard() {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [yearOptions, setYearOptions] = useState<string[]>([]);
   const [programOptions, setProgramOptions] = useState<string[]>([]);
+  const [filterPrograms, setFilterPrograms] = useState<string[]>([]);
+  const [filterYears, setFilterYears] = useState<string[]>([]);
   const [forecastRows, setForecastRows] = useState<ForecastRow[]>([]);
   const [programSettings, setProgramSettings] = useState<ProgramSettings | null>(null);
   const [selectedLines, setSelectedLines] = useState<Record<string, SelectedLine>>({});
@@ -65,26 +68,22 @@ export default function RequestWizard() {
       if (ys.length) {
         setYearOptions(ys as string[]);
         if (!selectedYear) setSelectedYear(ys[0] as string);
+        if (filterYears.length === 0) setFilterYears(ys as string[]);
       }
     };
     loadYears();
   }, []);
 
-  // Load available programs for selected year from forecast
+  // Load available programs from forecast (all)
   useEffect(() => {
     const loadPrograms = async () => {
-      if (!selectedYear) { setProgramOptions([]); return; }
-      const { data } = await supabase.from("forecast_rows").select("program").eq("year", selectedYear);
+      const { data } = await supabase.from("forecast_rows").select("program");
       const names = Array.from(new Set((data || []).map((r: any) => r.program).filter(Boolean))).sort();
       setProgramOptions(names as string[]);
-      if (!selectedProgramName && names.length) {
-        setSelectedProgramName(names[0] as string);
-      }
-      const match = programs.find(p => p.name === (selectedProgramName || names[0]));
-      setSelectedProgramId(match?.id || "");
+      if (filterPrograms.length === 0 && names.length) setFilterPrograms(names as string[]);
     };
     loadPrograms();
-  }, [selectedYear, programs, selectedProgramName]);
+  }, []);
 
   // Auto-select latest available forecast program/year on first load
   useEffect(() => {
@@ -110,12 +109,11 @@ export default function RequestWizard() {
     pickDefaults();
   }, [programs, defaultsLoaded]);
 
-  // Load forecast rows and settings
+  // Load forecast list (filters) and settings (header)
   useEffect(() => {
     const run = async () => {
-      if (!selectedYear) return;
-      // Settings (only if program id is known)
-      if (selectedProgramId) {
+      // Settings for header selection only
+      if (selectedProgramId && selectedYear) {
         const { data: s } = await supabase
           .from("program_settings")
           .select("*")
@@ -127,23 +125,20 @@ export default function RequestWizard() {
         setProgramSettings(null);
       }
 
-      // Forecast (by program name + year)
-      const programNameForFilter = selectedProgramName || programs.find(p => p.id === selectedProgramId)?.name || "";
-      if (!programNameForFilter) {
-        setForecastRows([]);
-        setSelectedLines({});
-        return;
+      // Forecast list by filters (default to all)
+      let q = supabase.from("forecast_rows").select("*");
+      if (filterPrograms.length && filterPrograms.length !== programOptions.length) {
+        q = q.in("program", filterPrograms);
       }
-      const { data: rows } = await supabase
-        .from("forecast_rows")
-        .select("*")
-        .eq("program", programNameForFilter)
-        .eq("year", selectedYear);
+      if (filterYears.length && filterYears.length !== yearOptions.length) {
+        q = q.in("year", filterYears);
+      }
+      const { data: rows } = await q;
       setForecastRows(rows || []);
       setSelectedLines({});
     };
     run();
-  }, [selectedProgramId, selectedProgramName, selectedYear, programs]);
+  }, [filterPrograms, filterYears, programOptions.length, yearOptions.length, selectedProgramId, selectedYear]);
 
   // Load funding sources linked to selected program/year
   useEffect(() => {
@@ -174,6 +169,19 @@ export default function RequestWizard() {
   }, [selectedProgramId, selectedYear]);
 
   const toggleSelect = (r: ForecastRow) => {
+    // Lock header Program/Year on first selection; prevent mixing
+    if (!selectedProgramName || !selectedYear) {
+      const progName = r.program || "";
+      const yr = r.year || "";
+      setSelectedProgramName(progName);
+      setSelectedYear(yr);
+      const match = programs.find(p => p.name === progName);
+      setSelectedProgramId(match?.id || "");
+    } else if (r.program !== selectedProgramName || r.year !== selectedYear) {
+      toast({ title: "Cannot mix Program/Year", description: `This request is limited to ${selectedProgramName} - ${selectedYear}.`, variant: "destructive" });
+      return;
+    }
+
     setSelectedLines(prev => {
       const next = { ...prev };
       if (next[r.id!]) delete next[r.id!];
@@ -336,6 +344,10 @@ export default function RequestWizard() {
               <CardTitle>Step 2: Select Items from Forecast</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <MultiSelect label="Programs" options={programOptions} values={filterPrograms} onChange={setFilterPrograms} />
+                <MultiSelect label="Years" options={yearOptions} values={filterYears} onChange={setFilterYears} />
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
