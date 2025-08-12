@@ -33,10 +33,13 @@ export default function RequestWizard() {
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
   const [selectedProgramName, setSelectedProgramName] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<string>(years[0]);
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [yearOptions, setYearOptions] = useState<string[]>([]);
+  const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [forecastRows, setForecastRows] = useState<ForecastRow[]>([]);
   const [programSettings, setProgramSettings] = useState<ProgramSettings | null>(null);
   const [selectedLines, setSelectedLines] = useState<Record<string, SelectedLine>>({});
+  const [fundingOptions, setFundingOptions] = useState<FundingSource[]>([]);
   const [fundingSourceId, setFundingSourceId] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [defaultsLoaded, setDefaultsLoaded] = useState(false);
@@ -53,6 +56,35 @@ export default function RequestWizard() {
     };
     load();
   }, []);
+
+  // Load available years from forecast
+  useEffect(() => {
+    const loadYears = async () => {
+      const { data } = await supabase.from("forecast_rows").select("year");
+      const ys = Array.from(new Set((data || []).map((r: any) => r.year).filter(Boolean))).sort().reverse();
+      if (ys.length) {
+        setYearOptions(ys as string[]);
+        if (!selectedYear) setSelectedYear(ys[0] as string);
+      }
+    };
+    loadYears();
+  }, []);
+
+  // Load available programs for selected year from forecast
+  useEffect(() => {
+    const loadPrograms = async () => {
+      if (!selectedYear) { setProgramOptions([]); return; }
+      const { data } = await supabase.from("forecast_rows").select("program").eq("year", selectedYear);
+      const names = Array.from(new Set((data || []).map((r: any) => r.program).filter(Boolean))).sort();
+      setProgramOptions(names as string[]);
+      if (!selectedProgramName && names.length) {
+        setSelectedProgramName(names[0] as string);
+      }
+      const match = programs.find(p => p.name === (selectedProgramName || names[0]));
+      setSelectedProgramId(match?.id || "");
+    };
+    loadPrograms();
+  }, [selectedYear, programs, selectedProgramName]);
 
   // Auto-select latest available forecast program/year on first load
   useEffect(() => {
@@ -112,6 +144,34 @@ export default function RequestWizard() {
     };
     run();
   }, [selectedProgramId, selectedProgramName, selectedYear, programs]);
+
+  // Load funding sources linked to selected program/year
+  useEffect(() => {
+    const load = async () => {
+      if (!selectedProgramId || !selectedYear) {
+        setFundingOptions([]);
+        setFundingSourceId("pooled");
+        return;
+      }
+      const { data: allocs } = await supabase
+        .from('program_funding_allocations')
+        .select('funding_source_id')
+        .eq('program_id', selectedProgramId)
+        .eq('year', selectedYear);
+      const ids = Array.from(new Set((allocs || []).map((a: any) => a.funding_source_id).filter(Boolean))) as string[];
+      if (ids.length === 0) {
+        setFundingOptions([]);
+        setFundingSourceId('pooled');
+        return;
+      }
+      const { data: fs } = await supabase.from('funding_sources').select('*').in('id', ids).order('name');
+      setFundingOptions(fs || []);
+      if (!(fs || []).find(f => f.id === fundingSourceId)) {
+        setFundingSourceId((fs && fs[0]?.id) || 'pooled');
+      }
+    };
+    load();
+  }, [selectedProgramId, selectedYear]);
 
   const toggleSelect = (r: ForecastRow) => {
     setSelectedLines(prev => {
@@ -226,17 +286,17 @@ export default function RequestWizard() {
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-sm">Program</label>
-                <Select value={selectedProgramId} onValueChange={(id) => {
-                  setSelectedProgramId(id);
-                  const name = programs.find(p => p.id === id)?.name || "";
+                <Select value={selectedProgramName} onValueChange={(name) => {
                   setSelectedProgramName(name);
+                  const match = programs.find(p => p.name === name);
+                  setSelectedProgramId(match?.id || "");
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select program" />
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-popover">
-                    {programs.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    {programOptions.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -248,7 +308,7 @@ export default function RequestWizard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-popover">
-                    {years.map(y => (
+                    {yearOptions.map(y => (
                       <SelectItem key={y} value={y}>{y}</SelectItem>
                     ))}
                   </SelectContent>
@@ -262,7 +322,7 @@ export default function RequestWizard() {
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-popover">
                     <SelectItem value="pooled">Undesignated (pooled)</SelectItem>
-                    {fundingSources.map(fs => (
+                    {fundingOptions.map(fs => (
                       <SelectItem key={fs.id} value={fs.id}>{fs.name}</SelectItem>
                     ))}
                   </SelectContent>
