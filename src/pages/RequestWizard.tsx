@@ -169,36 +169,46 @@ export default function RequestWizard() {
   }, [selectedProgramId, selectedYear]);
 
   const toggleSelect = (r: ForecastRow) => {
-    // Lock header Program/Year on first selection; prevent mixing
-    if (!selectedProgramName || !selectedYear) {
-      const progName = r.program || "";
-      const yr = r.year || "";
-      setSelectedProgramName(progName);
-      setSelectedYear(yr);
-      const match = programs.find(p => p.name === progName);
-      setSelectedProgramId(match?.id || "");
-    } else if (r.program !== selectedProgramName || r.year !== selectedYear) {
-      toast({ title: "Cannot mix Program/Year", description: `This request is limited to ${selectedProgramName} - ${selectedYear}.`, variant: "destructive" });
-      return;
-    }
-
-    setSelectedLines(prev => {
-      const next = { ...prev };
-      if (next[r.id!]) delete next[r.id!];
-      else {
-        const unitPrice = Number(r.unit_price) || 0;
-        const qty = Number(r.forecasted_quantity) || 0;
-        next[r.id!] = {
-          row: r,
-          requestedQty: qty,
-          unitPrice,
-          subtotal: qty * unitPrice,
-        };
+    try {
+      const rowId = r.id as string | undefined;
+      if (!rowId) {
+        console.error("Forecast row missing id", r);
+        toast({ title: "Item error", description: "This forecast item is missing an ID.", variant: "destructive" });
+        return;
       }
-      return next;
-    });
-  };
+      // Lock header Program/Year on first selection; prevent mixing
+      if (!selectedProgramName || !selectedYear) {
+        const progName = r.program || "";
+        const yr = r.year || "";
+        setSelectedProgramName(progName);
+        setSelectedYear(yr);
+        const match = programs.find(p => p.name === progName);
+        if (match?.id) setSelectedProgramId(match.id);
+      } else if (r.program !== selectedProgramName || r.year !== selectedYear) {
+        toast({ title: "Cannot mix Program/Year", description: `This request is limited to ${selectedProgramName} - ${selectedYear}.`, variant: "destructive" });
+        return;
+      }
 
+      setSelectedLines(prev => {
+        const next = { ...prev };
+        if (next[rowId]) delete next[rowId];
+        else {
+          const unitPrice = Number(r.unit_price ?? 0) || 0;
+          const qty = Number(r.forecasted_quantity ?? 0) || 0;
+          next[rowId] = {
+            row: r,
+            requestedQty: qty,
+            unitPrice,
+            subtotal: qty * unitPrice,
+          };
+        }
+        return next;
+      });
+    } catch (e) {
+      console.error("toggleSelect error", e);
+      toast({ title: "Selection error", description: "Failed to select item.", variant: "destructive" });
+    }
+  };
   const updateLine = (id: string, patch: Partial<SelectedLine>) => {
     setSelectedLines(prev => {
       const cur = prev[id];
