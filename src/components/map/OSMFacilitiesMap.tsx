@@ -1,5 +1,5 @@
 import React from "react";
-import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, GeoJSON } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -35,6 +35,9 @@ interface OSMFacilitiesMapProps {
   facilities?: FacilityPoint[];
   center?: LatLngExpression;
   zoom?: number;
+  regionMetrics?: Record<string, number>;
+  geojsonUrl?: string;
+  metricLabel?: string;
 }
 
 const sampleFacilities: FacilityPoint[] = [
@@ -71,13 +74,78 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
   facilities = sampleFacilities,
   center = [9.145, 40.489673], // Ethiopia approx
   zoom = 6,
+  regionMetrics,
+  geojsonUrl,
+  metricLabel,
 }) => {
+  const [regionsGeo, setRegionsGeo] = React.useState<any | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    if (regionMetrics) {
+      fetch(geojsonUrl ?? "/data/ethiopia-regions.geojson")
+        .then((r) => r.json())
+        .then((gj) => {
+          if (active) setRegionsGeo(gj);
+        })
+        .catch(() => setRegionsGeo(null));
+    } else {
+      setRegionsGeo(null);
+    }
+    return () => {
+      active = false;
+    };
+  }, [regionMetrics, geojsonUrl]);
+
+  const [minVal, maxVal] = React.useMemo(() => {
+    if (!regionMetrics) return [0, 0];
+    const vals = Object.values(regionMetrics);
+    if (!vals.length) return [0, 0];
+    return [Math.min(...vals), Math.max(...vals)];
+  }, [regionMetrics]);
+
+  const getOpacity = (v?: number) => {
+    if (!regionMetrics || v === undefined || maxVal === minVal) return 0.2;
+    const t = (v - minVal) / (maxVal - minVal || 1);
+    return 0.2 + Math.max(0, Math.min(1, t)) * 0.6;
+  };
+
+  const styleFn = (feature: any) => {
+    const props = feature?.properties || {};
+    const name =
+      props.shapeName || props.NAME_1 || props.region || props.Region || props.REGION;
+    const value = name ? regionMetrics?.[name as string] : undefined;
+    return {
+      color: "hsl(var(--border))",
+      weight: 1,
+      fillColor: "hsl(var(--primary))",
+      fillOpacity: getOpacity(value),
+    } as L.PathOptions;
+  };
+
+  const onEachFeature = (feature: any, layer: L.Layer) => {
+    const props = feature?.properties || {};
+    const name =
+      props.shapeName || props.NAME_1 || props.region || props.Region || props.REGION || "Unknown";
+    const value = regionMetrics?.[name as string];
+    const label = metricLabel ?? "Value";
+    const html = `<div style="font-size:12px"><strong>${name}</strong><br/>${label}: ${
+      value?.toLocaleString?.() ?? "N/A"
+    }</div>`;
+    // @ts-ignore
+    (layer as any).bindTooltip(html, { sticky: true });
+  };
+
   return (
     <div className="absolute inset-0">
       <MapContainer {...({ center, zoom } as any)} className="h-full w-full">
         <TileLayer 
           url="https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
         />
+        {regionsGeo && (
+          // @ts-ignore
+          <GeoJSON data={regionsGeo as any} style={styleFn as any} onEachFeature={onEachFeature as any} />
+        )}
         {facilities.map((f) => (
           <Marker key={f.id} position={[f.lat, f.lng] as LatLngExpression}>
             <Tooltip>
