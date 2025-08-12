@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
+import PageHeader from "@/components/layout/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
@@ -158,22 +159,16 @@ const filteredTotals = React.useMemo(() => {
   }, [filteredRows]);
 
   return (
-    <main className="min-h-screen bg-background">
+    <>
       <Helmet>
         <title>Health Programs Forecast Dashboard</title>
         <meta name="description" content="Analyze forecast data across health programs with import, charts, and drill-down." />
         <link rel="canonical" href={`${window.location.origin}/dashboard`} />
       </Helmet>
-      <header className="border-b">
-        <div className="container py-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Health Programs Forecast Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">
-              Import forecast CSVs and analyze from program-level trends down to individual products.
-            </p>
-          </div>
+      <PageHeader
+        title="Health Programs Forecast Dashboard"
+        description="Import forecast CSVs and analyze from program-level trends down to individual products."
+        actions={
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button>Import Forecast</Button>
@@ -186,10 +181,10 @@ const filteredTotals = React.useMemo(() => {
               <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
             </DialogContent>
           </Dialog>
-        </div>
-      </header>
+        }
+      />
 
-      <section className="container mt-6 space-y-6 pb-10">
+      <section className="space-y-6 pb-10">
         {/* Auth CTA when not signed in */}
         {!user && (
           <Card className="surface border-dashed">
@@ -412,7 +407,7 @@ const filteredTotals = React.useMemo(() => {
         )}
         <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
       </section>
-    </main>
+    </>
   );
 };
 

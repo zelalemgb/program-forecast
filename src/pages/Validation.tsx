@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import PageHeader from "@/components/layout/PageHeader";
 
 interface ForecastRowDb {
   program: string;
@@ -109,17 +110,13 @@ const Validation: React.FC = () => {
   }, [assumptions, selectedPrograms, selectedYears]);
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="relative">
-        <div className="container py-8">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Forecast Validation Dashboard</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            Overview of data quality checks, mapping coverage, and key assumptions for forecast data.
-          </p>
-        </div>
-      </header>
+    <>
+      <PageHeader
+        title="Forecast Validation Dashboard"
+        description="Overview of data quality checks, mapping coverage, and key assumptions for forecast data."
+      />
 
-      <section className="container space-y-6 pb-10">
+      <section className="space-y-6 pb-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-2">
             <Popover>
@@ -367,7 +364,7 @@ const Validation: React.FC = () => {
           </CardContent>
         </Card>
       </section>
-    </main>
+    </>
   );
 };
 

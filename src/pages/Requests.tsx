@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import PageHeader from "@/components/layout/PageHeader";
 
 const years = Array.from({ length: 6 }, (_, i) => `${2024 + i}`);
 
@@ -38,16 +39,16 @@ export default function RequestsPage() {
   const programMap = useMemo(() => Object.fromEntries(programs.map(p => [p.id, p.name])), [programs]);
 
   return (
-    <main className="container py-6 space-y-4">
+    <>
       <Helmet>
         <title>Procurement Requests | Procurement Monitoring</title>
         <meta name="description" content="Create and track procurement requests by program and year." />
         <link rel="canonical" href="/requests" />
       </Helmet>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Procurement Requests</h1>
-        <Button onClick={() => navigate("/requests/new")}>New Request</Button>
-      </div>
+      <PageHeader
+        title="Procurement Requests"
+        actions={<Button onClick={() => navigate("/requests/new")}>New Request</Button>}
+      />
 
       <Card>
         <CardHeader>
@@ -124,6 +125,6 @@ export default function RequestsPage() {
           </Table>
         </CardContent>
       </Card>
-    </main>
+    </>
   );
 }

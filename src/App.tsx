@@ -23,7 +23,7 @@ import RequestDetail from "./pages/RequestDetail";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
-import TopFilterBar from "@/components/layout/TopFilterBar";
+import LayoutTopBar from "@/components/layout/LayoutTopBar";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -44,7 +44,7 @@ const App = () => (
                 <AppSidebar />
                 <main className="flex-1">
                   <SiteHeader />
-                  <TopFilterBar />
+                  <LayoutTopBar />
                   <div className="container py-4 space-y-4">
                     <Breadcrumbs />
                     <Routes>

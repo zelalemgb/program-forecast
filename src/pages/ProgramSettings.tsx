@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Types from Supabase
 import type { Database } from "@/integrations/supabase/types";
+import PageHeader from "@/components/layout/PageHeader";
 
 type Program = Database["public"]["Tables"]["programs"]["Row"];
 type ProgramSettings = Database["public"]["Tables"]["program_settings"]["Row"];
@@ -163,13 +164,16 @@ const ProgramSettingsPage: React.FC = () => {
   };
 
   return (
-    <main className="container py-6 space-y-6">
+    <>
       <Helmet>
         <title>Program Settings & Budget | Procurement Monitoring</title>
         <meta name="description" content="Configure program budgets, PSM %, and funding sources for the selected forecast year." />
         <link rel="canonical" href="/program-settings" />
       </Helmet>
-      <h1 className="text-2xl font-semibold tracking-tight">Program Settings</h1>
+      <PageHeader
+        title="Program Settings"
+        description="Configure program budgets, PSM %, and funding sources for the selected forecast year."
+      />
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
@@ -310,7 +314,7 @@ const ProgramSettingsPage: React.FC = () => {
           </CardContent>
         </Card>
       </section>
-    </main>
+    </>
   );
 };
 

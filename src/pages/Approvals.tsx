@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import PageHeader from "@/components/layout/PageHeader";
 
 interface RequestRow {
   id: string;
@@ -100,19 +101,19 @@ const Approvals: React.FC = () => {
   const canonical = `${window.location.origin}/approvals`;
 
   return (
-    <main>
+    <>
       <Helmet>
         <title>Approvals | Health Forecasts</title>
         <meta name="description" content="Review and approve facility registration requests." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <section className="container py-10">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Approvals</h1>
-        <p className="text-muted-foreground mt-2">Review pending facility registration requests in your scope.</p>
-      </section>
+      <PageHeader
+        title="Approvals"
+        description="Review pending facility registration requests in your scope."
+      />
 
-      <section className="container pb-16">
+      <section className="pb-16">
         <Card className="surface">
           <CardHeader>
             <CardTitle>Pending Requests</CardTitle>
@@ -154,7 +155,7 @@ const Approvals: React.FC = () => {
           </CardContent>
         </Card>
       </section>
-    </main>
+    </>
   );
 };
 
