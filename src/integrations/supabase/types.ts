@@ -267,6 +267,44 @@ export type Database = {
           },
         ]
       }
+      finance_status: {
+        Row: {
+          amount_transferred: number
+          budget_approved: boolean
+          budget_approved_date: string | null
+          created_at: string
+          id: string
+          request_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_transferred?: number
+          budget_approved?: boolean
+          budget_approved_date?: string | null
+          created_at?: string
+          id?: string
+          request_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_transferred?: number
+          budget_approved?: boolean
+          budget_approved_date?: string | null
+          created_at?: string
+          id?: string
+          request_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_status_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forecast_rows: {
         Row: {
           created_at: string
@@ -312,6 +350,30 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           year?: string | null
+        }
+        Relationships: []
+      }
+      funding_sources: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -565,6 +627,224 @@ export type Database = {
         }
         Relationships: []
       }
+      procurement_events: {
+        Row: {
+          actor_id: string
+          arrival_date: string | null
+          award_date: string | null
+          award_value: number | null
+          clearance_date: string | null
+          created_at: string
+          grv_date: string | null
+          grv_number: string | null
+          id: string
+          invoice_date: string | null
+          payment_date: string | null
+          payment_ref: string | null
+          po_date: string | null
+          po_number: string | null
+          po_value: number | null
+          received_quantity: number | null
+          request_id: string
+          shipment_date: string | null
+          stage: string
+          supplier: string | null
+          tender_close_date: string | null
+          tender_open_date: string | null
+          tender_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string
+          arrival_date?: string | null
+          award_date?: string | null
+          award_value?: number | null
+          clearance_date?: string | null
+          created_at?: string
+          grv_date?: string | null
+          grv_number?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_date?: string | null
+          payment_ref?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          po_value?: number | null
+          received_quantity?: number | null
+          request_id: string
+          shipment_date?: string | null
+          stage: string
+          supplier?: string | null
+          tender_close_date?: string | null
+          tender_open_date?: string | null
+          tender_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string
+          arrival_date?: string | null
+          award_date?: string | null
+          award_value?: number | null
+          clearance_date?: string | null
+          created_at?: string
+          grv_date?: string | null
+          grv_number?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_date?: string | null
+          payment_ref?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          po_value?: number | null
+          received_quantity?: number | null
+          request_id?: string
+          shipment_date?: string | null
+          stage?: string
+          supplier?: string | null
+          tender_close_date?: string | null
+          tender_open_date?: string | null
+          tender_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_request_items: {
+        Row: {
+          created_at: string
+          forecast_row_id: string | null
+          id: string
+          item_name: string
+          line_subtotal: number
+          override: boolean
+          override_reason: string | null
+          request_id: string
+          requested_quantity: number
+          unit: string | null
+          updated_at: string
+          updated_unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          forecast_row_id?: string | null
+          id?: string
+          item_name: string
+          line_subtotal: number
+          override?: boolean
+          override_reason?: string | null
+          request_id: string
+          requested_quantity: number
+          unit?: string | null
+          updated_at?: string
+          updated_unit_price: number
+        }
+        Update: {
+          created_at?: string
+          forecast_row_id?: string | null
+          id?: string
+          item_name?: string
+          line_subtotal?: number
+          override?: boolean
+          override_reason?: string | null
+          request_id?: string
+          requested_quantity?: number
+          unit?: string | null
+          updated_at?: string
+          updated_unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_request_items_forecast_row_id_fkey"
+            columns: ["forecast_row_id"]
+            isOneToOne: false
+            referencedRelation: "forecast_rows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_requests: {
+        Row: {
+          created_at: string
+          current_stage: string
+          funding_source_id: string | null
+          id: string
+          notes: string | null
+          program_id: string
+          psm_amount: number
+          psm_percent: number
+          request_subtotal: number
+          request_total: number
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string | null
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          current_stage?: string
+          funding_source_id?: string | null
+          id?: string
+          notes?: string | null
+          program_id: string
+          psm_amount?: number
+          psm_percent?: number
+          request_subtotal?: number
+          request_total?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year: string
+        }
+        Update: {
+          created_at?: string
+          current_stage?: string
+          funding_source_id?: string | null
+          id?: string
+          notes?: string | null
+          program_id?: string
+          psm_amount?: number
+          psm_percent?: number
+          request_subtotal?: number
+          request_total?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_requests_funding_source_id_fkey"
+            columns: ["funding_source_id"]
+            isOneToOne: false
+            referencedRelation: "funding_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_requests_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product: {
         Row: {
           category_id: number | null
@@ -778,6 +1058,116 @@ export type Database = {
         }
         Relationships: []
       }
+      program_funding_allocations: {
+        Row: {
+          allocated_amount: number
+          created_at: string
+          funding_source_id: string
+          id: string
+          program_id: string
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          allocated_amount?: number
+          created_at?: string
+          funding_source_id: string
+          id?: string
+          program_id: string
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          allocated_amount?: number
+          created_at?: string
+          funding_source_id?: string
+          id?: string
+          program_id?: string
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_funding_allocations_funding_source_id_fkey"
+            columns: ["funding_source_id"]
+            isOneToOne: false
+            referencedRelation: "funding_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_funding_allocations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_settings: {
+        Row: {
+          budget_total: number
+          created_at: string
+          id: string
+          last_synced: string | null
+          program_id: string
+          psm_percent: number
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          budget_total?: number
+          created_at?: string
+          id?: string
+          last_synced?: string | null
+          program_id: string
+          psm_percent?: number
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          budget_total?: number
+          created_at?: string
+          id?: string
+          last_synced?: string | null
+          program_id?: string
+          psm_percent?: number
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_settings_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       region: {
         Row: {
           created_at: string | null
@@ -855,6 +1245,120 @@ export type Database = {
           zone_id?: number | null
         }
         Relationships: []
+      }
+      request_comments: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          mentions: Json | null
+          request_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          mentions?: Json | null
+          request_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          mentions?: Json | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_comments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_documents: {
+        Row: {
+          file_path: string
+          id: string
+          request_id: string
+          stage: string | null
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          file_path: string
+          id?: string
+          request_id: string
+          stage?: string | null
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Update: {
+          file_path?: string
+          id?: string
+          request_id?: string
+          stage?: string | null
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_transitions: {
+        Row: {
+          actor_id: string
+          attachment_url: string | null
+          comment: string | null
+          created_at: string
+          decision: string | null
+          from_stage: string | null
+          id: string
+          request_id: string
+          to_stage: string | null
+        }
+        Insert: {
+          actor_id?: string
+          attachment_url?: string | null
+          comment?: string | null
+          created_at?: string
+          decision?: string | null
+          from_stage?: string | null
+          id?: string
+          request_id: string
+          to_stage?: string | null
+        }
+        Update: {
+          actor_id?: string
+          attachment_url?: string | null
+          comment?: string | null
+          created_at?: string
+          decision?: string | null
+          from_stage?: string | null
+          id?: string
+          request_id?: string
+          to_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_transitions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {
@@ -1150,6 +1654,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      recompute_request_totals: {
+        Args: { p_request_id: string }
+        Returns: undefined
       }
       refresh_procurement_summary: {
         Args: Record<PropertyKey, never>
