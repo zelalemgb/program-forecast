@@ -97,9 +97,14 @@ export const SiteHeader: React.FC = () => {
 
         <div className="flex items-center gap-2">
           {!user ? (
-            <Button asChild size="sm">
-              <Link to="/auth">Sign in</Link>
-            </Button>
+            <>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/auth?mode=signup">Sign up</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link to="/auth">Sign in</Link>
+              </Button>
+            </>
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger className="focus:outline-none">

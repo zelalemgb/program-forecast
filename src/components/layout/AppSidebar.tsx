@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Item {
   title: string;
@@ -82,6 +83,10 @@ function Group({ label, items }: { label: string; items: Item[] }) {
 const AppSidebar = () => {
   const { state, toggleSidebar } = useSidebar();
   const Collapser = state === "collapsed" ? ChevronRight : ChevronLeft;
+  const location = useLocation();
+  const { pathname } = location;
+  const { user } = useAuth();
+  if (!user && pathname === "/") return null;
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
