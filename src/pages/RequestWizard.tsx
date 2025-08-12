@@ -32,12 +32,14 @@ export default function RequestWizard() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
+  const [selectedProgramName, setSelectedProgramName] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>(years[0]);
   const [forecastRows, setForecastRows] = useState<ForecastRow[]>([]);
   const [programSettings, setProgramSettings] = useState<ProgramSettings | null>(null);
   const [selectedLines, setSelectedLines] = useState<Record<string, SelectedLine>>({});
   const [fundingSourceId, setFundingSourceId] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [defaultsLoaded, setDefaultsLoaded] = useState(false);
 
   // Load reference lists
   useEffect(() => {
@@ -52,30 +54,64 @@ export default function RequestWizard() {
     load();
   }, []);
 
+  // Auto-select latest available forecast program/year on first load
+  useEffect(() => {
+    const pickDefaults = async () => {
+      if (defaultsLoaded) return;
+      // Try to get the latest forecast row to infer program/year
+      const { data } = await supabase
+        .from("forecast_rows")
+        .select("program,year,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      const latest = data?.[0];
+      if (latest) {
+        const progName = latest.program || "";
+        const yr = latest.year || years[0];
+        setSelectedProgramName(progName);
+        setSelectedYear(yr);
+        const match = programs.find(p => p.name === progName);
+        if (match) setSelectedProgramId(match.id);
+      }
+      setDefaultsLoaded(true);
+    };
+    pickDefaults();
+  }, [programs, defaultsLoaded]);
+
   // Load forecast rows and settings
   useEffect(() => {
     const run = async () => {
-      if (!selectedProgramId || !selectedYear) return;
-      // Settings
-      const { data: s } = await supabase
-        .from("program_settings")
-        .select("*")
-        .eq("program_id", selectedProgramId)
-        .eq("year", selectedYear)
-        .maybeSingle();
-      setProgramSettings(s || null);
+      if (!selectedYear) return;
+      // Settings (only if program id is known)
+      if (selectedProgramId) {
+        const { data: s } = await supabase
+          .from("program_settings")
+          .select("*")
+          .eq("program_id", selectedProgramId)
+          .eq("year", selectedYear)
+          .maybeSingle();
+        setProgramSettings(s || null);
+      } else {
+        setProgramSettings(null);
+      }
 
-      // Forecast
+      // Forecast (by program name + year)
+      const programNameForFilter = selectedProgramName || programs.find(p => p.id === selectedProgramId)?.name || "";
+      if (!programNameForFilter) {
+        setForecastRows([]);
+        setSelectedLines({});
+        return;
+      }
       const { data: rows } = await supabase
         .from("forecast_rows")
         .select("*")
-        .eq("program", programs.find(p => p.id === selectedProgramId)?.name || "")
+        .eq("program", programNameForFilter)
         .eq("year", selectedYear);
       setForecastRows(rows || []);
       setSelectedLines({});
     };
     run();
-  }, [selectedProgramId, selectedYear, programs]);
+  }, [selectedProgramId, selectedProgramName, selectedYear, programs]);
 
   const toggleSelect = (r: ForecastRow) => {
     setSelectedLines(prev => {
@@ -190,7 +226,11 @@ export default function RequestWizard() {
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-sm">Program</label>
-                <Select value={selectedProgramId} onValueChange={setSelectedProgramId}>
+                <Select value={selectedProgramId} onValueChange={(id) => {
+                  setSelectedProgramId(id);
+                  const name = programs.find(p => p.id === id)?.name || "";
+                  setSelectedProgramName(name);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select program" />
                   </SelectTrigger>
