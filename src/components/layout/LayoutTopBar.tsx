@@ -7,6 +7,7 @@ const LayoutTopBar: React.FC = () => {
   const { pathname } = useLocation();
 
   const hideOn = [
+    /^\/$/,
     /^\/dashboard/,
     /^\/validation/,
     /^\/requests(\/|$)/,
