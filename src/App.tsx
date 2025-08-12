@@ -20,6 +20,10 @@ import ProgramSettings from "./pages/ProgramSettings";
 import Requests from "./pages/Requests";
 import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
+import Breadcrumbs from "@/components/layout/Breadcrumbs";
+import TopFilterBar from "@/components/layout/TopFilterBar";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,24 +34,40 @@ const App = () => (
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
-            <SiteHeader />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/validation" element={<Validation />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/register" element={<RegisterFacility />} />
-              <Route path="/approvals" element={<Approvals />} />
-              <Route path="/admin" element={<SuperAdminDashboard />} />
-              <Route path="/program-settings" element={<ProgramSettings />} />
-              <Route path="/requests" element={<Requests />} />
-              <Route path="/requests/new" element={<RequestWizard />} />
-              <Route path="/requests/:id" element={<RequestDetail />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <SiteFooter />
+            <SidebarProvider>
+              <header className="h-12 flex items-center border-b bg-background">
+                <div className="container">
+                  <SidebarTrigger />
+                </div>
+              </header>
+              <div className="flex min-h-screen w-full">
+                <AppSidebar />
+                <main className="flex-1">
+                  <SiteHeader />
+                  <TopFilterBar />
+                  <div className="container py-4 space-y-4">
+                    <Breadcrumbs />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/validation" element={<Validation />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/register" element={<RegisterFacility />} />
+                      <Route path="/approvals" element={<Approvals />} />
+                      <Route path="/admin" element={<SuperAdminDashboard />} />
+                      <Route path="/program-settings" element={<ProgramSettings />} />
+                      <Route path="/requests" element={<Requests />} />
+                      <Route path="/requests/new" element={<RequestWizard />} />
+                      <Route path="/requests/:id" element={<RequestDetail />} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </div>
+                  <SiteFooter />
+                </main>
+              </div>
+            </SidebarProvider>
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
