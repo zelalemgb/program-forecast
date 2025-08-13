@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import PageHeader from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import RRFManager from "@/components/dagu/RRFManager";
 
 const Dagu: React.FC = () => {
   return (
@@ -48,6 +49,8 @@ const Dagu: React.FC = () => {
           </Card>
         </Link>
       </main>
+      <RRFManager />
+
     </>
   );
 };
