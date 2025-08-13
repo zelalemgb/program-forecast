@@ -14,16 +14,26 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { 
-  Home,
-  PencilRuler,
-  ShieldAlert,
-  LineChart,
+  LayoutDashboard,
+  Camera,
+  Upload,
+  Database,
+  TrendingUp,
+  FileText,
+  Download,
   ShoppingCart,
+  Banknote,
+  BarChart3,
+  Map,
+  Target,
+  MessageSquare,
   Settings,
-  FolderKanban,
+  Users,
+  BookOpen,
+  Play,
   ChevronLeft,
   ChevronRight,
-  Boxes,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -33,26 +43,45 @@ interface Item {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const dataCollection: Item[] = [
-  { title: "Home", url: "/", icon: Home },
-  { title: "Dagu", url: "/dagu", icon: Boxes },
-  { title: "Requests", url: "/requests", icon: FolderKanban },
-  { title: "New Request", url: "/requests/new", icon: PencilRuler },
-  { title: "Register Facility", url: "/register", icon: Settings },
+const dashboardItems: Item[] = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
 ];
 
-const guardrails: Item[] = [
-  { title: "Validation", url: "/validation", icon: ShieldAlert },
+const dataCapture: Item[] = [
+  { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera },
+  { title: "File Upload", url: "/file-upload", icon: Upload },
+  { title: "API/Data Feeds", url: "/data-feeds", icon: Database },
 ];
 
 const forecasting: Item[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LineChart },
-  { title: "Program Settings", url: "/program-settings", icon: Settings },
-  { title: "Approvals", url: "/approvals", icon: ShoppingCart },
+  { title: "Run Forecast", url: "/forecast", icon: TrendingUp },
+  { title: "View Assumptions", url: "/forecast/assumptions", icon: FileText },
+  { title: "Download Reports", url: "/forecast/reports", icon: Download },
+];
+
+const supplyPlanning: Item[] = [
+  { title: "Review Procurement Plan", url: "/procurement-plan", icon: ShoppingCart },
+  { title: "Budget Alignment", url: "/budget-alignment", icon: Banknote },
 ];
 
 const analytics: Item[] = [
-  { title: "Analytics", url: "/dashboard", icon: LineChart },
+  { title: "Facility Trends", url: "/analytics/facility", icon: BarChart3 },
+  { title: "Regional/National Trends", url: "/analytics/regional", icon: Map },
+  { title: "Forecast Accuracy", url: "/analytics/accuracy", icon: Target },
+];
+
+const aiAssistant: Item[] = [
+  { title: "AI Assistant", url: "/ai-assistant", icon: MessageSquare },
+];
+
+const admin: Item[] = [
+  { title: "User Management", url: "/admin/users", icon: Users },
+  { title: "Settings", url: "/program-settings", icon: Settings },
+];
+
+const helpTraining: Item[] = [
+  { title: "Guides", url: "/help/guides", icon: BookOpen },
+  { title: "Micro-learning Videos", url: "/help/videos", icon: Play },
 ];
 
 function Group({ label, items }: { label: string; items: Item[] }) {
@@ -94,9 +123,14 @@ const AppSidebar = () => {
       <SidebarRail />
       <SidebarHeader>
         <Link to="/" className="flex items-center gap-2 px-2 py-1.5">
-          <LineChart className="h-5 w-5" />
+          <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
+            <Shield className="h-5 w-5 text-white" />
+          </div>
           {state !== "collapsed" && (
-            <span className="text-base font-semibold tracking-tight">Forlab+</span>
+            <div>
+              <div className="text-sm font-semibold">MoH Platform</div>
+              <div className="text-xs text-muted-foreground">Supply Chain</div>
+            </div>
           )}
         </Link>
       </SidebarHeader>
@@ -106,10 +140,15 @@ const AppSidebar = () => {
             <Collapser className="h-4 w-4" />
           </Button>
         </div>
-        <Group label="Data Collection" items={dataCollection} />
-        <Group label="Guardrails" items={guardrails} />
-        <Group label="Forecasting & Procurement" items={forecasting} />
-        <Group label="Analytics" items={analytics} />
+        
+        <Group label="" items={dashboardItems} />
+        <Group label="Data Capture" items={dataCapture} />
+        <Group label="Forecasting" items={forecasting} />
+        <Group label="Supply Planning" items={supplyPlanning} />
+        <Group label="Analytics & Reports" items={analytics} />
+        <Group label="" items={aiAssistant} />
+        <Group label="Admin" items={admin} />
+        <Group label="Help & Training" items={helpTraining} />
       </SidebarContent>
     </Sidebar>
   );
