@@ -61,7 +61,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Health supply chain colors
+				brand: 'hsl(var(--brand))',
+				'status-ok': 'hsl(var(--status-ok))',
+				'status-warning': 'hsl(var(--status-warning))',
+				'status-critical': 'hsl(var(--status-critical))',
+				'status-neutral': 'hsl(var(--status-neutral))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

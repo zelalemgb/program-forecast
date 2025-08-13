@@ -1,25 +1,25 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Eye, EyeOff, Shield, Globe, ArrowLeft } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const Auth: React.FC = () => {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPwd, setShowPwd] = React.useState(false);
+  const mode = searchParams.get("mode") || "signin";
 
   React.useEffect(() => {
-    document.title = "Sign in or create an account";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Login or register to access your forecasts and manage uploads.");
-  }, []);
+    document.title = mode === "signup" ? "Register Account | MoH" : "Sign In | MoH";
+  }, [mode]);
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ const Auth: React.FC = () => {
       toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Welcome back", description: "Signed in successfully" });
-      navigate("/dashboard");
+      navigate("/");
     }
   };
 
@@ -42,76 +42,132 @@ const Auth: React.FC = () => {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value;
     const { error } = await signUp(email, password);
     if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Account created", description: "Check your email to confirm, then complete registration." });
+      toast({ title: "Account created", description: "Check your email to confirm your account." });
       navigate("/register");
     }
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center">
-      <h1 className="sr-only">Sign in or create an account</h1>
-      <section className="container pb-10">
-        <Card className="max-w-md mx-auto surface">
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Continue with your email</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin" className="mt-4">
-                <form onSubmit={onSignIn} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-sm">Email</label>
-                    <Input name="email" type="email" placeholder="you@example.com" required />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm">Password</label>
-                    <div className="relative">
-                      <Input name="password" type={showPwd ? "text" : "password"} placeholder="••••••••" required />
-                      <button
-                        type="button"
-                        onClick={() => setShowPwd((v) => !v)}
-                        aria-label={showPwd ? "Hide password" : "Show password"}
-                        className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        {showPwd ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">Sign In</Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup" className="mt-4">
-                <form onSubmit={onSignUp} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-sm">Email</label>
-                    <Input name="email" type="email" placeholder="you@example.com" required />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm">Password</label>
-                    <Input name="password" type="password" placeholder="••••••••" minLength={6} required />
-                  </div>
-                  <Button type="submit" className="w-full">Create Account</Button>
-                  <p className="text-xs text-muted-foreground">After confirming your email, you’ll be redirected to register your facility.</p>
-                </form>
-              </TabsContent>
-            </Tabs>
-            <div className="text-xs text-muted-foreground mt-4">
-              By continuing you agree to our terms. <Link to="/" className="underline">Back to dashboard</Link>
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Helmet>
+        <title>{mode === "signup" ? "Register Account | MoH" : "Sign In | MoH"}</title>
+        <meta name="description" content={mode === "signup" ? "Register for MoH Forecasting Platform" : "Sign in to MoH Forecasting Platform"} />
+      </Helmet>
+
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="w-16 h-16 hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Ministry of Health</h1>
+          <p className="text-muted-foreground">Supply Chain Platform</p>
+        </div>
+
+        {/* Auth Card */}
+        <Card className="surface">
+          <CardContent className="p-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">
+                {mode === "signup" ? "Create Account" : "Sign In"}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {mode === "signup" 
+                  ? "Register your facility to access the platform"
+                  : "Enter your credentials to access your dashboard"
+                }
+              </p>
+            </div>
+
+            <form onSubmit={mode === "signup" ? onSignUp : onSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email Address</label>
+                <Input 
+                  name="email" 
+                  type="email" 
+                  placeholder="your.name@moh.gov.et" 
+                  required 
+                  className="h-11"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Password</label>
+                <div className="relative">
+                  <Input 
+                    name="password" 
+                    type={showPwd ? "text" : "password"} 
+                    placeholder="••••••••" 
+                    required
+                    minLength={mode === "signup" ? 6 : undefined}
+                    className="h-11 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(!showPwd)}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground hover:text-foreground"
+                  >
+                    {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full h-11 hero-gradient">
+                {mode === "signup" ? "Create Account" : "Sign In"}
+              </Button>
+            </form>
+
+            {/* Footer actions */}
+            <div className="mt-6 space-y-4">
+              {mode === "signin" && (
+                <div className="text-center">
+                  <Link to="#" className="text-sm text-blue-600 hover:underline">
+                    Forgot your password?
+                  </Link>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground" />
+                  <select className="bg-transparent text-muted-foreground">
+                    <option>English</option>
+                    <option>አማርኛ</option>
+                  </select>
+                </div>
+                
+                {mode === "signup" ? (
+                  <Link to="/auth" className="text-blue-600 hover:underline">
+                    Already have an account?
+                  </Link>
+                ) : (
+                  <Link to="/auth?mode=signup" className="text-blue-600 hover:underline">
+                    Create account
+                  </Link>
+                )}
+              </div>
+
+              {/* Security badge */}
+              <div className="pt-4 border-t">
+                <Badge variant="secondary" className="w-full justify-center py-2">
+                  <Shield className="w-3 h-3 mr-2" />
+                  Encrypted & MoH cloud hosted
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
-      </section>
+
+        {/* Back to landing */}
+        <div className="text-center">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+      </div>
     </main>
   );
 };
