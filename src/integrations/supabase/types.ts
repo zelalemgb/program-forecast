@@ -77,6 +77,42 @@ export type Database = {
         }
         Relationships: []
       }
+      commodity_issues: {
+        Row: {
+          created_at: string
+          id: string
+          item_description: string
+          program: string
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+          user_id: string | null
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_description: string
+          program: string
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_description?: string
+          program?: string
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       course_rules: {
         Row: {
           base_unit: string
@@ -236,6 +272,10 @@ export type Database = {
           facility_id: number
           facility_name: string
           facility_type: string | null
+          latitude: number | null
+          level: string | null
+          longitude: number | null
+          ownership: string | null
           updated_at: string | null
           woreda_id: number | null
         }
@@ -245,6 +285,10 @@ export type Database = {
           facility_id?: number
           facility_name: string
           facility_type?: string | null
+          latitude?: number | null
+          level?: string | null
+          longitude?: number | null
+          ownership?: string | null
           updated_at?: string | null
           woreda_id?: number | null
         }
@@ -254,6 +298,10 @@ export type Database = {
           facility_id?: number
           facility_name?: string
           facility_type?: string | null
+          latitude?: number | null
+          level?: string | null
+          longitude?: number | null
+          ownership?: string | null
           updated_at?: string | null
           woreda_id?: number | null
         }
@@ -524,6 +572,155 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      inbound_master_items: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          source: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload: Json
+          processed?: boolean
+          processed_at?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      outbound_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          last_error: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          last_error?: string | null
+          payload: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pipeline_asn_headers: {
+        Row: {
+          created_at: string
+          created_by: string
+          expected_date: string | null
+          facility_id: number
+          id: string
+          program_id: string
+          status: string
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          expected_date?: string | null
+          facility_id: number
+          id?: string
+          program_id: string
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expected_date?: string | null
+          facility_id?: number
+          id?: string
+          program_id?: string
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pipeline_asn_lines: {
+        Row: {
+          created_at: string
+          expiry_date: string | null
+          header_id: string
+          id: string
+          item_id: string
+          lot: string | null
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expiry_date?: string | null
+          header_id: string
+          id?: string
+          item_id: string
+          lot?: string | null
+          quantity: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expiry_date?: string | null
+          header_id?: string
+          id?: string
+          item_id?: string
+          lot?: string | null
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_asn_lines_header_id_fkey"
+            columns: ["header_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_asn_headers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       procurement: {
         Row: {
@@ -947,48 +1144,81 @@ export type Database = {
       }
       product_reference: {
         Row: {
+          active: boolean
           atc_code: string | null
+          barcode_type: string | null
           base_unit: string
           canonical_name: string
+          code: string | null
           course_rule_id: string | null
           created_at: string
           default_unit: string | null
+          effective_from: string | null
+          effective_to: string | null
+          form: string | null
+          gtin: string | null
           id: string
+          pack_size: number | null
           price_benchmark_high: number | null
           price_benchmark_low: number | null
           program: string | null
           recommended_formulation: string | null
+          strength: string | null
+          tracer_flag: boolean
           unit_to_base_factor: number
+          uom: string | null
           updated_at: string
         }
         Insert: {
+          active?: boolean
           atc_code?: string | null
+          barcode_type?: string | null
           base_unit: string
           canonical_name: string
+          code?: string | null
           course_rule_id?: string | null
           created_at?: string
           default_unit?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          form?: string | null
+          gtin?: string | null
           id?: string
+          pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
           program?: string | null
           recommended_formulation?: string | null
+          strength?: string | null
+          tracer_flag?: boolean
           unit_to_base_factor?: number
+          uom?: string | null
           updated_at?: string
         }
         Update: {
+          active?: boolean
           atc_code?: string | null
+          barcode_type?: string | null
           base_unit?: string
           canonical_name?: string
+          code?: string | null
           course_rule_id?: string | null
           created_at?: string
           default_unit?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          form?: string | null
+          gtin?: string | null
           id?: string
+          pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
           program?: string | null
           recommended_formulation?: string | null
+          strength?: string | null
+          tracer_flag?: boolean
           unit_to_base_factor?: number
+          uom?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1360,6 +1590,140 @@ export type Database = {
           },
         ]
       }
+      rrf_headers: {
+        Row: {
+          created_at: string
+          facility_id: number
+          id: string
+          notes: string | null
+          period: string
+          program_id: string
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: number
+          id?: string
+          notes?: string | null
+          period: string
+          program_id: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: number
+          id?: string
+          notes?: string | null
+          period?: string
+          program_id?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_rrf_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+        ]
+      }
+      rrf_lines: {
+        Row: {
+          amc: number | null
+          comments: string | null
+          created_at: string
+          final_order: number | null
+          id: string
+          item_id: string
+          pipeline: number | null
+          rrf_id: string
+          soh: number | null
+          suggested_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          amc?: number | null
+          comments?: string | null
+          created_at?: string
+          final_order?: number | null
+          id?: string
+          item_id: string
+          pipeline?: number | null
+          rrf_id: string
+          soh?: number | null
+          suggested_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amc?: number | null
+          comments?: string | null
+          created_at?: string
+          final_order?: number | null
+          id?: string
+          item_id?: string
+          pipeline?: number | null
+          rrf_id?: string
+          soh?: number | null
+          suggested_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_rrf_line_header"
+            columns: ["rrf_id"]
+            isOneToOne: false
+            referencedRelation: "rrf_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_rrf_line_item"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rrf_snapshots: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          rrf_id: string
+          snapshot: Json
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          rrf_id: string
+          snapshot: Json
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          rrf_id?: string
+          snapshot?: Json
+          stage?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           contact_info: Json | null
@@ -1609,6 +1973,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      approve_rrf: {
+        Args: { p_rrf_id: string; p_decision?: string; p_comment?: string }
+        Returns: undefined
+      }
       can_update_registration_request: {
         Args: { _user_id: string; _request_id: string }
         Returns: boolean
@@ -1661,6 +2029,10 @@ export type Database = {
       }
       refresh_procurement_summary: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      submit_rrf: {
+        Args: { p_rrf_id: string }
         Returns: undefined
       }
     }

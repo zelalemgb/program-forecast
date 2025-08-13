@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
+import ImportCommodityIssues from "@/components/forecast/ImportCommodityIssues";
 
 // Types from Supabase
 type Program = Database["public"]["Tables"]["programs"]["Row"];
@@ -151,6 +152,12 @@ const ForecastWorkbench: React.FC = () => {
         title="Forecast Workbench"
         description="Create or adjust facility forecasts, review guardrails, and compare against program budgets."
       />
+
+      <section className="space-y-6">
+        <ImportCommodityIssues onDataImported={() => {
+          toast({ title: "Data imported", description: "Commodity issue data has been imported successfully." });
+        }} />
+      </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <Card className="lg:col-span-3">
