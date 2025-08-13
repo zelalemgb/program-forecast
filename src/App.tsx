@@ -31,6 +31,7 @@ const queryClient = new QueryClient();
 const AppShell: React.FC = () => {
   const { pathname } = useLocation();
   const isAuth = pathname.startsWith("/auth");
+  const isDagu = pathname.startsWith("/dagu");
 
   return (
     <SidebarProvider>
@@ -45,7 +46,7 @@ const AppShell: React.FC = () => {
         {!isAuth && <AppSidebar />}
         <main className="flex-1">
           {!isAuth && <SiteHeader />}
-          <LayoutTopBar />
+          {!isDagu && <LayoutTopBar />}
           <div className="container py-4 space-y-4">
             <Breadcrumbs />
               <Routes>
