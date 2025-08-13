@@ -1512,6 +1512,33 @@ export type Database = {
           },
         ]
       }
+      rrf_snapshots: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          rrf_id: string
+          snapshot: Json
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          rrf_id: string
+          snapshot: Json
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          rrf_id?: string
+          snapshot?: Json
+          stage?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           contact_info: Json | null
@@ -1761,6 +1788,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      approve_rrf: {
+        Args: { p_rrf_id: string; p_decision?: string; p_comment?: string }
+        Returns: undefined
+      }
       can_update_registration_request: {
         Args: { _user_id: string; _request_id: string }
         Returns: boolean
@@ -1813,6 +1844,10 @@ export type Database = {
       }
       refresh_procurement_summary: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      submit_rrf: {
+        Args: { p_rrf_id: string }
         Returns: undefined
       }
     }

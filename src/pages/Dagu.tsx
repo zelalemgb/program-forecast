@@ -8,6 +8,7 @@ import ConsumptionForm from "@/components/dagu/ConsumptionForm";
 import AMCOverview from "@/components/dagu/AMCOverview";
 import AlertsPanel from "@/components/dagu/AlertsPanel";
 import CountsVariance from "@/components/dagu/CountsVariance";
+import RRFServerManager from "@/components/dagu/RRFServerManager";
 
 const Dagu: React.FC = () => {
   return (
@@ -64,6 +65,7 @@ const Dagu: React.FC = () => {
 
       {/* RRF Section */}
       <RRFManager />
+      <RRFServerManager />
     </>
   );
 };
