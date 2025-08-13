@@ -325,6 +325,36 @@ const Dagu: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Period Selector */}
+                <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                  <Label htmlFor="period-type" className="font-medium">Period Type:</Label>
+                  <Select defaultValue="monthly">
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="bimonthly">Bi-monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Label htmlFor="specific-period" className="font-medium">Period:</Label>
+                  <Select defaultValue="feb-2024">
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="feb-2024">February 2024</SelectItem>
+                      <SelectItem value="jan-2024">January 2024</SelectItem>
+                      <SelectItem value="dec-2023">December 2023</SelectItem>
+                      <SelectItem value="q1-2024">Q1 2024</SelectItem>
+                      <SelectItem value="h1-2024">Jan-Feb 2024</SelectItem>
+                      <SelectItem value="fy-2024">FY 2024</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Drug-by-Drug Table */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Drug-by-Drug Period Analysis</h4>
