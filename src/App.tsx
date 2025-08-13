@@ -21,6 +21,7 @@ import Requests from "./pages/Requests";
 import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
+import Dagu from "./pages/Dagu";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
@@ -51,6 +52,7 @@ const AppShell: React.FC = () => {
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/forecast" element={<ForecastWorkbench />} />
+              <Route path="/dagu" element={<Dagu />} />
               <Route path="/validation" element={<Validation />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />

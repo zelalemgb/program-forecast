@@ -23,6 +23,7 @@ import {
   FolderKanban,
   ChevronLeft,
   ChevronRight,
+  Boxes,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -34,6 +35,7 @@ interface Item {
 
 const dataCollection: Item[] = [
   { title: "Home", url: "/", icon: Home },
+  { title: "Dagu", url: "/dagu", icon: Boxes },
   { title: "Requests", url: "/requests", icon: FolderKanban },
   { title: "New Request", url: "/requests/new", icon: PencilRuler },
   { title: "Register Facility", url: "/register", icon: Settings },

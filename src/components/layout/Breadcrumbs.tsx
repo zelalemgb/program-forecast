@@ -19,6 +19,7 @@ const labels: Record<string, string> = {
   admin: "Admin",
   "program-settings": "Program Settings",
   requests: "Requests",
+  dagu: "Dagu",
 };
 
 const Breadcrumbs: React.FC = () => {
