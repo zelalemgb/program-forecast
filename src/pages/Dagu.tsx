@@ -4,6 +4,10 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import RRFManager from "@/components/dagu/RRFManager";
+import ConsumptionForm from "@/components/dagu/ConsumptionForm";
+import AMCOverview from "@/components/dagu/AMCOverview";
+import AlertsPanel from "@/components/dagu/AlertsPanel";
+import CountsVariance from "@/components/dagu/CountsVariance";
 
 const Dagu: React.FC = () => {
   return (
@@ -49,8 +53,17 @@ const Dagu: React.FC = () => {
           </Card>
         </Link>
       </main>
-      <RRFManager />
 
+      {/* Inventory Section */}
+      <section id="inventory" className="mt-6 space-y-6">
+        <AMCOverview />
+        <AlertsPanel />
+        <ConsumptionForm />
+        <CountsVariance />
+      </section>
+
+      {/* RRF Section */}
+      <RRFManager />
     </>
   );
 };
