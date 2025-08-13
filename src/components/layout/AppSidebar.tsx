@@ -52,6 +52,10 @@ const dataCapture: Item[] = [
   { title: "API/Data Feeds", url: "/data-feeds", icon: Database },
 ];
 
+const dagu: Item[] = [
+  { title: "Dagu – Facility Supply", url: "/dagu", icon: Database },
+];
+
 const forecasting: Item[] = [
   { title: "Run Forecast", url: "/forecast", icon: TrendingUp },
   { title: "View Assumptions", url: "/forecast/assumptions", icon: FileText },
@@ -142,6 +146,7 @@ const AppSidebar = () => {
         
         <Group label="" items={dashboardItems} />
         <Group label="Data Capture" items={dataCapture} />
+        <Group label="Supply Operations" items={dagu} />
         <Group label="Forecasting" items={forecasting} />
         <Group label="Supply Planning" items={supplyPlanning} />
         <Group label="Analytics & Reports" items={analytics} />

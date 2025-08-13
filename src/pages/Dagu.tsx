@@ -3,62 +3,389 @@ import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle } from "lucide-react";
 
 const Dagu: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
 
   return (
-    <main>
+    <main className="container py-6 space-y-6">
       <Helmet>
-        <title>Dagu LMIS | Facility Inventory</title>
+        <title>Dagu – Facility Supply Operations | Forlab+</title>
         <meta
           name="description"
-          content="Dagu: record receipts, issues, and track stock by batch/expiry at facility level."
+          content="Dagu supply operations module for facility inventory management, receipts, issues, and EPSS integration."
         />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <header className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight">Dagu Facility Inventory</h1>
-        <p className="text-muted-foreground mt-1">
-          Record received drugs and issues to departments. FEFO-ready, offline-first coming next.
-        </p>
+      {/* Top Bar */}
+      <header className="flex items-center justify-between border-b border-border pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <Package className="h-6 w-6 text-primary" />
+            Dagu – Facility Supply Operations
+          </h1>
+          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+            <span>Facility: Main Health Center</span>
+            <span>•</span>
+            <span>Period: Feb 2024</span>
+            <span>•</span>
+            <span>Last Stock Take: 15 Feb 2024</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            3 Pending Requests
+          </Badge>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            2 Low Stock
+          </Badge>
+          <Button variant="ghost" size="icon">
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
+      {/* Main Content */}
       <section>
-        <Tabs defaultValue="receive">
-          <TabsList aria-label="Dagu workflows">
-            <TabsTrigger value="receive">Receive</TabsTrigger>
-            <TabsTrigger value="issue">Issue</TabsTrigger>
-            <TabsTrigger value="stock">Stock</TabsTrigger>
+        <Tabs defaultValue="goods-received" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="goods-received">Goods Received</TabsTrigger>
+            <TabsTrigger value="ward-requests">Ward Requests</TabsTrigger>
+            <TabsTrigger value="transfers-out">Transfers Out</TabsTrigger>
+            <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
+            <TabsTrigger value="period-end">Period-End</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="receive" role="region" aria-label="Receive">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Capture receipts from EPSA/central store, transfers-in, or internal purchases.
-              </p>
-              <Button variant="default">Start Receipt</Button>
+          {/* Goods Received Tab */}
+          <TabsContent value="goods-received" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Record Incoming Stock</CardTitle>
+                <CardDescription>
+                  Capture stock received from EPSS, internal procurement, transfers, or donations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="source">Source</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="epss">EPSS Scheduled Delivery</SelectItem>
+                        <SelectItem value="procurement">Internal Procurement</SelectItem>
+                        <SelectItem value="transfer">Transfer from Other Facility</SelectItem>
+                        <SelectItem value="donation">Donation</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="delivery-note">Delivery Note #</Label>
+                    <Input placeholder="Enter delivery note number" />
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Items Received</h4>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                    <span>Product Name</span>
+                    <span>Batch/Lot</span>
+                    <span>Quantity</span>
+                    <span>Unit</span>
+                    <span>Expiry Date</span>
+                    <span>Notes</span>
+                  </div>
+                  <div className="py-4 text-center text-muted-foreground">
+                    No items added yet. Click "Add Item" to start recording received goods.
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Save Draft</Button>
+                  <Button>Complete Receipt</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Ward Requests Tab */}
+          <TabsContent value="ward-requests" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>New Request</CardTitle>
+                  <CardDescription>Submit request from ward or department</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="department">Requesting Department</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="maternity">Maternity Ward</SelectItem>
+                        <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                        <SelectItem value="outpatient">Outpatient Department</SelectItem>
+                        <SelectItem value="emergency">Emergency Room</SelectItem>
+                        <SelectItem value="laboratory">Laboratory</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="priority">Priority</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="notes">Request Notes</Label>
+                    <Textarea placeholder="Additional notes or special instructions" />
+                  </div>
+                  
+                  <Button className="w-full">Submit Request</Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    Pending Requests
+                    <Badge variant="secondary">3</Badge>
+                  </CardTitle>
+                  <CardDescription>Requests awaiting approval and fulfillment</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">Maternity Ward</div>
+                        <div className="text-sm text-muted-foreground">5 items requested</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">View</Button>
+                        <Button size="sm">Approve & Issue</Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">Emergency Room</div>
+                        <div className="text-sm text-muted-foreground">2 items requested • Urgent</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">View</Button>
+                        <Button size="sm">Approve & Issue</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="issue" role="region" aria-label="Issue">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Issue stock to departments/wards. FEFO batches will be suggested.
-              </p>
-              <Button variant="default">Record Issue</Button>
-            </div>
+          {/* Transfers Out Tab */}
+          <TabsContent value="transfers-out" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Transfer to Other Facility</CardTitle>
+                <CardDescription>
+                  Send items to another facility for emergency support or planned distribution
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="destination">Destination Facility</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select facility" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="district">District Hospital</SelectItem>
+                        <SelectItem value="health-post-1">Health Post A</SelectItem>
+                        <SelectItem value="health-post-2">Health Post B</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="reason">Transfer Reason</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="emergency">Emergency Support</SelectItem>
+                        <SelectItem value="planned">Planned Transfer</SelectItem>
+                        <SelectItem value="redistribution">Stock Redistribution</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="transfer-notes">Transfer Notes</Label>
+                  <Textarea placeholder="Reason for transfer and additional notes" />
+                </div>
+                
+                <Button className="w-full">Record Transfer</Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="stock" role="region" aria-label="Stock">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                View stock by item and batch. Physical count & adjustments coming next.
-              </p>
-              <Button variant="outline">Refresh</Button>
-            </div>
+          {/* Adjustments Tab */}
+          <TabsContent value="adjustments" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Adjustments</CardTitle>
+                <CardDescription>
+                  Record stock changes outside normal receipt/issue processes
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="adjustment-type">Adjustment Type</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="positive">Positive Adjustment</SelectItem>
+                        <SelectItem value="negative">Negative Adjustment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="reason">Reason</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="found">Found Stock</SelectItem>
+                        <SelectItem value="return">Return from Ward</SelectItem>
+                        <SelectItem value="correction">Data Correction</SelectItem>
+                        <SelectItem value="expired">Expired Items</SelectItem>
+                        <SelectItem value="damaged">Damaged Items</SelectItem>
+                        <SelectItem value="loss">Loss/Theft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="attachment">Attachment (Optional)</Label>
+                  <Input type="file" accept=".pdf,.jpg,.png" />
+                </div>
+                
+                <Button className="w-full">Record Adjustment</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Period-End Tab */}
+          <TabsContent value="period-end" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Period-End Summary & EPSS Request
+                </CardTitle>
+                <CardDescription>
+                  Review period activities and generate EPSS request for next period
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Period Summary</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Beginning Balance:</span>
+                        <span className="font-medium">245 items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Received:</span>
+                        <span className="font-medium">156 items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Issued:</span>
+                        <span className="font-medium">189 items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Adjustments:</span>
+                        <span className="font-medium">-12 items</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2">
+                        <span className="font-medium">Ending Balance:</span>
+                        <span className="font-medium">200 items</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Key Metrics</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Stockout Days:</span>
+                        <span className="font-medium">8 days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Expired/Damaged:</span>
+                        <span className="font-medium">5 items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Items Below Min:</span>
+                        <span className="font-medium text-orange-600">12 items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Consumption Rate:</span>
+                        <span className="font-medium">94.5%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button variant="outline" className="flex-1">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Summary
+                  </Button>
+                  <Button className="flex-1">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Generate EPSS Request
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </section>
