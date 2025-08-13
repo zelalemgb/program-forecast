@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle } from "lucide-react";
 
 const Dagu: React.FC = () => {
@@ -320,33 +321,114 @@ const Dagu: React.FC = () => {
                   Period-End Summary & EPSS Request
                 </CardTitle>
                 <CardDescription>
-                  Review period activities and generate EPSS request for next period
+                  Drug-by-drug consumption analysis and period summary
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Drug-by-Drug Table */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Drug-by-Drug Period Analysis</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Drug Name</TableHead>
+                          <TableHead className="text-right">Beginning</TableHead>
+                          <TableHead className="text-right">Received</TableHead>
+                          <TableHead className="text-right">Issued</TableHead>
+                          <TableHead className="text-right">Adjustments</TableHead>
+                          <TableHead className="text-right">Ending Balance</TableHead>
+                          <TableHead className="text-right">Consumption</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">Amoxicillin 250mg</TableCell>
+                          <TableCell className="text-right">500</TableCell>
+                          <TableCell className="text-right">200</TableCell>
+                          <TableCell className="text-right">180</TableCell>
+                          <TableCell className="text-right">-5</TableCell>
+                          <TableCell className="text-right">515</TableCell>
+                          <TableCell className="text-right font-medium">185</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Paracetamol 500mg</TableCell>
+                          <TableCell className="text-right">300</TableCell>
+                          <TableCell className="text-right">150</TableCell>
+                          <TableCell className="text-right">120</TableCell>
+                          <TableCell className="text-right">0</TableCell>
+                          <TableCell className="text-right">330</TableCell>
+                          <TableCell className="text-right font-medium">120</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Oxytocin 10IU</TableCell>
+                          <TableCell className="text-right">80</TableCell>
+                          <TableCell className="text-right">40</TableCell>
+                          <TableCell className="text-right">35</TableCell>
+                          <TableCell className="text-right">-2</TableCell>
+                          <TableCell className="text-right">83</TableCell>
+                          <TableCell className="text-right font-medium">37</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Artemether 80mg</TableCell>
+                          <TableCell className="text-right">120</TableCell>
+                          <TableCell className="text-right">60</TableCell>
+                          <TableCell className="text-right">45</TableCell>
+                          <TableCell className="text-right">0</TableCell>
+                          <TableCell className="text-right">135</TableCell>
+                          <TableCell className="text-right font-medium">45</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">ORS Sachets</TableCell>
+                          <TableCell className="text-right">200</TableCell>
+                          <TableCell className="text-right">100</TableCell>
+                          <TableCell className="text-right">85</TableCell>
+                          <TableCell className="text-right">-5</TableCell>
+                          <TableCell className="text-right">210</TableCell>
+                          <TableCell className="text-right font-medium">90</TableCell>
+                        </TableRow>
+                        <TableRow className="border-t-2 font-medium bg-muted/50">
+                          <TableCell className="font-semibold">TOTAL</TableCell>
+                          <TableCell className="text-right">1,200</TableCell>
+                          <TableCell className="text-right">550</TableCell>
+                          <TableCell className="text-right">465</TableCell>
+                          <TableCell className="text-right">-12</TableCell>
+                          <TableCell className="text-right">1,273</TableCell>
+                          <TableCell className="text-right font-semibold">477</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Period Summary Cards */}
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-medium">Period Summary</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>Beginning Balance:</span>
-                        <span className="font-medium">245 items</span>
+                        <span>Total Beginning Balance:</span>
+                        <span className="font-medium">1,200 units</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Received:</span>
-                        <span className="font-medium">156 items</span>
+                        <span>Total Received:</span>
+                        <span className="font-medium">550 units</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Issued:</span>
-                        <span className="font-medium">189 items</span>
+                        <span>Total Issued:</span>
+                        <span className="font-medium">465 units</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Adjustments:</span>
-                        <span className="font-medium">-12 items</span>
+                        <span>Total Adjustments:</span>
+                        <span className="font-medium">-12 units</span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
-                        <span className="font-medium">Ending Balance:</span>
-                        <span className="font-medium">200 items</span>
+                        <span className="font-medium">Total Ending Balance:</span>
+                        <span className="font-medium">1,273 units</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Consumption:</span>
+                        <span className="font-medium text-primary">477 units</span>
                       </div>
                     </div>
                   </div>
@@ -360,15 +442,19 @@ const Dagu: React.FC = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Expired/Damaged:</span>
-                        <span className="font-medium">5 items</span>
+                        <span className="font-medium">12 units</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Items Below Min:</span>
-                        <span className="font-medium text-orange-600">12 items</span>
+                        <span className="font-medium text-destructive">3 drugs</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Consumption Rate:</span>
-                        <span className="font-medium">94.5%</span>
+                        <span className="font-medium">37.5%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Stock Turnover:</span>
+                        <span className="font-medium">2.7x</span>
                       </div>
                     </div>
                   </div>
