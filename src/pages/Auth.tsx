@@ -50,7 +50,8 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background flex items-center">
+      <h1 className="sr-only">Sign in or create an account</h1>
       <section className="container pb-10">
         <Card className="max-w-md mx-auto surface">
           <CardHeader>
