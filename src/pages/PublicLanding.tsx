@@ -13,7 +13,7 @@ const PublicLanding: React.FC = () => {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50">
       <Helmet>
-        <title>Forecasting Assistant & Supply Chain Platform | Ministry of Health</title>
+        <title>Forlab+ | Ministry of Health Supply Chain Platform</title>
         <meta name="description" content="From facilities to the nation: better forecasts, better medicines. Secure platform for health supply chain management and forecasting." />
         <link rel="canonical" href={canonical} />
       </Helmet>
@@ -26,7 +26,7 @@ const PublicLanding: React.FC = () => {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">Forecasting Assistant & Supply Chain Platform</h1>
+              <h1 className="text-lg font-semibold text-foreground">Forlab+</h1>
               <p className="text-xs text-muted-foreground">Ministry of Health - Ethiopia</p>
             </div>
           </div>

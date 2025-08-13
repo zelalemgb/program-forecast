@@ -10,7 +10,7 @@ const Landing: React.FC = () => {
   return (
     <main className="container py-6 space-y-6">
       <Helmet>
-        <title>Dashboard | MoH Supply Chain Platform</title>
+        <title>Dashboard | Forlab+ Platform</title>
         <meta name="description" content="Health supply chain management dashboard for monitoring stock levels, forecasts, and facility operations." />
         <link rel="canonical" href={canonical} />
       </Helmet>

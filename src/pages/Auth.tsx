@@ -62,8 +62,8 @@ const Auth: React.FC = () => {
           <div className="w-16 h-16 hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Ministry of Health</h1>
-          <p className="text-muted-foreground">Supply Chain Platform</p>
+          <h1 className="text-2xl font-bold text-foreground">Forlab+</h1>
+          <p className="text-muted-foreground">Ministry of Health</p>
         </div>
 
         {/* Auth Card */}

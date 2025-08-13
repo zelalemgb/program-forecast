@@ -128,8 +128,8 @@ const AppSidebar = () => {
           </div>
           {state !== "collapsed" && (
             <div>
-              <div className="text-sm font-semibold">MoH Platform</div>
-              <div className="text-xs text-muted-foreground">Supply Chain</div>
+              <div className="text-sm font-semibold">Forlab+</div>
+              <div className="text-xs text-muted-foreground">MoH Platform</div>
             </div>
           )}
         </Link>
