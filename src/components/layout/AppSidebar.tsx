@@ -33,7 +33,6 @@ import {
   Play,
   ChevronLeft,
   ChevronRight,
-  Shield,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -124,7 +123,7 @@ const AppSidebar = () => {
       <SidebarHeader>
         <Link to="/" className="flex items-center gap-2 px-2 py-1.5">
           <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-white" />
+            <TrendingUp className="h-5 w-5 text-white" />
           </div>
           {state !== "collapsed" && (
             <div>

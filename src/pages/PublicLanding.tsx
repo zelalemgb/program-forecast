@@ -23,7 +23,7 @@ const PublicLanding: React.FC = () => {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 hero-gradient rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-semibold text-foreground">Forlab+</h1>
@@ -93,7 +93,7 @@ const PublicLanding: React.FC = () => {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Activity className="w-8 h-8 text-white" />
+                    <TrendingUp className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-semibold">Access Your Dashboard</h3>
                   <p className="text-muted-foreground mt-1">Sign in to manage your facility's supply chain</p>

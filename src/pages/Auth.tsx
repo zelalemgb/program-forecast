@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Shield, Globe, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Shield, Globe, ArrowLeft, TrendingUp } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 const Auth: React.FC = () => {
@@ -60,7 +60,7 @@ const Auth: React.FC = () => {
         {/* Header */}
         <div className="text-center">
           <div className="w-16 h-16 hero-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-white" />
+            <TrendingUp className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Forlab+</h1>
           <p className="text-muted-foreground">Ministry of Health</p>
