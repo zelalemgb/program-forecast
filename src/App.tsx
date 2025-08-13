@@ -21,7 +21,6 @@ import Requests from "./pages/Requests";
 import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
-import Dagu from "./pages/Dagu";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
@@ -31,7 +30,6 @@ const queryClient = new QueryClient();
 const AppShell: React.FC = () => {
   const { pathname } = useLocation();
   const isAuth = pathname.startsWith("/auth");
-  const isDagu = pathname.startsWith("/dagu");
 
   return (
     <SidebarProvider>
@@ -46,27 +44,26 @@ const AppShell: React.FC = () => {
         {!isAuth && <AppSidebar />}
         <main className="flex-1">
           {!isAuth && <SiteHeader />}
-          {!isDagu && <LayoutTopBar />}
+          <LayoutTopBar />
           <div className="container py-4 space-y-4">
             <Breadcrumbs />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dagu" element={<Dagu />} />
-                <Route path="/forecast" element={<ForecastWorkbench />} />
-                <Route path="/validation" element={<Validation />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/register" element={<RegisterFacility />} />
-                <Route path="/approvals" element={<Approvals />} />
-                <Route path="/admin" element={<SuperAdminDashboard />} />
-                <Route path="/program-settings" element={<ProgramSettings />} />
-                <Route path="/requests" element={<Requests />} />
-                <Route path="/requests/new" element={<RequestWizard />} />
-                <Route path="/requests/:id" element={<RequestDetail />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/forecast" element={<ForecastWorkbench />} />
+              <Route path="/validation" element={<Validation />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/register" element={<RegisterFacility />} />
+              <Route path="/approvals" element={<Approvals />} />
+              <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="/program-settings" element={<ProgramSettings />} />
+              <Route path="/requests" element={<Requests />} />
+              <Route path="/requests/new" element={<RequestWizard />} />
+              <Route path="/requests/:id" element={<RequestDetail />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </div>
           <SiteFooter />
         </main>

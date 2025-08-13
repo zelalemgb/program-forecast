@@ -53,10 +53,6 @@ const analytics: Item[] = [
   { title: "Analytics", url: "/dashboard", icon: LineChart },
 ];
 
-const dagu: Item[] = [
-  { title: "Dagu", url: "/dagu", icon: LineChart },
-];
-
 function Group({ label, items }: { label: string; items: Item[] }) {
   const location = useLocation();
   const { state } = useSidebar();
@@ -108,7 +104,6 @@ const AppSidebar = () => {
             <Collapser className="h-4 w-4" />
           </Button>
         </div>
-        <Group label="Dagu" items={dagu} />
         <Group label="Data Collection" items={dataCollection} />
         <Group label="Guardrails" items={guardrails} />
         <Group label="Forecasting & Procurement" items={forecasting} />
