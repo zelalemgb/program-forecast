@@ -34,18 +34,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn: AuthContextValue["signIn"] = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (networkError) {
+      console.error("Network error during sign in:", networkError);
+      return { error: { message: "Network connection failed. Please check your internet connection or try again later." } };
+    }
   };
 
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
-    const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl }
-    });
-    return { error };
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectUrl }
+      });
+      return { error };
+    } catch (networkError) {
+      console.error("Network error during sign up:", networkError);
+      return { error: { message: "Network connection failed. Please check your internet connection or try again later." } };
+    }
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
