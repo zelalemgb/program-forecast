@@ -20,7 +20,6 @@ const Dagu: React.FC = () => {
   
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
-  const [collapsedPeriods, setCollapsedPeriods] = useState<{ [key: number]: boolean }>({});
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -42,6 +41,15 @@ const Dagu: React.FC = () => {
   };
 
   const periods = generatePeriods();
+
+  // Initialize all periods as collapsed by default
+  const [collapsedPeriods, setCollapsedPeriods] = useState<{ [key: number]: boolean }>(() => {
+    const initialState: { [key: number]: boolean } = {};
+    periods.forEach((_, index) => {
+      initialState[index] = true; // Start collapsed
+    });
+    return initialState;
+  });
 
   const togglePeriod = (index: number) => {
     setCollapsedPeriods(prev => ({
@@ -476,7 +484,7 @@ const Dagu: React.FC = () => {
                                     <TableHead className="text-right text-xs border-r">Cons.</TableHead>
                                   </>
                                 ) : (
-                                  <TableHead className="text-right text-xs border-r">Total</TableHead>
+                                  <TableHead className="text-right text-xs border-r">Consumption</TableHead>
                                 )}
                               </React.Fragment>
                             ))}
@@ -501,7 +509,7 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">195</TableCell>
                               )}
                             </React.Fragment>
                           ))}
@@ -523,7 +531,7 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">127</TableCell>
                               )}
                             </React.Fragment>
                           ))}
@@ -542,7 +550,7 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs">83</TableCell>
                                   <TableCell className="text-right text-xs">1</TableCell>
                                   <TableCell className="text-right text-xs">4</TableCell>
-                                  <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">41</TableCell>
                                 </>
                               ) : (
                                 <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
@@ -564,7 +572,7 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs">120</TableCell>
                                   <TableCell className="text-right text-xs">3</TableCell>
                                   <TableCell className="text-right text-xs">0</TableCell>
-                                  <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">60</TableCell>
                                 </>
                               ) : (
                                 <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
@@ -586,7 +594,7 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs">190</TableCell>
                                   <TableCell className="text-right text-xs">2</TableCell>
                                   <TableCell className="text-right text-xs">1</TableCell>
-                                  <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">111</TableCell>
                                 </>
                               ) : (
                                 <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
