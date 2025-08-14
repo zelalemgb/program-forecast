@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle, ChevronDown, ChevronRight, TrendingUp, TrendingDown, CheckCircle } from "lucide-react";
+import KPICards from "@/components/home/KPICards";
 import * as ethiopianDate from "ethiopian-date";
 
 const Dagu: React.FC = () => {
@@ -121,13 +122,240 @@ const Dagu: React.FC = () => {
 
       {/* Main Content */}
       <section>
-        <Tabs defaultValue="goods-received" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="goods-received">Goods Received</TabsTrigger>
             <TabsTrigger value="ward-requests">Ward Requests</TabsTrigger>
             <TabsTrigger value="transfers-out">Transfers Out</TabsTrigger>
             <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Inventory KPIs */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Inventory Status</h2>
+              <KPICards stockouts={4} lowStock={8} nearExpiry={12} overstock={3} />
+            </div>
+
+            {/* Critical Alerts & Current Stock Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Critical Alerts */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Critical Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+                    <div>
+                      <div className="font-medium text-destructive">Paracetamol 500mg</div>
+                      <div className="text-sm text-muted-foreground">Stockout - 0 units available</div>
+                    </div>
+                    <Badge variant="destructive">Critical</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border border-orange-200 rounded-lg bg-orange-50">
+                    <div>
+                      <div className="font-medium text-orange-800">Amoxicillin 250mg</div>
+                      <div className="text-sm text-muted-foreground">Expires in 5 days - 120 units</div>
+                    </div>
+                    <Badge variant="outline" className="border-orange-300 text-orange-700">Expiring</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border border-yellow-200 rounded-lg bg-yellow-50">
+                    <div>
+                      <div className="font-medium text-yellow-800">ORS Sachets</div>
+                      <div className="text-sm text-muted-foreground">Low stock - 25 units (5 days remaining)</div>
+                    </div>
+                    <Badge variant="outline" className="border-yellow-300 text-yellow-700">Low Stock</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Current Stock Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Essential Stock Status</CardTitle>
+                  <CardDescription>Top priority items status overview</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Artemether</TableCell>
+                        <TableCell>450 units</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Good
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Iron Tablets</TableCell>
+                        <TableCell>180 units</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Good
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Paracetamol</TableCell>
+                        <TableCell>0 units</TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Stockout
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">ORS Sachets</TableCell>
+                        <TableCell>25 units</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-yellow-300 text-yellow-700">
+                            Low Stock
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity & Pending Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Recent Activity (Last 7 Days)</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3 p-2 rounded-lg border">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <div className="flex-1">
+                      <div className="font-medium">Goods Received</div>
+                      <div className="text-sm text-muted-foreground">EPSS delivery - 15 items</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">2 days ago</div>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-lg border">
+                    <TrendingDown className="h-4 w-4 text-blue-600" />
+                    <div className="flex-1">
+                      <div className="font-medium">Ward Request Fulfilled</div>
+                      <div className="text-sm text-muted-foreground">Maternity Ward - 8 items</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">1 day ago</div>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-lg border">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <div className="flex-1">
+                      <div className="font-medium">Stock Adjustment</div>
+                      <div className="text-sm text-muted-foreground">Expired items removed - 3 batches</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">3 days ago</div>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-lg border">
+                    <Package className="h-4 w-4 text-purple-600" />
+                    <div className="flex-1">
+                      <div className="font-medium">Transfer Out</div>
+                      <div className="text-sm text-muted-foreground">Health Post A - Emergency support</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">5 days ago</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pending Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Pending Actions</CardTitle>
+                  <CardDescription>Priority tasks requiring attention</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      <div>
+                        <div className="font-medium">Stockout Items</div>
+                        <div className="text-sm text-muted-foreground">4 items need immediate reorder</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="destructive">Urgent</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-orange-600" />
+                      <div>
+                        <div className="font-medium">Ward Requests</div>
+                        <div className="text-sm text-muted-foreground">3 requests awaiting approval</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline">Review</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <div className="font-medium">Near Expiry</div>
+                        <div className="text-sm text-muted-foreground">12 items expiring within 30 days</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline">Check</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-purple-600" />
+                      <div>
+                        <div className="font-medium">Stock Count</div>
+                        <div className="text-sm text-muted-foreground">Monthly count due in 5 days</div>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline">Schedule</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">This Month's Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-semibold text-green-600">156</div>
+                    <div className="text-sm text-muted-foreground">Items Received</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-semibold text-blue-600">89</div>
+                    <div className="text-sm text-muted-foreground">Items Issued</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-semibold text-purple-600">7</div>
+                    <div className="text-sm text-muted-foreground">Adjustments Made</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-semibold text-orange-600">3</div>
+                    <div className="text-sm text-muted-foreground">Transfers Out</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Goods Received Tab */}
           <TabsContent value="goods-received" className="space-y-4">
