@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle } from "lucide-react";
-import EthiopianDate from "ethiopian-date";
+import * as ethiopianDate from "ethiopian-date";
 
 const Dagu: React.FC = () => {
   const location = useLocation();
@@ -22,11 +22,10 @@ const Dagu: React.FC = () => {
 
   // Generate periods based on selection
   const generatePeriods = () => {
-    const periods = [];
-    const ethiopianDate = new EthiopianDate();
-    
+    // Since the ethiopian-date library is for conversion only, 
+    // we'll use predefined Ethiopian month names
     if (periodType === "monthly") {
-      // 12 months starting from Hamle
+      // 12 months starting from Hamle (Ethiopian calendar)
       const hamleMonths = ["Hamle", "Nehase", "Meskerem", "Tekemet", "Hedar", "Tahsas", 
                           "Tir", "Yekatit", "Megabit", "Miazia", "Ginbot", "Sene"];
       return hamleMonths;
@@ -37,7 +36,7 @@ const Dagu: React.FC = () => {
       // 2 halves
       return ["H1 (Hamle-Tahsas)", "H2 (Tir-Sene)"];
     }
-    return periods;
+    return [];
   };
 
   const periods = generatePeriods();
