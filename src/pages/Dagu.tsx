@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle } from "lucide-react";
+import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import * as ethiopianDate from "ethiopian-date";
 
 const Dagu: React.FC = () => {
@@ -19,6 +20,7 @@ const Dagu: React.FC = () => {
   
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
+  const [collapsedPeriods, setCollapsedPeriods] = useState<{ [key: number]: boolean }>({});
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -40,6 +42,13 @@ const Dagu: React.FC = () => {
   };
 
   const periods = generatePeriods();
+
+  const togglePeriod = (index: number) => {
+    setCollapsedPeriods(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   return (
     <main className="container py-6 space-y-6">
@@ -430,118 +439,164 @@ const Dagu: React.FC = () => {
                 {/* Drug-by-Drug Table */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Drug-by-Drug Annual Analysis ({periodType} periods)</h4>
-                  <div className="border rounded-lg overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="sticky left-0 bg-background z-10 border-r">Drug Name</TableHead>
-                          {periods.map((period, index) => (
-                            <TableHead key={index} className="text-center border-l" colSpan={9}>
-                              {period}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                        <TableRow>
-                          <TableHead className="sticky left-0 bg-background z-10 border-r"></TableHead>
-                          {periods.map((_, periodIndex) => (
-                            <React.Fragment key={periodIndex}>
-                              <TableHead className="text-right text-xs">Beg.</TableHead>
-                              <TableHead className="text-right text-xs">Rec.</TableHead>
-                              <TableHead className="text-right text-xs">Iss.</TableHead>
-                              <TableHead className="text-right text-xs">Adj.</TableHead>
-                              <TableHead className="text-right text-xs">T.Out</TableHead>
-                              <TableHead className="text-right text-xs">End</TableHead>
-                              <TableHead className="text-right text-xs">S.Days</TableHead>
-                              <TableHead className="text-right text-xs">Exp/Dam</TableHead>
-                              <TableHead className="text-right text-xs border-r">Cons.</TableHead>
-                            </React.Fragment>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="sticky left-0 bg-background z-20 border-r min-w-[200px]">Drug Name</TableHead>
+                            {periods.map((period, index) => (
+                              <TableHead key={index} className="text-center border-l relative" colSpan={collapsedPeriods[index] ? 1 : 9}>
+                                <Collapsible>
+                                  <CollapsibleTrigger
+                                    className="flex items-center gap-1 hover:bg-muted/50 p-1 rounded"
+                                    onClick={() => togglePeriod(index)}
+                                  >
+                                    {collapsedPeriods[index] ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                    {period}
+                                  </CollapsibleTrigger>
+                                </Collapsible>
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                          <TableRow>
+                            <TableHead className="sticky left-0 bg-background z-20 border-r"></TableHead>
+                            {periods.map((_, periodIndex) => (
+                              <React.Fragment key={periodIndex}>
+                                {!collapsedPeriods[periodIndex] ? (
+                                  <>
+                                    <TableHead className="text-right text-xs">Beg.</TableHead>
+                                    <TableHead className="text-right text-xs">Rec.</TableHead>
+                                    <TableHead className="text-right text-xs">Iss.</TableHead>
+                                    <TableHead className="text-right text-xs">Adj.</TableHead>
+                                    <TableHead className="text-right text-xs">T.Out</TableHead>
+                                    <TableHead className="text-right text-xs">End</TableHead>
+                                    <TableHead className="text-right text-xs">S.Days</TableHead>
+                                    <TableHead className="text-right text-xs">Exp/Dam</TableHead>
+                                    <TableHead className="text-right text-xs border-r">Cons.</TableHead>
+                                  </>
+                                ) : (
+                                  <TableHead className="text-right text-xs border-r">Total</TableHead>
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                         {/* Sample drugs with data for each period */}
                         <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Amoxicillin 250mg</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Amoxicillin 250mg</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
-                              <TableCell className="text-right text-xs">500</TableCell>
-                              <TableCell className="text-right text-xs">200</TableCell>
-                              <TableCell className="text-right text-xs">180</TableCell>
-                              <TableCell className="text-right text-xs">-5</TableCell>
-                              <TableCell className="text-right text-xs">10</TableCell>
-                              <TableCell className="text-right text-xs">505</TableCell>
-                              <TableCell className="text-right text-xs">2</TableCell>
-                              <TableCell className="text-right text-xs">5</TableCell>
-                              <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
+                              {!collapsedPeriods[periodIndex] ? (
+                                <>
+                                  <TableCell className="text-right text-xs">500</TableCell>
+                                  <TableCell className="text-right text-xs">200</TableCell>
+                                  <TableCell className="text-right text-xs">180</TableCell>
+                                  <TableCell className="text-right text-xs">-5</TableCell>
+                                  <TableCell className="text-right text-xs">10</TableCell>
+                                  <TableCell className="text-right text-xs">505</TableCell>
+                                  <TableCell className="text-right text-xs">2</TableCell>
+                                  <TableCell className="text-right text-xs">5</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
+                                </>
+                              ) : (
+                                <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
+                              )}
                             </React.Fragment>
                           ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Paracetamol 500mg</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Paracetamol 500mg</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
-                              <TableCell className="text-right text-xs">300</TableCell>
-                              <TableCell className="text-right text-xs">150</TableCell>
-                              <TableCell className="text-right text-xs">120</TableCell>
-                              <TableCell className="text-right text-xs">0</TableCell>
-                              <TableCell className="text-right text-xs">5</TableCell>
-                              <TableCell className="text-right text-xs">325</TableCell>
-                              <TableCell className="text-right text-xs">0</TableCell>
-                              <TableCell className="text-right text-xs">2</TableCell>
-                              <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                              {!collapsedPeriods[periodIndex] ? (
+                                <>
+                                  <TableCell className="text-right text-xs">300</TableCell>
+                                  <TableCell className="text-right text-xs">150</TableCell>
+                                  <TableCell className="text-right text-xs">120</TableCell>
+                                  <TableCell className="text-right text-xs">0</TableCell>
+                                  <TableCell className="text-right text-xs">5</TableCell>
+                                  <TableCell className="text-right text-xs">325</TableCell>
+                                  <TableCell className="text-right text-xs">0</TableCell>
+                                  <TableCell className="text-right text-xs">2</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                                </>
+                              ) : (
+                                <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                              )}
                             </React.Fragment>
                           ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Oxytocin 10IU</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Oxytocin 10IU</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
-                              <TableCell className="text-right text-xs">80</TableCell>
-                              <TableCell className="text-right text-xs">40</TableCell>
-                              <TableCell className="text-right text-xs">35</TableCell>
-                              <TableCell className="text-right text-xs">-2</TableCell>
-                              <TableCell className="text-right text-xs">0</TableCell>
-                              <TableCell className="text-right text-xs">83</TableCell>
-                              <TableCell className="text-right text-xs">1</TableCell>
-                              <TableCell className="text-right text-xs">4</TableCell>
-                              <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                              {!collapsedPeriods[periodIndex] ? (
+                                <>
+                                  <TableCell className="text-right text-xs">80</TableCell>
+                                  <TableCell className="text-right text-xs">40</TableCell>
+                                  <TableCell className="text-right text-xs">35</TableCell>
+                                  <TableCell className="text-right text-xs">-2</TableCell>
+                                  <TableCell className="text-right text-xs">0</TableCell>
+                                  <TableCell className="text-right text-xs">83</TableCell>
+                                  <TableCell className="text-right text-xs">1</TableCell>
+                                  <TableCell className="text-right text-xs">4</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                                </>
+                              ) : (
+                                <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                              )}
                             </React.Fragment>
                           ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Artemether 80mg</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Artemether 80mg</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
-                              <TableCell className="text-right text-xs">120</TableCell>
-                              <TableCell className="text-right text-xs">60</TableCell>
-                              <TableCell className="text-right text-xs">45</TableCell>
-                              <TableCell className="text-right text-xs">0</TableCell>
-                              <TableCell className="text-right text-xs">15</TableCell>
-                              <TableCell className="text-right text-xs">120</TableCell>
-                              <TableCell className="text-right text-xs">3</TableCell>
-                              <TableCell className="text-right text-xs">0</TableCell>
-                              <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                              {!collapsedPeriods[periodIndex] ? (
+                                <>
+                                  <TableCell className="text-right text-xs">120</TableCell>
+                                  <TableCell className="text-right text-xs">60</TableCell>
+                                  <TableCell className="text-right text-xs">45</TableCell>
+                                  <TableCell className="text-right text-xs">0</TableCell>
+                                  <TableCell className="text-right text-xs">15</TableCell>
+                                  <TableCell className="text-right text-xs">120</TableCell>
+                                  <TableCell className="text-right text-xs">3</TableCell>
+                                  <TableCell className="text-right text-xs">0</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                                </>
+                              ) : (
+                                <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                              )}
                             </React.Fragment>
                           ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">ORS Sachets</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">ORS Sachets</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
-                              <TableCell className="text-right text-xs">200</TableCell>
-                              <TableCell className="text-right text-xs">100</TableCell>
-                              <TableCell className="text-right text-xs">85</TableCell>
-                              <TableCell className="text-right text-xs">-5</TableCell>
-                              <TableCell className="text-right text-xs">20</TableCell>
-                              <TableCell className="text-right text-xs">190</TableCell>
-                              <TableCell className="text-right text-xs">2</TableCell>
-                              <TableCell className="text-right text-xs">1</TableCell>
-                              <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                              {!collapsedPeriods[periodIndex] ? (
+                                <>
+                                  <TableCell className="text-right text-xs">200</TableCell>
+                                  <TableCell className="text-right text-xs">100</TableCell>
+                                  <TableCell className="text-right text-xs">85</TableCell>
+                                  <TableCell className="text-right text-xs">-5</TableCell>
+                                  <TableCell className="text-right text-xs">20</TableCell>
+                                  <TableCell className="text-right text-xs">190</TableCell>
+                                  <TableCell className="text-right text-xs">2</TableCell>
+                                  <TableCell className="text-right text-xs">1</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                                </>
+                              ) : (
+                                <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                              )}
                             </React.Fragment>
                           ))}
                         </TableRow>
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 </div>
 
