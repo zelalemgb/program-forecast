@@ -20,6 +20,7 @@ import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
 import Dagu from "./pages/Dagu";
+import SupplyPlanning from "./pages/SupplyPlanning";
 import Guides from "./pages/Guides";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -44,6 +45,7 @@ const AppShell: React.FC = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/forecast" element={<ForecastWorkbench />} />
             <Route path="/dagu" element={<Dagu />} />
+            <Route path="/supply-planning" element={<SupplyPlanning />} />
             <Route path="/validation" element={<Validation />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
