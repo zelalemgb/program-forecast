@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Download, ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
+import ForecastingWizard from "@/components/forecast/ForecastingWizard";
 
 const SupplyPlanning: React.FC = () => {
   const location = useLocation();
@@ -17,6 +18,7 @@ const SupplyPlanning: React.FC = () => {
   
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
+  const [showWizard, setShowWizard] = useState(false);
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -764,14 +766,29 @@ const SupplyPlanning: React.FC = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export Annual Analysis
               </Button>
-              <Button className="flex-1">
+              <Button 
+                className="flex-1"
+                onClick={() => setShowWizard(true)}
+              >
                 <FileText className="h-4 w-4 mr-2" />
-                Generate Supply Forecast
+                Run Forecast
               </Button>
             </div>
           </CardContent>
         </Card>
       </section>
+
+      {/* Forecasting Wizard */}
+      {showWizard && (
+        <ForecastingWizard
+          onClose={() => setShowWizard(false)}
+          onComplete={(data) => {
+            console.log("Forecasting wizard completed with data:", data);
+            setShowWizard(false);
+            // TODO: Process the wizard data and generate forecast
+          }}
+        />
+      )}
     </main>
   );
 };
