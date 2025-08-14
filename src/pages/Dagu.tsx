@@ -251,12 +251,36 @@ const Dagu: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Items to Transfer</h4>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                    <span>Product Name</span>
+                    <span>Batch/Lot</span>
+                    <span>Quantity</span>
+                    <span>Unit</span>
+                    <span>Stock on Hand</span>
+                    <span>Notes</span>
+                  </div>
+                  <div className="py-4 text-center text-muted-foreground">
+                    No items added yet. Click "Add Item" to specify items for transfer.
+                  </div>
+                </div>
+                
                 <div>
                   <Label htmlFor="transfer-notes">Transfer Notes</Label>
                   <Textarea placeholder="Reason for transfer and additional notes" />
                 </div>
                 
-                <Button className="w-full">Record Transfer</Button>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Save Draft</Button>
+                  <Button>Record Transfer</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
