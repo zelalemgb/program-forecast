@@ -115,16 +115,7 @@ const SupplyPlanning: React.FC = () => {
       {/* Main Content */}
       <section>
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Supply Planning Analysis
-            </CardTitle>
-            <CardDescription>
-              Annual drug consumption analysis based on Ethiopian calendar year starting from Hamle
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             {/* Period Selector */}
             <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
               <Label htmlFor="period-type" className="font-medium">Period Type:</Label>
