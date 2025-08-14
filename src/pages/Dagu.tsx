@@ -18,6 +18,10 @@ const Dagu: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
   
+  // Check for tab query parameter
+  const searchParams = new URLSearchParams(location.search);
+  const tabFromUrl = searchParams.get('tab') || 'goods-received';
+  
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
 
@@ -121,7 +125,7 @@ const Dagu: React.FC = () => {
 
       {/* Main Content */}
       <section>
-        <Tabs defaultValue="goods-received" className="space-y-6">
+        <Tabs defaultValue={tabFromUrl} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="goods-received">Goods Received</TabsTrigger>
             <TabsTrigger value="ward-requests">Ward Requests</TabsTrigger>
