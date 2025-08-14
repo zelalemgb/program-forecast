@@ -47,14 +47,10 @@ const dashboardItems: Item[] = [
 ];
 
 const dataCapture: Item[] = [
+  { title: "Dagu Mini", url: "/dagu", icon: Database },
   { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera },
   { title: "File Upload", url: "/file-upload", icon: Upload },
   { title: "API/Data Feeds", url: "/data-feeds", icon: Database },
-];
-
-const dagu: Item[] = [
-  { title: "Dagu Mini", url: "/dagu", icon: Database },
-  { title: "Supply Planning", url: "/supply-planning", icon: ShoppingCart },
 ];
 
 const forecasting: Item[] = [
@@ -64,6 +60,7 @@ const forecasting: Item[] = [
 ];
 
 const supplyPlanning: Item[] = [
+  { title: "Supply Planning", url: "/supply-planning", icon: ShoppingCart },
   { title: "Review Procurement Plan", url: "/procurement-plan", icon: ShoppingCart },
   { title: "Budget Alignment", url: "/budget-alignment", icon: Banknote },
 ];
@@ -147,7 +144,6 @@ const AppSidebar = () => {
         
         <Group label="" items={dashboardItems} />
         <Group label="Data Capture" items={dataCapture} />
-        <Group label="Supply Operations" items={dagu} />
         <Group label="Forecasting" items={forecasting} />
         <Group label="Supply Planning" items={supplyPlanning} />
         <Group label="Analytics & Reports" items={analytics} />
