@@ -51,6 +51,26 @@ const Dagu: React.FC = () => {
     return initialState;
   });
 
+  // State for manual entry - only for drugs without inventory data
+  const [editableValues, setEditableValues] = useState<{ [key: string]: string }>({});
+  
+  // Define which drugs have existing inventory data
+  const drugsWithInventory = ["Artemether", "Amoxicillin"]; // Drugs with existing data
+  const drugsWithoutInventory = ["Paracetamol", "ORS", "Iron Tablets"]; // Drugs needing manual entry
+
+  const handleValueChange = (drugName: string, periodIndex: number, value: string) => {
+    const key = `${drugName}-${periodIndex}`;
+    setEditableValues(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const getEditableValue = (drugName: string, periodIndex: number) => {
+    const key = `${drugName}-${periodIndex}`;
+    return editableValues[key] || "";
+  };
+
   const togglePeriod = (index: number) => {
     setCollapsedPeriods(prev => ({
       ...prev,
@@ -491,7 +511,7 @@ const Dagu: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {/* Sample drugs with data for each period */}
+                        {/* Amoxicillin - has inventory data */}
                         <TableRow>
                           <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Amoxicillin 250mg</TableCell>
                           {periods.map((_, periodIndex) => (
@@ -514,50 +534,216 @@ const Dagu: React.FC = () => {
                             </React.Fragment>
                           ))}
                         </TableRow>
+                        
+                        {/* Paracetamol - no inventory data, allow manual entry */}
                         <TableRow>
                           <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Paracetamol 500mg</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
                               {!collapsedPeriods[periodIndex] ? (
                                 <>
-                                  <TableCell className="text-right text-xs">300</TableCell>
-                                  <TableCell className="text-right text-xs">150</TableCell>
-                                  <TableCell className="text-right text-xs">120</TableCell>
-                                  <TableCell className="text-right text-xs">0</TableCell>
-                                  <TableCell className="text-right text-xs">5</TableCell>
-                                  <TableCell className="text-right text-xs">325</TableCell>
-                                  <TableCell className="text-right text-xs">0</TableCell>
-                                  <TableCell className="text-right text-xs">2</TableCell>
-                                  <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-soh-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-soh-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-received-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-received-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-issued-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-issued-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-adjustments-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-adjustments-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-transfers-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-transfers-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-balance-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-balance-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-losses-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-losses-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Paracetamol-days-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-days-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                      value={getEditableValue(`Paracetamol-consumption-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Paracetamol-consumption-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium text-primary">127</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                  <Input 
+                                    type="number" 
+                                    placeholder="0"
+                                    className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                    value={getEditableValue(`Paracetamol-consumption-${periodIndex}`, 0)}
+                                    onChange={(e) => handleValueChange(`Paracetamol-consumption-${periodIndex}`, 0, e.target.value)}
+                                  />
+                                </TableCell>
                               )}
                             </React.Fragment>
                           ))}
                         </TableRow>
+                        
+                        {/* Oxytocin - no inventory data, allow manual entry */}
                         <TableRow>
                           <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Oxytocin 10IU</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
                               {!collapsedPeriods[periodIndex] ? (
                                 <>
-                                  <TableCell className="text-right text-xs">80</TableCell>
-                                  <TableCell className="text-right text-xs">40</TableCell>
-                                  <TableCell className="text-right text-xs">35</TableCell>
-                                  <TableCell className="text-right text-xs">-2</TableCell>
-                                  <TableCell className="text-right text-xs">0</TableCell>
-                                  <TableCell className="text-right text-xs">83</TableCell>
-                                  <TableCell className="text-right text-xs">1</TableCell>
-                                  <TableCell className="text-right text-xs">4</TableCell>
-                                <TableCell className="text-right text-xs border-r font-medium text-primary">41</TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-soh-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-soh-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-received-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-received-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-issued-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-issued-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-adjustments-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-adjustments-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-transfers-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-transfers-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-balance-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-balance-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-losses-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-losses-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`Oxytocin-days-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-days-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                      value={getEditableValue(`Oxytocin-consumption-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`Oxytocin-consumption-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                  <Input 
+                                    type="number" 
+                                    placeholder="0"
+                                    className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                    value={getEditableValue(`Oxytocin-consumption-${periodIndex}`, 0)}
+                                    onChange={(e) => handleValueChange(`Oxytocin-consumption-${periodIndex}`, 0, e.target.value)}
+                                  />
+                                </TableCell>
                               )}
                             </React.Fragment>
                           ))}
                         </TableRow>
+                        
+                        {/* Artemether - has inventory data */}
                         <TableRow>
                           <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">Artemether 80mg</TableCell>
                           {periods.map((_, periodIndex) => (
@@ -572,32 +758,114 @@ const Dagu: React.FC = () => {
                                   <TableCell className="text-right text-xs">120</TableCell>
                                   <TableCell className="text-right text-xs">3</TableCell>
                                   <TableCell className="text-right text-xs">0</TableCell>
-                                <TableCell className="text-right text-xs border-r font-medium text-primary">60</TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary">60</TableCell>
                               )}
                             </React.Fragment>
                           ))}
                         </TableRow>
+                        
+                        {/* ORS Sachets - no inventory data, allow manual entry */}
                         <TableRow>
                           <TableCell className="font-medium sticky left-0 bg-background z-20 border-r min-w-[200px]">ORS Sachets</TableCell>
                           {periods.map((_, periodIndex) => (
                             <React.Fragment key={periodIndex}>
                               {!collapsedPeriods[periodIndex] ? (
                                 <>
-                                  <TableCell className="text-right text-xs">200</TableCell>
-                                  <TableCell className="text-right text-xs">100</TableCell>
-                                  <TableCell className="text-right text-xs">85</TableCell>
-                                  <TableCell className="text-right text-xs">-5</TableCell>
-                                  <TableCell className="text-right text-xs">20</TableCell>
-                                  <TableCell className="text-right text-xs">190</TableCell>
-                                  <TableCell className="text-right text-xs">2</TableCell>
-                                  <TableCell className="text-right text-xs">1</TableCell>
-                                <TableCell className="text-right text-xs border-r font-medium text-primary">111</TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-soh-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-soh-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-received-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-received-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-issued-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-issued-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-adjustments-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-adjustments-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-transfers-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-transfers-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-balance-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-balance-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-losses-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-losses-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted"
+                                      value={getEditableValue(`ORS-days-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-days-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0"
+                                      className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                      value={getEditableValue(`ORS-consumption-${periodIndex}`, 0)}
+                                      onChange={(e) => handleValueChange(`ORS-consumption-${periodIndex}`, 0, e.target.value)}
+                                    />
+                                  </TableCell>
                                 </>
                               ) : (
-                                <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                                <TableCell className="text-right text-xs border-r font-medium text-primary p-1">
+                                  <Input 
+                                    type="number" 
+                                    placeholder="0"
+                                    className="h-6 text-xs text-right border-0 bg-transparent p-1 focus:bg-muted font-medium"
+                                    value={getEditableValue(`ORS-consumption-${periodIndex}`, 0)}
+                                    onChange={(e) => handleValueChange(`ORS-consumption-${periodIndex}`, 0, e.target.value)}
+                                  />
+                                </TableCell>
                               )}
                             </React.Fragment>
                           ))}
