@@ -54,7 +54,8 @@ const dataCapture: Item[] = [
 ];
 
 const forecasting: Item[] = [
-  { title: "Run Forecast", url: "/forecast", icon: TrendingUp },
+  { title: "Run Forecast", url: "/run-forecast", icon: TrendingUp },
+  { title: "Forecast Workbench", url: "/forecast", icon: FileText },
   { title: "View Assumptions", url: "/forecast/assumptions", icon: FileText },
   { title: "Download Reports", url: "/forecast/reports", icon: Download },
 ];
