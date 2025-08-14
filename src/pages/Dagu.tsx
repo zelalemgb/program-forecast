@@ -326,12 +326,36 @@ const Dagu: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Items Being Adjusted</h4>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                    <span>Product Name</span>
+                    <span>Batch/Lot</span>
+                    <span>Adjustment Qty</span>
+                    <span>Unit</span>
+                    <span>Current Stock</span>
+                    <span>Notes</span>
+                  </div>
+                  <div className="py-4 text-center text-muted-foreground">
+                    No items added yet. Click "Add Item" to specify adjustments.
+                  </div>
+                </div>
+                
                 <div>
                   <Label htmlFor="attachment">Attachment (Optional)</Label>
                   <Input type="file" accept=".pdf,.jpg,.png" />
                 </div>
                 
-                <Button className="w-full">Record Adjustment</Button>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Save Draft</Button>
+                  <Button>Record Adjustment</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
