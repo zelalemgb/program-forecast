@@ -20,27 +20,41 @@ const Dagu: React.FC = () => {
   
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
+  const [showFullYear, setShowFullYear] = useState<boolean>(false);
 
   // Generate periods based on selection
   const generatePeriods = () => {
     // Since the ethiopian-date library is for conversion only, 
     // we'll use predefined Ethiopian month names
     if (periodType === "monthly") {
-      // 12 months starting from Hamle (Ethiopian calendar)
       const hamleMonths = ["Hamle", "Nehase", "Meskerem", "Tekemet", "Hedar", "Tahsas", 
                           "Tir", "Yekatit", "Megabit", "Miazia", "Ginbot", "Sene"];
-      return hamleMonths;
+      return showFullYear ? hamleMonths : ["Hamle"]; // Show only current period unless specified
     } else if (periodType === "quarterly") {
-      // 4 quarters
-      return ["Q1 (Hamle-Meskerem)", "Q2 (Tekemet-Tahsas)", "Q3 (Tir-Miazia)", "Q4 (Ginbot-Sene)"];
+      const quarters = ["Q1 (Hamle-Meskerem)", "Q2 (Tekemet-Tahsas)", "Q3 (Tir-Miazia)", "Q4 (Ginbot-Sene)"];
+      return showFullYear ? quarters : ["Q1 (Hamle-Meskerem)"];
     } else if (periodType === "biannually") {
-      // 2 halves
-      return ["H1 (Hamle-Tahsas)", "H2 (Tir-Sene)"];
+      const halves = ["H1 (Hamle-Tahsas)", "H2 (Tir-Sene)"];
+      return showFullYear ? halves : ["H1 (Hamle-Tahsas)"];
+    }
+    return [];
+  };
+
+  // Generate forecast periods - one year ahead
+  const generateForecastPeriods = () => {
+    if (periodType === "monthly") {
+      return ["Hamle+1", "Nehase+1", "Meskerem+1", "Tekemet+1", "Hedar+1", "Tahsas+1", 
+              "Tir+1", "Yekatit+1", "Megabit+1", "Miazia+1", "Ginbot+1", "Sene+1"];
+    } else if (periodType === "quarterly") {
+      return ["Q1+1 (Hamle-Meskerem)", "Q2+1 (Tekemet-Tahsas)", "Q3+1 (Tir-Miazia)", "Q4+1 (Ginbot-Sene)"];
+    } else if (periodType === "biannually") {
+      return ["H1+1 (Hamle-Tahsas)", "H2+1 (Tir-Sene)"];
     }
     return [];
   };
 
   const periods = generatePeriods();
+  const forecastPeriods = generateForecastPeriods();
 
   // Initialize all periods as collapsed by default
   const [collapsedPeriods, setCollapsedPeriods] = useState<{ [key: number]: boolean }>(() => {
@@ -459,14 +473,22 @@ const Dagu: React.FC = () => {
                       <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button 
+                    variant={showFullYear ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setShowFullYear(!showFullYear)}
+                    className="ml-2"
+                  >
+                    {showFullYear ? "Current Period Only" : "Show Full Year"}
+                  </Button>
                   <Badge variant="outline" className="ml-2">
-                    One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
+                    {showFullYear ? "Full Year" : "Current Period"} Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
                   </Badge>
                 </div>
 
-                {/* Drug-by-Drug Table */}
+                {/* Historical Data Table */}
                 <div className="space-y-4">
-                  <h4 className="font-medium">Drug-by-Drug Annual Analysis ({periodType} periods)</h4>
+                  <h4 className="font-medium">Historical Data ({periodType} periods)</h4>
                   <div className="border rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                       <Table>
@@ -872,6 +894,90 @@ const Dagu: React.FC = () => {
                         </TableRow>
                       </TableBody>
                     </Table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Forecast Table */}
+                <div className="space-y-4 mt-8">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">Supply Forecast (Next Year)</h4>
+                    <Badge variant="secondary">Projected</Badge>
+                  </div>
+                  <div className="border rounded-lg overflow-hidden bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gradient-to-r from-blue-100/50 to-indigo-100/50 dark:from-blue-900/30 dark:to-indigo-900/30">
+                            <TableHead className="sticky left-0 bg-gradient-to-r from-blue-100/50 to-indigo-100/50 dark:from-blue-900/30 dark:to-indigo-900/30 z-20 border-r min-w-[200px]">Drug Name</TableHead>
+                            {forecastPeriods.map((period, index) => (
+                              <TableHead key={index} className="text-center border-l">
+                                {period}
+                              </TableHead>
+                            ))}
+                            <TableHead className="text-center border-l font-medium">Total Forecast</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {/* Amoxicillin Forecast */}
+                          <TableRow className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+                            <TableCell className="font-medium sticky left-0 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-950/10 dark:to-indigo-950/10 z-20 border-r min-w-[200px]">Amoxicillin 250mg</TableCell>
+                            {forecastPeriods.map((_, periodIndex) => (
+                              <TableCell key={periodIndex} className="text-right text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                {195 + Math.floor(Math.random() * 20) - 10}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-right font-bold text-blue-800 dark:text-blue-200">
+                              {195 * forecastPeriods.length}
+                            </TableCell>
+                          </TableRow>
+
+                          {/* Paracetamol Forecast */}
+                          <TableRow className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+                            <TableCell className="font-medium sticky left-0 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-950/10 dark:to-indigo-950/10 z-20 border-r min-w-[200px]">Paracetamol 500mg</TableCell>
+                            {forecastPeriods.map((_, periodIndex) => (
+                              <TableCell key={periodIndex} className="text-right text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                {Math.max(0, parseInt(getEditableValue(`Paracetamol-consumption-${periodIndex % periods.length}`, 0)) || 0)}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-right font-bold text-blue-800 dark:text-blue-200">
+                              {forecastPeriods.reduce((sum, _, index) => 
+                                sum + Math.max(0, parseInt(getEditableValue(`Paracetamol-consumption-${index % periods.length}`, 0)) || 0), 0
+                              )}
+                            </TableCell>
+                          </TableRow>
+
+                          {/* Oxytocin Forecast */}
+                          <TableRow className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+                            <TableCell className="font-medium sticky left-0 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-950/10 dark:to-indigo-950/10 z-20 border-r min-w-[200px]">Oxytocin 10IU</TableCell>
+                            {forecastPeriods.map((_, periodIndex) => (
+                              <TableCell key={periodIndex} className="text-right text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                {Math.max(0, parseInt(getEditableValue(`Oxytocin-consumption-${periodIndex % periods.length}`, 0)) || 0)}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-right font-bold text-blue-800 dark:text-blue-200">
+                              {forecastPeriods.reduce((sum, _, index) => 
+                                sum + Math.max(0, parseInt(getEditableValue(`Oxytocin-consumption-${index % periods.length}`, 0)) || 0), 0
+                              )}
+                            </TableCell>
+                          </TableRow>
+
+                          {/* ORS Forecast */}
+                          <TableRow className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+                            <TableCell className="font-medium sticky left-0 bg-gradient-to-r from-blue-50/30 to-indigo-50/30 dark:from-blue-950/10 dark:to-indigo-950/10 z-20 border-r min-w-[200px]">ORS Sachets</TableCell>
+                            {forecastPeriods.map((_, periodIndex) => (
+                              <TableCell key={periodIndex} className="text-right text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                {Math.max(0, parseInt(getEditableValue(`ORS-consumption-${periodIndex % periods.length}`, 0)) || 0)}
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-right font-bold text-blue-800 dark:text-blue-200">
+                              {forecastPeriods.reduce((sum, _, index) => 
+                                sum + Math.max(0, parseInt(getEditableValue(`ORS-consumption-${index % periods.length}`, 0)) || 0), 0
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 </div>
