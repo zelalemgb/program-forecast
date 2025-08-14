@@ -94,7 +94,7 @@ const Dagu: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            Dagu – Facility Supply Operations
+            Dagu Mini
           </h1>
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
             <span>Facility: Main Health Center</span>
@@ -122,11 +122,12 @@ const Dagu: React.FC = () => {
       {/* Main Content */}
       <section>
         <Tabs defaultValue="goods-received" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="goods-received">Goods Received</TabsTrigger>
             <TabsTrigger value="ward-requests">Ward Requests</TabsTrigger>
             <TabsTrigger value="transfers-out">Transfers Out</TabsTrigger>
             <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
+            <TabsTrigger value="supply-operations">Supply Operations</TabsTrigger>
             <TabsTrigger value="supply-planning">Supply Planning</TabsTrigger>
           </TabsList>
 
@@ -1090,6 +1091,37 @@ const Dagu: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Supply Operations Tab */}
+          <TabsContent value="supply-operations" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Supply Planning</CardTitle>
+                  <CardDescription>Plan and manage supply operations</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p>Supply planning tools coming soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Operations Dashboard</CardTitle>
+                  <CardDescription>Monitor supply operations status</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                    <p>Operations dashboard coming soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </section>
