@@ -414,9 +414,13 @@ const Dagu: React.FC = () => {
                           <TableHead className="text-right">Beginning</TableHead>
                           <TableHead className="text-right">Received</TableHead>
                           <TableHead className="text-right">Issued</TableHead>
-                          <TableHead className="text-right">Adjustments</TableHead>
+                          <TableHead className="text-right">Adjustment</TableHead>
+                          <TableHead className="text-right">Transfer Out</TableHead>
                           <TableHead className="text-right">Ending Balance</TableHead>
+                          <TableHead className="text-right">Stockout Days</TableHead>
+                          <TableHead className="text-right">Expired & Damage</TableHead>
                           <TableHead className="text-right">Consumption</TableHead>
+                          <TableHead className="text-right">Wastage Rate</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -426,8 +430,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">200</TableCell>
                           <TableCell className="text-right">180</TableCell>
                           <TableCell className="text-right">-5</TableCell>
-                          <TableCell className="text-right">515</TableCell>
-                          <TableCell className="text-right font-medium">185</TableCell>
+                          <TableCell className="text-right">10</TableCell>
+                          <TableCell className="text-right">505</TableCell>
+                          <TableCell className="text-right">2</TableCell>
+                          <TableCell className="text-right">5</TableCell>
+                          <TableCell className="text-right font-medium">195</TableCell>
+                          <TableCell className="text-right text-muted-foreground">2.5%</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-medium">Paracetamol 500mg</TableCell>
@@ -435,8 +443,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">150</TableCell>
                           <TableCell className="text-right">120</TableCell>
                           <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">330</TableCell>
-                          <TableCell className="text-right font-medium">120</TableCell>
+                          <TableCell className="text-right">5</TableCell>
+                          <TableCell className="text-right">325</TableCell>
+                          <TableCell className="text-right">0</TableCell>
+                          <TableCell className="text-right">2</TableCell>
+                          <TableCell className="text-right font-medium">127</TableCell>
+                          <TableCell className="text-right text-muted-foreground">1.6%</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-medium">Oxytocin 10IU</TableCell>
@@ -444,8 +456,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">40</TableCell>
                           <TableCell className="text-right">35</TableCell>
                           <TableCell className="text-right">-2</TableCell>
+                          <TableCell className="text-right">0</TableCell>
                           <TableCell className="text-right">83</TableCell>
-                          <TableCell className="text-right font-medium">37</TableCell>
+                          <TableCell className="text-right">1</TableCell>
+                          <TableCell className="text-right">4</TableCell>
+                          <TableCell className="text-right font-medium">41</TableCell>
+                          <TableCell className="text-right text-muted-foreground">9.8%</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-medium">Artemether 80mg</TableCell>
@@ -453,8 +469,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">60</TableCell>
                           <TableCell className="text-right">45</TableCell>
                           <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">135</TableCell>
-                          <TableCell className="text-right font-medium">45</TableCell>
+                          <TableCell className="text-right">15</TableCell>
+                          <TableCell className="text-right">120</TableCell>
+                          <TableCell className="text-right">3</TableCell>
+                          <TableCell className="text-right">0</TableCell>
+                          <TableCell className="text-right font-medium">60</TableCell>
+                          <TableCell className="text-right text-muted-foreground">0%</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-medium">ORS Sachets</TableCell>
@@ -462,8 +482,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">100</TableCell>
                           <TableCell className="text-right">85</TableCell>
                           <TableCell className="text-right">-5</TableCell>
-                          <TableCell className="text-right">210</TableCell>
-                          <TableCell className="text-right font-medium">90</TableCell>
+                          <TableCell className="text-right">20</TableCell>
+                          <TableCell className="text-right">190</TableCell>
+                          <TableCell className="text-right">2</TableCell>
+                          <TableCell className="text-right">1</TableCell>
+                          <TableCell className="text-right font-medium">111</TableCell>
+                          <TableCell className="text-right text-muted-foreground">0.9%</TableCell>
                         </TableRow>
                         <TableRow className="border-t-2 font-medium bg-muted/50">
                           <TableCell className="font-semibold">TOTAL</TableCell>
@@ -471,8 +495,12 @@ const Dagu: React.FC = () => {
                           <TableCell className="text-right">550</TableCell>
                           <TableCell className="text-right">465</TableCell>
                           <TableCell className="text-right">-12</TableCell>
-                          <TableCell className="text-right">1,273</TableCell>
-                          <TableCell className="text-right font-semibold">477</TableCell>
+                          <TableCell className="text-right">50</TableCell>
+                          <TableCell className="text-right">1,223</TableCell>
+                          <TableCell className="text-right">8</TableCell>
+                          <TableCell className="text-right">12</TableCell>
+                          <TableCell className="text-right font-semibold">534</TableCell>
+                          <TableCell className="text-right font-semibold">2.2%</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
