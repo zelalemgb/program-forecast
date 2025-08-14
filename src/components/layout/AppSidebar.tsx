@@ -54,7 +54,7 @@ const dataCapture: Item[] = [
 
 const dagu: Item[] = [
   { title: "Dagu – Facility Supply", url: "/dagu", icon: Database },
-  { title: "Supply Planning", url: "/dagu?tab=supply-planning", icon: FileText },
+  { title: "Supply Planning", url: "/supply-planning", icon: FileText },
 ];
 
 const forecasting: Item[] = [
