@@ -53,7 +53,7 @@ const dataCapture: Item[] = [
 ];
 
 const dagu: Item[] = [
-  { title: "Dagu – Facility Supply", url: "/dagu", icon: Database },
+  { title: "Dagu Mini", url: "/dagu", icon: Database },
   { title: "Supply Planning", url: "/supply-planning", icon: ShoppingCart },
 ];
 
