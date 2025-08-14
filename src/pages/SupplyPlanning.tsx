@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, ChevronDown, ChevronRight } from "lucide-react";
+import { FileText, Download, ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
 
 const SupplyPlanning: React.FC = () => {
   const location = useLocation();
@@ -86,15 +86,30 @@ const SupplyPlanning: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      {/* Page Header */}
-      <header className="border-b border-border pb-4">
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          Supply Planning
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Annual drug consumption analysis based on Ethiopian calendar year starting from Hamle
-        </p>
+      {/* Top Bar */}
+      <header className="flex items-center justify-between border-b border-border pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            Supply Planning
+          </h1>
+          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+            <span>Facility: Main Health Center</span>
+            <span>•</span>
+            <span>Period: Feb 2024</span>
+            <span>•</span>
+            <span>Analysis Period: Ethiopian Calendar Year</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            Annual Analysis
+          </Badge>
+          <Button variant="ghost" size="icon">
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
