@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +11,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package, Plus, FileText, Download, HelpCircle, Clock, AlertTriangle } from "lucide-react";
+import EthiopianDate from "ethiopian-date";
 
 const Dagu: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
+  
+  const [periodType, setPeriodType] = useState<string>("monthly");
+  const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
+
+  // Generate periods based on selection
+  const generatePeriods = () => {
+    const periods = [];
+    const ethiopianDate = new EthiopianDate();
+    
+    if (periodType === "monthly") {
+      // 12 months starting from Hamle
+      const hamleMonths = ["Hamle", "Nehase", "Meskerem", "Tekemet", "Hedar", "Tahsas", 
+                          "Tir", "Yekatit", "Megabit", "Miazia", "Ginbot", "Sene"];
+      return hamleMonths;
+    } else if (periodType === "quarterly") {
+      // 4 quarters
+      return ["Q1 (Hamle-Meskerem)", "Q2 (Tekemet-Tahsas)", "Q3 (Tir-Miazia)", "Q4 (Ginbot-Sene)"];
+    } else if (periodType === "biannually") {
+      // 2 halves
+      return ["H1 (Hamle-Tahsas)", "H2 (Tir-Sene)"];
+    }
+    return periods;
+  };
+
+  const periods = generatePeriods();
 
   return (
     <main className="container py-6 space-y-6">
@@ -65,7 +91,7 @@ const Dagu: React.FC = () => {
             <TabsTrigger value="ward-requests">Ward Requests</TabsTrigger>
             <TabsTrigger value="transfers-out">Transfers Out</TabsTrigger>
             <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
-            <TabsTrigger value="period-end">Period-End</TabsTrigger>
+            <TabsTrigger value="supply-planning">Supply Planning</TabsTrigger>
           </TabsList>
 
           {/* Goods Received Tab */}
@@ -360,220 +386,217 @@ const Dagu: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* Period-End Tab */}
-          <TabsContent value="period-end" className="space-y-4">
+          {/* Supply Planning Tab */}
+          <TabsContent value="supply-planning" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Period-End Summary & EPSS Request
+                  Supply Planning Analysis
                 </CardTitle>
                 <CardDescription>
-                  Drug-by-drug consumption analysis and period summary
+                  Annual drug consumption analysis based on Ethiopian calendar year starting from Hamle
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Period Selector */}
                 <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
                   <Label htmlFor="period-type" className="font-medium">Period Type:</Label>
-                  <Select defaultValue="monthly">
+                  <Select value={periodType} onValueChange={setPeriodType}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="bimonthly">Bi-monthly</SelectItem>
                       <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="biannually">Biannually</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Label htmlFor="specific-period" className="font-medium">Period:</Label>
-                  <Select defaultValue="feb-2024">
+                  <Label htmlFor="starting-period" className="font-medium">Starting Period:</Label>
+                  <Select value={startingPeriod} onValueChange={setStartingPeriod}>
                     <SelectTrigger className="w-48">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="feb-2024">February 2024</SelectItem>
-                      <SelectItem value="jan-2024">January 2024</SelectItem>
-                      <SelectItem value="dec-2023">December 2023</SelectItem>
-                      <SelectItem value="q1-2024">Q1 2024</SelectItem>
-                      <SelectItem value="h1-2024">Jan-Feb 2024</SelectItem>
-                      <SelectItem value="fy-2024">FY 2024</SelectItem>
+                      <SelectItem value="hamle-2016">Hamle 2016 E.C.</SelectItem>
+                      <SelectItem value="hamle-2015">Hamle 2015 E.C.</SelectItem>
+                      <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Badge variant="outline" className="ml-2">
+                    One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
+                  </Badge>
                 </div>
 
                 {/* Drug-by-Drug Table */}
                 <div className="space-y-4">
-                  <h4 className="font-medium">Drug-by-Drug Period Analysis</h4>
-                  <div className="border rounded-lg overflow-hidden">
+                  <h4 className="font-medium">Drug-by-Drug Annual Analysis ({periodType} periods)</h4>
+                  <div className="border rounded-lg overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Drug Name</TableHead>
-                          <TableHead className="text-right">Beginning</TableHead>
-                          <TableHead className="text-right">Received</TableHead>
-                          <TableHead className="text-right">Issued</TableHead>
-                          <TableHead className="text-right">Adjustment</TableHead>
-                          <TableHead className="text-right">Transfer Out</TableHead>
-                          <TableHead className="text-right">Ending Balance</TableHead>
-                          <TableHead className="text-right">Stockout Days</TableHead>
-                          <TableHead className="text-right">Expired & Damage</TableHead>
-                          <TableHead className="text-right">Consumption</TableHead>
-                          <TableHead className="text-right">Wastage Rate</TableHead>
+                          <TableHead className="sticky left-0 bg-background z-10 border-r">Drug Name</TableHead>
+                          {periods.map((period, index) => (
+                            <TableHead key={index} className="text-center border-l" colSpan={9}>
+                              {period}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                        <TableRow>
+                          <TableHead className="sticky left-0 bg-background z-10 border-r"></TableHead>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableHead className="text-right text-xs">Beg.</TableHead>
+                              <TableHead className="text-right text-xs">Rec.</TableHead>
+                              <TableHead className="text-right text-xs">Iss.</TableHead>
+                              <TableHead className="text-right text-xs">Adj.</TableHead>
+                              <TableHead className="text-right text-xs">T.Out</TableHead>
+                              <TableHead className="text-right text-xs">End</TableHead>
+                              <TableHead className="text-right text-xs">S.Days</TableHead>
+                              <TableHead className="text-right text-xs">Exp/Dam</TableHead>
+                              <TableHead className="text-right text-xs border-r">Cons.</TableHead>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
+                        {/* Sample drugs with data for each period */}
                         <TableRow>
-                          <TableCell className="font-medium">Amoxicillin 250mg</TableCell>
-                          <TableCell className="text-right">500</TableCell>
-                          <TableCell className="text-right">200</TableCell>
-                          <TableCell className="text-right">180</TableCell>
-                          <TableCell className="text-right">-5</TableCell>
-                          <TableCell className="text-right">10</TableCell>
-                          <TableCell className="text-right">505</TableCell>
-                          <TableCell className="text-right">2</TableCell>
-                          <TableCell className="text-right">5</TableCell>
-                          <TableCell className="text-right font-medium">195</TableCell>
-                          <TableCell className="text-right text-muted-foreground">2.5%</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Amoxicillin 250mg</TableCell>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableCell className="text-right text-xs">500</TableCell>
+                              <TableCell className="text-right text-xs">200</TableCell>
+                              <TableCell className="text-right text-xs">180</TableCell>
+                              <TableCell className="text-right text-xs">-5</TableCell>
+                              <TableCell className="text-right text-xs">10</TableCell>
+                              <TableCell className="text-right text-xs">505</TableCell>
+                              <TableCell className="text-right text-xs">2</TableCell>
+                              <TableCell className="text-right text-xs">5</TableCell>
+                              <TableCell className="text-right text-xs border-r font-medium">195</TableCell>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">Paracetamol 500mg</TableCell>
-                          <TableCell className="text-right">300</TableCell>
-                          <TableCell className="text-right">150</TableCell>
-                          <TableCell className="text-right">120</TableCell>
-                          <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">5</TableCell>
-                          <TableCell className="text-right">325</TableCell>
-                          <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">2</TableCell>
-                          <TableCell className="text-right font-medium">127</TableCell>
-                          <TableCell className="text-right text-muted-foreground">1.6%</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Paracetamol 500mg</TableCell>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableCell className="text-right text-xs">300</TableCell>
+                              <TableCell className="text-right text-xs">150</TableCell>
+                              <TableCell className="text-right text-xs">120</TableCell>
+                              <TableCell className="text-right text-xs">0</TableCell>
+                              <TableCell className="text-right text-xs">5</TableCell>
+                              <TableCell className="text-right text-xs">325</TableCell>
+                              <TableCell className="text-right text-xs">0</TableCell>
+                              <TableCell className="text-right text-xs">2</TableCell>
+                              <TableCell className="text-right text-xs border-r font-medium">127</TableCell>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">Oxytocin 10IU</TableCell>
-                          <TableCell className="text-right">80</TableCell>
-                          <TableCell className="text-right">40</TableCell>
-                          <TableCell className="text-right">35</TableCell>
-                          <TableCell className="text-right">-2</TableCell>
-                          <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">83</TableCell>
-                          <TableCell className="text-right">1</TableCell>
-                          <TableCell className="text-right">4</TableCell>
-                          <TableCell className="text-right font-medium">41</TableCell>
-                          <TableCell className="text-right text-muted-foreground">9.8%</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Oxytocin 10IU</TableCell>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableCell className="text-right text-xs">80</TableCell>
+                              <TableCell className="text-right text-xs">40</TableCell>
+                              <TableCell className="text-right text-xs">35</TableCell>
+                              <TableCell className="text-right text-xs">-2</TableCell>
+                              <TableCell className="text-right text-xs">0</TableCell>
+                              <TableCell className="text-right text-xs">83</TableCell>
+                              <TableCell className="text-right text-xs">1</TableCell>
+                              <TableCell className="text-right text-xs">4</TableCell>
+                              <TableCell className="text-right text-xs border-r font-medium">41</TableCell>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">Artemether 80mg</TableCell>
-                          <TableCell className="text-right">120</TableCell>
-                          <TableCell className="text-right">60</TableCell>
-                          <TableCell className="text-right">45</TableCell>
-                          <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right">15</TableCell>
-                          <TableCell className="text-right">120</TableCell>
-                          <TableCell className="text-right">3</TableCell>
-                          <TableCell className="text-right">0</TableCell>
-                          <TableCell className="text-right font-medium">60</TableCell>
-                          <TableCell className="text-right text-muted-foreground">0%</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">Artemether 80mg</TableCell>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableCell className="text-right text-xs">120</TableCell>
+                              <TableCell className="text-right text-xs">60</TableCell>
+                              <TableCell className="text-right text-xs">45</TableCell>
+                              <TableCell className="text-right text-xs">0</TableCell>
+                              <TableCell className="text-right text-xs">15</TableCell>
+                              <TableCell className="text-right text-xs">120</TableCell>
+                              <TableCell className="text-right text-xs">3</TableCell>
+                              <TableCell className="text-right text-xs">0</TableCell>
+                              <TableCell className="text-right text-xs border-r font-medium">60</TableCell>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">ORS Sachets</TableCell>
-                          <TableCell className="text-right">200</TableCell>
-                          <TableCell className="text-right">100</TableCell>
-                          <TableCell className="text-right">85</TableCell>
-                          <TableCell className="text-right">-5</TableCell>
-                          <TableCell className="text-right">20</TableCell>
-                          <TableCell className="text-right">190</TableCell>
-                          <TableCell className="text-right">2</TableCell>
-                          <TableCell className="text-right">1</TableCell>
-                          <TableCell className="text-right font-medium">111</TableCell>
-                          <TableCell className="text-right text-muted-foreground">0.9%</TableCell>
-                        </TableRow>
-                        <TableRow className="border-t-2 font-medium bg-muted/50">
-                          <TableCell className="font-semibold">TOTAL</TableCell>
-                          <TableCell className="text-right">1,200</TableCell>
-                          <TableCell className="text-right">550</TableCell>
-                          <TableCell className="text-right">465</TableCell>
-                          <TableCell className="text-right">-12</TableCell>
-                          <TableCell className="text-right">50</TableCell>
-                          <TableCell className="text-right">1,223</TableCell>
-                          <TableCell className="text-right">8</TableCell>
-                          <TableCell className="text-right">12</TableCell>
-                          <TableCell className="text-right font-semibold">534</TableCell>
-                          <TableCell className="text-right font-semibold">2.2%</TableCell>
+                          <TableCell className="font-medium sticky left-0 bg-background z-10 border-r">ORS Sachets</TableCell>
+                          {periods.map((_, periodIndex) => (
+                            <React.Fragment key={periodIndex}>
+                              <TableCell className="text-right text-xs">200</TableCell>
+                              <TableCell className="text-right text-xs">100</TableCell>
+                              <TableCell className="text-right text-xs">85</TableCell>
+                              <TableCell className="text-right text-xs">-5</TableCell>
+                              <TableCell className="text-right text-xs">20</TableCell>
+                              <TableCell className="text-right text-xs">190</TableCell>
+                              <TableCell className="text-right text-xs">2</TableCell>
+                              <TableCell className="text-right text-xs">1</TableCell>
+                              <TableCell className="text-right text-xs border-r font-medium">111</TableCell>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                       </TableBody>
                     </Table>
                   </div>
                 </div>
 
-                {/* Period Summary Cards */}
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Period Summary</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Total Beginning Balance:</span>
-                        <span className="font-medium">1,200 units</span>
+                {/* Summary Cards with Calculations */}
+                <div className="grid grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Total Annual Consumption</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-primary">
+                        {periods.length * 534} units
                       </div>
-                      <div className="flex justify-between">
-                        <span>Total Received:</span>
-                        <span className="font-medium">550 units</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Total Issued:</span>
-                        <span className="font-medium">465 units</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Total Adjustments:</span>
-                        <span className="font-medium">-12 units</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="font-medium">Total Ending Balance:</span>
-                        <span className="font-medium">1,273 units</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Consumption:</span>
-                        <span className="font-medium text-primary">477 units</span>
-                      </div>
-                    </div>
-                  </div>
+                      <p className="text-xs text-muted-foreground">
+                        Across {periods.length} {periodType} periods
+                      </p>
+                    </CardContent>
+                  </Card>
                   
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Key Metrics</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Stockout Days:</span>
-                        <span className="font-medium">8 days</span>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Average Wastage Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-destructive">2.2%</div>
+                      <p className="text-xs text-muted-foreground">
+                        Annual average across all drugs
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Total Stockout Days</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-destructive">
+                        {periods.length * 8} days
                       </div>
-                      <div className="flex justify-between">
-                        <span>Expired/Damaged:</span>
-                        <span className="font-medium">12 units</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Items Below Min:</span>
-                        <span className="font-medium text-destructive">3 drugs</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Consumption Rate:</span>
-                        <span className="font-medium">37.5%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Stock Turnover:</span>
-                        <span className="font-medium">2.7x</span>
-                      </div>
-                    </div>
-                  </div>
+                      <p className="text-xs text-muted-foreground">
+                        Cumulative across all periods
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
-                
+
                 <div className="flex gap-2 pt-4 border-t">
                   <Button variant="outline" className="flex-1">
                     <Download className="h-4 w-4 mr-2" />
-                    Export Summary
+                    Export Annual Analysis
                   </Button>
                   <Button className="flex-1">
                     <FileText className="h-4 w-4 mr-2" />
-                    Generate EPSS Request
+                    Generate Supply Forecast
                   </Button>
                 </div>
               </CardContent>
