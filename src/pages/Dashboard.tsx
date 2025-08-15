@@ -13,8 +13,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
-import { ConsolidatedProductAnalysis } from "@/components/dashboard/ConsolidatedProductAnalysis";
+import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
+import { ForecastAccuracyChart } from "@/components/dashboard/ForecastAccuracyChart";
 import PageHeader from "@/components/layout/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -320,6 +321,13 @@ const filteredTotals = React.useMemo(() => {
         {dataset && <ProgramInsights rows={filteredRows} />}
 
         {dataset && (
+          <ForecastAccuracyChart 
+            selectedPrograms={selectedPrograms}
+            selectedYears={selectedYears}
+          />
+        )}
+
+        {dataset && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="surface overflow-hidden">
               <CardHeader>
@@ -358,16 +366,70 @@ const filteredTotals = React.useMemo(() => {
         )}
 
         {dataset && (
-          <ConsolidatedProductAnalysis
-            rows={filteredRows}
-            selectedPrograms={selectedPrograms}
-            selectedYears={selectedYears}
-            onPickProduct={(p) => {
-              setTrendProduct(p);
-              setTrendOpen(true);
-            }}
-            limit={50}
-          />
+          <Card className="surface">
+            <CardHeader>
+              <CardTitle>Top 20 Products by Observed Value</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Years</TableHead>
+                      <TableHead className="text-right">Total Qty</TableHead>
+                      <TableHead className="text-right">Avg Unit Price</TableHead>
+                      <TableHead className="text-right">Forecasted Total</TableHead>
+                      <TableHead className="text-right">Observed Total</TableHead>
+                      <TableHead className="text-right">Difference</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {top20ByObserved.map((p, idx) => {
+                      const hasDiff = Math.abs(p.difference || 0) > 0;
+                      const diffBorderCls = hasDiff ? "border border-destructive" : "";
+                      return (
+                        <TableRow
+                          key={idx}
+                          className={`hover:bg-accent/50 ${hasDiff ? "bg-accent/10" : ""} cursor-pointer`}
+                          onClick={() => {
+                            setTrendProduct(p.product);
+                            setTrendOpen(true);
+                          }}
+                          title={`View yearly trend for ${p.product}`}
+                        >
+                          <TableCell>{p.product}</TableCell>
+                          <TableCell>{p.unit}</TableCell>
+                          <TableCell>{p.yearsLabel}</TableCell>
+                          <TableCell className="text-right">{currency(p.totalQty)}</TableCell>
+                          <TableCell className="text-right">${currency(p.avgUnitPrice)}</TableCell>
+                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalForecasted)}</TableCell>
+                          <TableCell className={`text-right ${diffBorderCls}`}>${currency(p.totalObserved)}</TableCell>
+                          <TableCell className={`text-right ${hasDiff ? "font-semibold border border-destructive" : ""}`}>${currency(p.difference)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <Separator className="my-4" />
+              <div className="text-sm text-muted-foreground">
+                Tip: Use the filters above to analyze by multiple programs and years.
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {dataset && (
+          <div id="abrupt-changes">
+            <AbruptChangesTable
+              rows={filteredRows}
+              onPickProduct={(p) => {
+                setTrendProduct(p);
+                setTrendOpen(true);
+              }}
+            />
+          </div>
         )}
         <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
       </div>
