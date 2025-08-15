@@ -46,11 +46,15 @@ const dashboardItems: Item[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
 ];
 
-const dataCapture: Item[] = [
+interface ItemWithComingSoon extends Item {
+  comingSoon?: boolean;
+}
+
+const dataCapture: ItemWithComingSoon[] = [
   { title: "Dagu Mini", url: "/dagu", icon: Database },
-  { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera },
-  { title: "File Upload", url: "/file-upload", icon: Upload },
-  { title: "API/Data Feeds", url: "/data-feeds", icon: Database },
+  { title: "Forecast Upload", url: "/forecast-upload", icon: Upload },
+  { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera, comingSoon: true },
+  { title: "API/Data Feeds", url: "/data-feeds", icon: Database, comingSoon: true },
 ];
 
 const forecasting: Item[] = [
@@ -86,7 +90,7 @@ const helpTraining: Item[] = [
   { title: "Micro-learning Videos", url: "/help/videos", icon: Play },
 ];
 
-function Group({ label, items }: { label: string; items: Item[] }) {
+function Group({ label, items }: { label: string; items: (Item | ItemWithComingSoon)[] }) {
   const location = useLocation();
   const { state } = useSidebar();
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -97,16 +101,37 @@ function Group({ label, items }: { label: string; items: Item[] }) {
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <NavLink to={item.url} end className={getNavCls}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  {state !== "collapsed" && <span>{item.title}</span>}
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const itemWithComingSoon = item as ItemWithComingSoon;
+            const isComingSoon = itemWithComingSoon.comingSoon;
+            
+            if (isComingSoon) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton className="opacity-50 cursor-not-allowed">
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && (
+                      <span className="flex items-center justify-between w-full">
+                        {item.title}
+                        <span className="text-xs text-muted-foreground ml-2">Coming Soon</span>
+                      </span>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+            
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  <NavLink to={item.url} end className={getNavCls}>
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>{item.title}</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
