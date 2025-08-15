@@ -154,6 +154,20 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           .sort((a, b) => a.program.localeCompare(b.program) || a.year.localeCompare(b.year) || a.mape - b.mape);
 
         setAccuracyData(finalData);
+        
+        // Calculate summary statistics
+        if (finalData.length > 0) {
+          const avgMape = finalData.reduce((sum, item) => sum + item.mape, 0) / finalData.length;
+          const underForecast = finalData.filter(item => item.issueQuantity > item.forecastQuantity);
+          const overForecast = finalData.filter(item => item.forecastQuantity > item.issueQuantity);
+          
+          console.log("Summary Stats:", {
+            avgMape: avgMape.toFixed(1),
+            underForecastCount: underForecast.length,
+            overForecastCount: overForecast.length,
+            totalItems: finalData.length
+          });
+        }
       } catch (error) {
         console.error("Error processing accuracy data:", error);
       } finally {
@@ -163,6 +177,105 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
 
     fetchAccuracyData();
   }, [selectedPrograms, selectedYears]);
+
+  const getSummaryStats = () => {
+    if (accuracyData.length === 0) return null;
+    
+    const avgMape = accuracyData.reduce((sum, item) => sum + item.mape, 0) / accuracyData.length;
+    const underForecast = accuracyData.filter(item => item.issueQuantity > item.forecastQuantity);
+    const overForecast = accuracyData.filter(item => item.forecastQuantity > item.issueQuantity);
+    const exactMatch = accuracyData.filter(item => item.forecastQuantity === item.issueQuantity);
+    
+    const underForecastPct = (underForecast.length / accuracyData.length) * 100;
+    const overForecastPct = (overForecast.length / accuracyData.length) * 100;
+    
+    // Calculate potential service interruption risk
+    const highUnderForecast = underForecast.filter(item => 
+      (item.issueQuantity - item.forecastQuantity) / item.issueQuantity > 0.2 // More than 20% under-forecasted
+    );
+    
+    // Calculate potential waste risk  
+    const highOverForecast = overForecast.filter(item => 
+      (item.forecastQuantity - item.issueQuantity) / item.forecastQuantity > 0.3 // More than 30% over-forecasted
+    );
+    
+    return {
+      avgMape,
+      underForecast: underForecast.length,
+      overForecast: overForecast.length,
+      exactMatch: exactMatch.length,
+      underForecastPct,
+      overForecastPct,
+      highUnderForecast: highUnderForecast.length,
+      highOverForecast: highOverForecast.length,
+      totalItems: accuracyData.length
+    };
+  };
+
+  const getInsights = (stats: any) => {
+    if (!stats) return [];
+    
+    const insights = [];
+    
+    // MAPE Analysis
+    if (stats.avgMape > 50) {
+      insights.push({
+        type: 'error',
+        title: 'Poor Forecast Accuracy',
+        message: `Average MAPE of ${stats.avgMape.toFixed(1)}% indicates significant forecasting challenges. Review forecasting methodology.`
+      });
+    } else if (stats.avgMape > 20) {
+      insights.push({
+        type: 'warning', 
+        title: 'Moderate Forecast Accuracy',
+        message: `Average MAPE of ${stats.avgMape.toFixed(1)}% suggests room for improvement in forecasting accuracy.`
+      });
+    } else {
+      insights.push({
+        type: 'success',
+        title: 'Good Forecast Accuracy',
+        message: `Average MAPE of ${stats.avgMape.toFixed(1)}% indicates relatively good forecasting performance.`
+      });
+    }
+    
+    // Service Interruption Risk
+    if (stats.highUnderForecast > 0) {
+      insights.push({
+        type: 'error',
+        title: 'Service Interruption Risk',
+        message: `${stats.highUnderForecast} products are significantly under-forecasted (>20% gap), potentially leading to stockouts and service disruptions.`
+      });
+    }
+    
+    // Waste Risk
+    if (stats.highOverForecast > 0) {
+      insights.push({
+        type: 'warning',
+        title: 'Resource Waste Risk', 
+        message: `${stats.highOverForecast} products are significantly over-forecasted (>30% excess), potentially leading to waste and budget inefficiency.`
+      });
+    }
+    
+    // Balance Analysis
+    if (stats.underForecastPct > 60) {
+      insights.push({
+        type: 'info',
+        title: 'Systematic Under-forecasting',
+        message: `${stats.underForecastPct.toFixed(1)}% of products are under-forecasted. Consider adjusting forecasting parameters upward.`
+      });
+    } else if (stats.overForecastPct > 60) {
+      insights.push({
+        type: 'info', 
+        title: 'Systematic Over-forecasting',
+        message: `${stats.overForecastPct.toFixed(1)}% of products are over-forecasted. Consider adjusting forecasting parameters downward.`
+      });
+    }
+    
+    return insights;
+  };
+
+  const summaryStats = getSummaryStats();
+  const insights = getInsights(summaryStats);
 
   const getAccuracyBadge = (category: string) => {
     const variants = {
@@ -226,6 +339,45 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
         <p className="text-sm text-muted-foreground">
           Drug-level comparison of forecasted vs actual issue quantities with MAPE (Mean Absolute Percentage Error)
         </p>
+        {summaryStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">Average MAPE</p>
+              <p className="text-2xl font-semibold">{summaryStats.avgMape.toFixed(1)}%</p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">Under-forecast</p>
+              <p className="text-2xl font-semibold text-orange-600">{summaryStats.underForecast} ({summaryStats.underForecastPct.toFixed(1)}%)</p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">Over-forecast</p>
+              <p className="text-2xl font-semibold text-blue-600">{summaryStats.overForecast} ({summaryStats.overForecastPct.toFixed(1)}%)</p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">Total Products</p>
+              <p className="text-2xl font-semibold">{summaryStats.totalItems}</p>
+            </div>
+          </div>
+        )}
+        {insights.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <h4 className="font-medium">Analysis & Insights</h4>
+            {insights.map((insight, index) => (
+              <div 
+                key={index} 
+                className={`p-3 rounded-lg border-l-4 ${
+                  insight.type === 'error' ? 'bg-red-50 border-red-400' :
+                  insight.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                  insight.type === 'success' ? 'bg-green-50 border-green-400' :
+                  'bg-blue-50 border-blue-400'
+                }`}
+              >
+                <p className="font-medium text-sm">{insight.title}</p>
+                <p className="text-sm text-muted-foreground">{insight.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
