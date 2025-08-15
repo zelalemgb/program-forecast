@@ -1,15 +1,17 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 
-interface AccuracyData {
-  year: string;
+interface DrugAccuracyData {
   program: string;
-  forecastedQuantity: number;
+  year: string;
+  productName: string;
+  forecastQuantity: number;
   issueQuantity: number;
-  accuracy: number;
-  accuracyPercentage: string;
+  mape: number;
+  accuracyCategory: 'excellent' | 'good' | 'acceptable' | 'poor';
 }
 
 interface ForecastAccuracyChartProps {
@@ -21,7 +23,7 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
   selectedPrograms = [],
   selectedYears = []
 }) => {
-  const [accuracyData, setAccuracyData] = React.useState<AccuracyData[]>([]);
+  const [accuracyData, setAccuracyData] = React.useState<DrugAccuracyData[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -48,39 +50,12 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           return;
         }
 
-        console.log("Raw forecast data sample:", forecastData?.slice(0, 3));
-        console.log("Raw issue data sample:", issueData?.slice(0, 3));
+        // Create a comprehensive map for drug matching
+        const drugAccuracyMap = new Map<string, DrugAccuracyData>();
 
-        // Extract unique years and programs for debugging
-        const forecastYears = [...new Set(forecastData?.map(r => r.year) || [])];
-        const issueYears = [...new Set(issueData?.map(r => r.year) || [])];
-        const forecastPrograms = [...new Set(forecastData?.map(r => r.program?.toLowerCase()) || [])];
-        const issuePrograms = [...new Set(issueData?.map(r => r.program?.toLowerCase()) || [])];
-        
-        console.log("Forecast years:", forecastYears);
-        console.log("Issue years:", issueYears);
-        console.log("Forecast programs:", forecastPrograms);
-        console.log("Issue programs:", issuePrograms);
-
-        // Find overlapping years and programs
-        const commonYears = forecastYears.filter(year => issueYears.includes(year));
-        const commonPrograms = forecastPrograms.filter(prog => issuePrograms.includes(prog));
-        
-        console.log("Common years:", commonYears);
-        console.log("Common programs:", commonPrograms);
-
-        // Process and match data by program and year with case-insensitive matching
-        const accuracyMap = new Map<string, {
-          year: string;
-          program: string;
-          totalForecasted: number;
-          totalIssue: number;
-          productCount: number;
-        }>();
-
-        // Aggregate forecast data
+        // Process forecast data first
         forecastData?.forEach(row => {
-          if (!row.program || !row.year) return;
+          if (!row.program || !row.year || !row.product_list) return;
           
           const normalizedProgram = row.program.toLowerCase().trim();
           
@@ -88,23 +63,45 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           if (selectedPrograms.length > 0 && !selectedPrograms.some(p => p.toLowerCase() === normalizedProgram)) return;
           if (selectedYears.length > 0 && !selectedYears.includes(row.year)) return;
           
-          const key = `${normalizedProgram}-${row.year}`;
-          const existing = accuracyMap.get(key) || {
-            year: row.year,
-            program: row.program, // Keep original casing for display
-            totalForecasted: 0,
-            totalIssue: 0,
-            productCount: 0
-          };
+          const key = `${normalizedProgram}-${row.year}-${row.product_list.toLowerCase().trim()}`;
           
-          existing.totalForecasted += Number(row.forecasted_quantity) || 0;
-          existing.productCount += 1;
-          accuracyMap.set(key, existing);
+          if (!drugAccuracyMap.has(key)) {
+            drugAccuracyMap.set(key, {
+              program: row.program,
+              year: row.year,
+              productName: row.product_list,
+              forecastQuantity: Number(row.forecasted_quantity) || 0,
+              issueQuantity: 0,
+              mape: 0,
+              accuracyCategory: 'poor'
+            });
+          }
         });
 
-        // Aggregate issue data and match with forecast using case-insensitive matching
+        // Simple Levenshtein distance function for fuzzy matching
+        const levenshteinDistance = (str1: string, str2: string): number => {
+          const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+          
+          for (let i = 0; i <= str1.length; i += 1) matrix[0][i] = i;
+          for (let j = 0; j <= str2.length; j += 1) matrix[j][0] = j;
+          
+          for (let j = 1; j <= str2.length; j += 1) {
+            for (let i = 1; i <= str1.length; i += 1) {
+              const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+              matrix[j][i] = Math.min(
+                matrix[j][i - 1] + 1,
+                matrix[j - 1][i] + 1,
+                matrix[j - 1][i - 1] + indicator
+              );
+            }
+          }
+          
+          return matrix[str2.length][str1.length];
+        };
+
+        // Process issue data and match with forecast using fuzzy matching
         issueData?.forEach(row => {
-          if (!row.program || !row.year) return;
+          if (!row.program || !row.year || !row.items_description) return;
           
           const normalizedProgram = row.program.toLowerCase().trim();
           
@@ -112,34 +109,51 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           if (selectedPrograms.length > 0 && !selectedPrograms.some(p => p.toLowerCase() === normalizedProgram)) return;
           if (selectedYears.length > 0 && !selectedYears.includes(row.year)) return;
           
-          const key = `${normalizedProgram}-${row.year}`;
-          const existing = accuracyMap.get(key);
+          const issueProductNormalized = row.items_description.toLowerCase().trim();
           
-          if (existing) {
-            existing.totalIssue += Number(row.quantity) || 0;
+          // Try to find matching forecast entries
+          for (let [key, forecastEntry] of drugAccuracyMap.entries()) {
+            if (key.includes(normalizedProgram) && key.includes(row.year)) {
+              const forecastProductNormalized = forecastEntry.productName.toLowerCase().trim();
+              
+              // Simple fuzzy matching - check if products have similar names
+              if (issueProductNormalized.includes(forecastProductNormalized.slice(0, 10)) ||
+                  forecastProductNormalized.includes(issueProductNormalized.slice(0, 10)) ||
+                  levenshteinDistance(issueProductNormalized, forecastProductNormalized) < 10) {
+                
+                forecastEntry.issueQuantity += Number(row.quantity) || 0;
+                break;
+              }
+            }
           }
         });
 
-        // Calculate accuracy and format for chart
-        const chartData: AccuracyData[] = Array.from(accuracyMap.values())
-          .filter(item => item.totalForecasted > 0 && item.totalIssue > 0)
+        // Calculate MAPE and categorize accuracy
+        const finalData: DrugAccuracyData[] = Array.from(drugAccuracyMap.values())
+          .filter(item => item.forecastQuantity > 0 || item.issueQuantity > 0)
           .map(item => {
-            const accuracy = item.totalIssue > 0 
-              ? Math.min(100, (item.totalForecasted / item.totalIssue) * 100)
-              : 0;
+            let mape = 0;
+            if (item.issueQuantity > 0) {
+              mape = Math.abs(item.issueQuantity - item.forecastQuantity) / item.issueQuantity * 100;
+            } else if (item.forecastQuantity > 0) {
+              mape = 100; // If forecast exists but no actual issue, 100% error
+            }
+            
+            // Categorize accuracy based on MAPE
+            let accuracyCategory: 'excellent' | 'good' | 'acceptable' | 'poor' = 'poor';
+            if (mape <= 10) accuracyCategory = 'excellent';
+            else if (mape <= 20) accuracyCategory = 'good';
+            else if (mape <= 50) accuracyCategory = 'acceptable';
             
             return {
-              year: item.year,
-              program: item.program,
-              forecastedQuantity: Math.round(item.totalForecasted),
-              issueQuantity: Math.round(item.totalIssue),
-              accuracy: Math.round(accuracy * 100) / 100,
-              accuracyPercentage: `${Math.round(accuracy)}%`
+              ...item,
+              mape: Math.round(mape * 100) / 100,
+              accuracyCategory
             };
           })
-          .sort((a, b) => a.year.localeCompare(b.year) || a.program.localeCompare(b.program));
+          .sort((a, b) => a.program.localeCompare(b.program) || a.year.localeCompare(b.year) || a.mape - b.mape);
 
-        setAccuracyData(chartData);
+        setAccuracyData(finalData);
       } catch (error) {
         console.error("Error processing accuracy data:", error);
       } finally {
@@ -149,6 +163,22 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
 
     fetchAccuracyData();
   }, [selectedPrograms, selectedYears]);
+
+  const getAccuracyBadge = (category: string) => {
+    const variants = {
+      excellent: { variant: "default", color: "bg-green-100 text-green-800" },
+      good: { variant: "secondary", color: "bg-blue-100 text-blue-800" },
+      acceptable: { variant: "outline", color: "bg-yellow-100 text-yellow-800" },
+      poor: { variant: "destructive", color: "bg-red-100 text-red-800" }
+    };
+    
+    const config = variants[category as keyof typeof variants] || variants.poor;
+    return (
+      <Badge className={config.color}>
+        {category.charAt(0).toUpperCase() + category.slice(1)}
+      </Badge>
+    );
+  };
 
   if (loading) {
     return (
@@ -189,70 +219,64 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{`${data.program} - ${data.year}`}</p>
-          <p className="text-sm text-muted-foreground">
-            <span className="inline-block w-3 h-3 bg-blue-500 rounded mr-2"></span>
-            Forecasted: {data.forecastedQuantity.toLocaleString()}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            <span className="inline-block w-3 h-3 bg-green-500 rounded mr-2"></span>
-            Actual Issue: {data.issueQuantity.toLocaleString()}
-          </p>
-          <p className="text-sm font-medium">
-            <span className="inline-block w-3 h-3 bg-orange-500 rounded mr-2"></span>
-            Accuracy: {data.accuracyPercentage}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <Card className="surface">
       <CardHeader>
         <CardTitle>Forecast Accuracy Analysis</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Compares forecasted quantities with actual issue data to measure prediction accuracy
+          Drug-level comparison of forecasted vs actual issue quantities with MAPE (Mean Absolute Percentage Error)
         </p>
       </CardHeader>
-      <CardContent className="h-96">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={accuracyData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey={(data) => `${data.program.slice(0, 15)}... (${data.year})`}
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              interval={0}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis yAxisId="left" orientation="left" />
-            <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar yAxisId="left" dataKey="forecastedQuantity" fill="hsl(var(--primary))" name="Forecasted Quantity" />
-            <Bar yAxisId="left" dataKey="issueQuantity" fill="hsl(var(--secondary))" name="Actual Issue Quantity" />
-            <Line 
-              yAxisId="right" 
-              type="monotone" 
-              dataKey="accuracy" 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={3}
-              name="Accuracy %" 
-              dot={{ fill: "hsl(var(--destructive))", strokeWidth: 2, r: 4 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Program</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Drug/Product</TableHead>
+                <TableHead className="text-right">Forecast Quantity</TableHead>
+                <TableHead className="text-right">Issue Quantity</TableHead>
+                <TableHead className="text-right">MAPE (%)</TableHead>
+                <TableHead>Accuracy</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accuracyData.map((item, index) => (
+                <TableRow key={index} className="hover:bg-accent/50">
+                  <TableCell className="font-medium">{item.program}</TableCell>
+                  <TableCell>{item.year}</TableCell>
+                  <TableCell className="max-w-xs truncate" title={item.productName}>
+                    {item.productName}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.forecastQuantity.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.issueQuantity.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {item.mape.toFixed(1)}%
+                  </TableCell>
+                  <TableCell>
+                    {getAccuracyBadge(item.accuracyCategory)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        {accuracyData.length > 0 && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p><strong>MAPE Categories:</strong></p>
+            <div className="flex flex-wrap gap-4 mt-2">
+              <span>• Excellent: &le;10%</span>
+              <span>• Good: &le;20%</span>
+              <span>• Acceptable: &le;50%</span>
+              <span>• Poor: &gt;50%</span>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
