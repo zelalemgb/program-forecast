@@ -159,12 +159,13 @@ const filteredTotals = React.useMemo(() => {
   }, [filteredRows]);
 
   return (
-    <>
+    <div className="container mx-auto p-6">
       <Helmet>
         <title>Health Programs Forecast Dashboard</title>
         <meta name="description" content="Analyze forecast data across health programs with import, charts, and drill-down." />
         <link rel="canonical" href={`${window.location.origin}/dashboard`} />
       </Helmet>
+      
       <PageHeader
         title="Health Programs Forecast Dashboard"
         description="Import forecast CSVs and analyze from program-level trends down to individual products."
@@ -184,7 +185,7 @@ const filteredTotals = React.useMemo(() => {
         }
       />
 
-      <section className="space-y-6 pb-10">
+      <div className="space-y-6 mt-6">{/* Changed from section to div and added mt-6 */}
         {/* Auth CTA when not signed in */}
         {!user && (
           <Card className="surface border-dashed">
@@ -406,8 +407,8 @@ const filteredTotals = React.useMemo(() => {
           </div>
         )}
         <ProductTrendDialog open={trendOpen} onOpenChange={setTrendOpen} product={trendProduct} rows={filteredRows} />
-      </section>
-    </>
+      </div>
+    </div>
   );
 };
 
