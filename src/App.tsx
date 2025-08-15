@@ -10,6 +10,7 @@ import Validation from "./pages/Validation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import CDSSDashboard from "./pages/CDSSDashboard";
 import Profile from "./pages/Profile";
 import RegisterFacility from "./pages/RegisterFacility";
 import Approvals from "./pages/Approvals";
@@ -45,6 +46,7 @@ const AppShell: React.FC = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
             <Route path="/forecast" element={<RunForecast />} />
             <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
             <Route path="/dagu" element={<Dagu />} />
