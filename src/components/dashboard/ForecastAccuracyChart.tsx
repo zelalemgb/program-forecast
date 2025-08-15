@@ -133,17 +133,23 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           .filter(item => item.issueQuantity > 0) // Only show items that have actual issue data
           .map(item => {
             let mape = 0;
+            
+            // Standard MAPE formula: |Actual - Forecast| / |Actual| * 100
+            // But we need to handle edge cases to prevent division by zero
             if (item.issueQuantity > 0) {
               mape = Math.abs(item.issueQuantity - item.forecastQuantity) / item.issueQuantity * 100;
+              // Cap MAPE at a reasonable maximum (e.g., 500%) to handle extreme cases
+              mape = Math.min(mape, 500);
             } else if (item.forecastQuantity > 0) {
-              mape = 100; // If forecast exists but no actual issue, 100% error
+              // If forecast exists but no actual issue, assign maximum error
+              mape = 500;
             }
             
             // Categorize accuracy based on MAPE
             let accuracyCategory: 'excellent' | 'good' | 'acceptable' | 'poor' = 'poor';
             if (mape <= 10) accuracyCategory = 'excellent';
             else if (mape <= 20) accuracyCategory = 'good';
-            else if (mape <= 25) accuracyCategory = 'acceptable';
+            else if (mape <= 30) accuracyCategory = 'acceptable';
             
             return {
               ...item,
@@ -218,7 +224,7 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
     const insights = [];
     
     // MAPE Analysis
-    if (stats.avgMape > 25) {
+    if (stats.avgMape > 30) {
       insights.push({
         type: 'error',
         title: 'Poor Forecast Accuracy',
@@ -424,8 +430,8 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
             <div className="flex flex-wrap gap-4 mt-2">
               <span>• Excellent: &le;10%</span>
               <span>• Good: &le;20%</span>
-              <span>• Acceptable: &le;25%</span>
-              <span>• Poor: &gt;25%</span>
+              <span>• Acceptable: &le;30%</span>
+              <span>• Poor: &gt;30%</span>
             </div>
           </div>
         )}
