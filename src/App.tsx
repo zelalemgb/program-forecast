@@ -22,6 +22,7 @@ import ForecastWorkbench from "./pages/ForecastWorkbench";
 import RunForecast from "./pages/RunForecast";
 import Dagu from "./pages/Dagu";
 import SupplyPlanning from "./pages/SupplyPlanning";
+import BudgetAlignment from "./pages/BudgetAlignment";
 import Guides from "./pages/Guides";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -48,6 +49,7 @@ const AppShell: React.FC = () => {
             <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
             <Route path="/dagu" element={<Dagu />} />
             <Route path="/supply-planning" element={<SupplyPlanning />} />
+            <Route path="/budget-alignment" element={<BudgetAlignment />} />
             <Route path="/validation" element={<Validation />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
