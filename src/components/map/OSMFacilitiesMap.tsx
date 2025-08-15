@@ -73,8 +73,8 @@ const OSMFacilitiesMap: React.FC<OSMFacilitiesMapProps> = ({
   zoom = 6,
 }) => {
   return (
-    <div className="absolute inset-0">
-      <MapContainer {...({ center, zoom } as any)} className="h-full w-full">
+    <div className="h-full w-full relative">
+      <MapContainer {...({ center, zoom } as any)} className="h-full w-full rounded-md">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {facilities.map((f) => (
           <Marker key={f.id} position={[f.lat, f.lng] as LatLngExpression}>
