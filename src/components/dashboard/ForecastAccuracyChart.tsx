@@ -128,9 +128,9 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           }
         });
 
-        // Calculate MAPE and categorize accuracy
+        // Calculate MAPE and categorize accuracy - only include items with issue data
         const finalData: DrugAccuracyData[] = Array.from(drugAccuracyMap.values())
-          .filter(item => item.forecastQuantity > 0 || item.issueQuantity > 0)
+          .filter(item => item.issueQuantity > 0) // Only show items that have actual issue data
           .map(item => {
             let mape = 0;
             if (item.issueQuantity > 0) {
