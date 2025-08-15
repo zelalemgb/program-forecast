@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DrugAccuracyData {
@@ -299,6 +300,31 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
     );
   };
 
+  const getForecastIndicator = (item: DrugAccuracyData) => {
+    if (item.forecastQuantity > item.issueQuantity) {
+      // Over-forecast
+      return (
+        <div className="flex items-center justify-center text-blue-600">
+          <ArrowUp className="h-4 w-4" />
+        </div>
+      );
+    } else if (item.issueQuantity > item.forecastQuantity) {
+      // Under-forecast
+      return (
+        <div className="flex items-center justify-center text-orange-600">
+          <ArrowDown className="h-4 w-4" />
+        </div>
+      );
+    } else {
+      // Exact match
+      return (
+        <div className="flex items-center justify-center text-gray-500">
+          <Minus className="h-4 w-4" />
+        </div>
+      );
+    }
+  };
+
   if (loading) {
     return (
       <Card className="surface">
@@ -395,6 +421,7 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
                 <TableHead>Drug/Product</TableHead>
                 <TableHead className="text-right">Forecast Quantity</TableHead>
                 <TableHead className="text-right">Issue Quantity</TableHead>
+                <TableHead className="text-center">Trend</TableHead>
                 <TableHead className="text-right">MAPE (%)</TableHead>
                 <TableHead>Accuracy</TableHead>
               </TableRow>
@@ -412,6 +439,9 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
                   </TableCell>
                   <TableCell className="text-right">
                     {item.issueQuantity.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {getForecastIndicator(item)}
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     {item.mape.toFixed(1)}%
