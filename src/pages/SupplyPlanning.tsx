@@ -84,9 +84,19 @@ const SupplyPlanning: React.FC = () => {
   };
 
   const handleImportFromExcel = () => {
-    // TODO: Implement Excel import functionality
-    setManualEntryMode(true);
-    console.log("Import from Excel functionality to be implemented");
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        // TODO: Process Excel file with a library like xlsx
+        console.log("Selected file:", file.name);
+        setManualEntryMode(true);
+        // Here you would typically parse the Excel file and populate editableValues
+      }
+    };
+    input.click();
   };
 
   return (
