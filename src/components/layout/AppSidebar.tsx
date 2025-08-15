@@ -1,4 +1,4 @@
-import { NavLink, useLocation, Link } from "react-router-dom";
+import { NavLink, useLocation, Link, useNavigate } from "react-router-dom";
 import { 
   Sidebar,
   SidebarContent,
@@ -142,29 +142,33 @@ const AppSidebar = () => {
   const location = useLocation();
   const { pathname } = location;
   const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogoClick = () => {
+    console.log("Logo clicked - navigating to /");
+    navigate("/");
+  };
+  
   if (!user && pathname === "/") return null;
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
       <SidebarHeader className="p-0">
-        <Link 
-          to="/" 
+        <div 
           className="flex items-center gap-2 px-2 py-1.5 mx-2 hover:bg-muted/50 rounded-md transition-colors cursor-pointer relative z-10"
           title="Go to Dashboard"
-          onClick={(e) => {
-            console.log("Logo clicked - navigating to /");
-          }}
+          onClick={handleLogoClick}
         >
           <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
             <TrendingUp className="h-5 w-5 text-white" />
           </div>
           {state !== "collapsed" && (
-            <div className="pointer-events-none">
+            <div>
               <div className="text-sm font-semibold">Forlab+</div>
               <div className="text-xs text-muted-foreground">MoH Platform</div>
             </div>
           )}
-        </Link>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <div className="p-2 flex justify-end">
