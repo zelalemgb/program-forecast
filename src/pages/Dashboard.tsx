@@ -170,18 +170,34 @@ const filteredTotals = React.useMemo(() => {
         title="Health Programs Forecast Dashboard"
         description="Import forecast CSVs and analyze from program-level trends down to individual products."
         actions={
-          <Dialog open={importOpen} onOpenChange={setImportOpen}>
-            <DialogTrigger asChild>
-              <Button>Import Forecast</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>Bulk import forecast CSV</DialogTitle>
-                <DialogDescription>Upload your CSV to update your dataset.</DialogDescription>
-              </DialogHeader>
-              <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Dialog open={importOpen} onOpenChange={setImportOpen}>
+              <DialogTrigger asChild>
+                <Button>Import Forecast</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Bulk import forecast CSV</DialogTitle>
+                  <DialogDescription>Upload your CSV to update your dataset.</DialogDescription>
+                </DialogHeader>
+                <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Import Issue Data</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Import Issue Data</DialogTitle>
+                  <DialogDescription>Upload issue data to analyze forecast problems.</DialogDescription>
+                </DialogHeader>
+                <div className="p-4 text-center text-muted-foreground">
+                  Import functionality for issue data will be implemented here.
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 
