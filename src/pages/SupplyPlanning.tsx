@@ -19,6 +19,7 @@ const SupplyPlanning: React.FC = () => {
   const [periodType, setPeriodType] = useState<string>("monthly");
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
   const [showWizard, setShowWizard] = useState(false);
+  const [manualEntryMode, setManualEntryMode] = useState(false);
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -77,6 +78,17 @@ const SupplyPlanning: React.FC = () => {
     }));
   };
 
+  const handleClearAndManualEntry = () => {
+    setEditableValues({});
+    setManualEntryMode(true);
+  };
+
+  const handleImportFromExcel = () => {
+    // TODO: Implement Excel import functionality
+    setManualEntryMode(true);
+    console.log("Import from Excel functionality to be implemented");
+  };
+
   return (
     <main className="container py-6 space-y-6">
       <Helmet>
@@ -118,33 +130,55 @@ const SupplyPlanning: React.FC = () => {
       <section>
         <Card>
           <CardContent className="space-y-6 pt-6">
+            {/* Manual Entry Controls */}
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-4">
+                <Label htmlFor="period-type" className="font-medium">Period Type:</Label>
+                <Select value={periodType} onValueChange={setPeriodType}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="biannually">Biannually</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Label htmlFor="starting-period" className="font-medium">Starting Period:</Label>
+                <Select value={startingPeriod} onValueChange={setStartingPeriod}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hamle-2016">Hamle 2016 E.C.</SelectItem>
+                    <SelectItem value="hamle-2015">Hamle 2015 E.C.</SelectItem>
+                    <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="ml-2">
+                  One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearAndManualEntry}
+                  className="flex items-center gap-2"
+                >
+                  Clear values and Enter Manually
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleImportFromExcel}
+                  className="flex items-center gap-2"
+                >
+                  Import from Excel
+                </Button>
+              </div>
+            </div>
+
             {/* Period Selector */}
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <Label htmlFor="period-type" className="font-medium">Period Type:</Label>
-              <Select value={periodType} onValueChange={setPeriodType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="biannually">Biannually</SelectItem>
-                </SelectContent>
-              </Select>
-              <Label htmlFor="starting-period" className="font-medium">Starting Period:</Label>
-              <Select value={startingPeriod} onValueChange={setStartingPeriod}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hamle-2016">Hamle 2016 E.C.</SelectItem>
-                  <SelectItem value="hamle-2015">Hamle 2015 E.C.</SelectItem>
-                  <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
-                </SelectContent>
-              </Select>
-              <Badge variant="outline" className="ml-2">
-                One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
-              </Badge>
+            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg" style={{ display: 'none' }}>
             </div>
 
             {/* Drug-by-Drug Table */}
@@ -560,11 +594,11 @@ const SupplyPlanning: React.FC = () => {
             </div>
 
             {/* Forecast Section */}
-            <div className="space-y-4 border-t pt-6">
+            <div className={`space-y-4 border-t pt-6 ${manualEntryMode ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="flex items-center gap-2">
                 <h4 className="font-medium">Supply Forecast (Next Year)</h4>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  Forecast Based on Historical Consumption
+                  {manualEntryMode ? 'Forecast Disabled - Manual Entry Mode' : 'Forecast Based on Historical Consumption'}
                 </Badge>
               </div>
               
