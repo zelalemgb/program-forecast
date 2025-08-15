@@ -25,6 +25,7 @@ import Dagu from "./pages/Dagu";
 import SupplyPlanning from "./pages/SupplyPlanning";
 import BudgetAlignment from "./pages/BudgetAlignment";
 import Guides from "./pages/Guides";
+import Videos from "./pages/Videos";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -63,6 +64,7 @@ const AppShell: React.FC = () => {
             <Route path="/requests/new" element={<RequestWizard />} />
             <Route path="/requests/:id" element={<RequestDetail />} />
             <Route path="/help/guides" element={<Guides />} />
+            <Route path="/help/videos" element={<Videos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
 
