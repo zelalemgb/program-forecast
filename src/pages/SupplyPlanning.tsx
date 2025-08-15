@@ -79,13 +79,14 @@ const SupplyPlanning: React.FC = () => {
   };
 
   const handleClearAndManualEntry = () => {
+    // Always clear data when button is clicked
+    setEditableValues({});
+    
     if (manualEntryMode) {
       // Switch back to auto forecast mode
       setManualEntryMode(false);
-      setEditableValues({});
     } else {
       // Switch to manual entry mode
-      setEditableValues({});
       setManualEntryMode(true);
     }
   };
