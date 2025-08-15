@@ -143,7 +143,7 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
             let accuracyCategory: 'excellent' | 'good' | 'acceptable' | 'poor' = 'poor';
             if (mape <= 10) accuracyCategory = 'excellent';
             else if (mape <= 20) accuracyCategory = 'good';
-            else if (mape <= 50) accuracyCategory = 'acceptable';
+            else if (mape <= 25) accuracyCategory = 'acceptable';
             
             return {
               ...item,
@@ -218,7 +218,7 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
     const insights = [];
     
     // MAPE Analysis
-    if (stats.avgMape > 50) {
+    if (stats.avgMape > 25) {
       insights.push({
         type: 'error',
         title: 'Poor Forecast Accuracy',
@@ -424,8 +424,8 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
             <div className="flex flex-wrap gap-4 mt-2">
               <span>• Excellent: &le;10%</span>
               <span>• Good: &le;20%</span>
-              <span>• Acceptable: &le;50%</span>
-              <span>• Poor: &gt;50%</span>
+              <span>• Acceptable: &le;25%</span>
+              <span>• Poor: &gt;25%</span>
             </div>
           </div>
         )}
