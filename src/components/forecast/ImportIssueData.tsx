@@ -1,5 +1,6 @@
 import React from "react";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -80,15 +81,49 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
   }, [session?.user?.id]);
 
   const handleFile = (file: File) => {
-    // Handle Excel files differently
+    // Handle Excel files
     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      toast({
-        title: "Excel files not supported",
-        description: "Please save your Excel file as CSV format and try again.",
-      });
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          if (jsonData.length === 0) {
+            toast({
+              title: "Empty file",
+              description: "The Excel file appears to be empty.",
+            });
+            return;
+          }
+          
+          // Convert to CSV-like structure for processing
+          const headers = jsonData[0] as string[];
+          const rows = jsonData.slice(1).map((row: any[]) => {
+            const obj: any = {};
+            headers.forEach((header, index) => {
+              obj[header] = row[index] || '';
+            });
+            return obj;
+          });
+          
+          processData(headers, rows);
+        } catch (error) {
+          console.error("Excel parsing error:", error);
+          toast({
+            title: "Excel parsing failed",
+            description: "Could not read the Excel file. Please check the file format.",
+          });
+        }
+      };
+      reader.readAsArrayBuffer(file);
       return;
     }
 
+    // Handle CSV files
     Papa.parse<IssueDataRow>(file, {
       header: true,
       skipEmptyLines: true,
@@ -122,41 +157,44 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
           }
         }
 
-        // Validate headers - be more flexible with header matching
-        const headers = results.meta.fields || [];
-        const normalizedHeaders = headers.map(h => h.trim().toLowerCase());
-        const normalizedExpected = SAMPLE_CSV_HEADERS.map(h => h.toLowerCase());
-        
-        const missing = normalizedExpected.filter((h) => !normalizedHeaders.includes(h));
-        if (missing.length) {
-          toast({
-            title: "Invalid file format",
-            description: `Missing columns: ${missing.join(", ")}. Found: ${headers.join(", ")}. Please ensure your CSV has the exact column names from the template.`,
-          });
-          return;
-        }
-
-        // Transform and insert rows into Supabase
-        const rows = (results.data as IssueDataRow[]).map((r) => ({
-          user_id: session?.user?.id,
-          program: String(r["Program"] || "").trim(),
-          items_description: String(r["Items Description"] || "").trim(),
-          unit: r["Unit"] ? String(r["Unit"]) : null,
-          quantity: parseNumber(r["Quantity"]),
-          year: r["Year"] ? String(r["Year"]) : null,
-        }));
-
-        (async () => {
-          const { error } = await supabase.from("product_issues").insert(rows);
-          if (error) {
-            toast({ title: "Database insert failed", description: error.message });
-          } else {
-            toast({ title: "Import successful", description: `${rows.length} issue records imported.` });
-            onData?.();
-          }
-        })().catch((e) => console.error(e));
+        processData(results.meta.fields || [], results.data as IssueDataRow[]);
       },
     });
+  };
+
+  const processData = (headers: string[], rows: IssueDataRow[]) => {
+    // Validate headers - be more flexible with header matching
+    const normalizedHeaders = headers.map(h => String(h).trim().toLowerCase());
+    const normalizedExpected = SAMPLE_CSV_HEADERS.map(h => h.toLowerCase());
+    
+    const missing = normalizedExpected.filter((h) => !normalizedHeaders.includes(h));
+    if (missing.length) {
+      toast({
+        title: "Invalid file format",
+        description: `Missing columns: ${missing.join(", ")}. Found: ${headers.join(", ")}. Please ensure your file has the exact column names from the template.`,
+      });
+      return;
+    }
+
+    // Transform and insert rows into Supabase
+    const transformedRows = rows.map((r) => ({
+      user_id: session?.user?.id,
+      program: String(r["Program"] || "").trim(),
+      items_description: String(r["Items Description"] || "").trim(),
+      unit: r["Unit"] ? String(r["Unit"]) : null,
+      quantity: parseNumber(r["Quantity"]),
+      year: r["Year"] ? String(r["Year"]) : null,
+    }));
+
+    (async () => {
+      const { error } = await supabase.from("product_issues").insert(transformedRows);
+      if (error) {
+        toast({ title: "Database insert failed", description: error.message });
+      } else {
+        toast({ title: "Import successful", description: `${transformedRows.length} issue records imported.` });
+        onData?.();
+      }
+    })().catch((e) => console.error(e));
   };
 
   const onUploadClick = () => {
