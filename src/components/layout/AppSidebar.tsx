@@ -64,7 +64,6 @@ const forecasting: Item[] = [
 
 const supplyPlanning: Item[] = [
   { title: "Supply Planning", url: "/supply-planning", icon: ShoppingCart },
-  { title: "Review Procurement Plan", url: "/procurement-plan", icon: ShoppingCart },
   { title: "Budget Alignment", url: "/budget-alignment", icon: Banknote },
 ];
 
