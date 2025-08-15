@@ -84,13 +84,25 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
       header: true,
       skipEmptyLines: true,
       transformHeader: (h) => h.trim(),
+      delimiter: ",",
+      newline: "\n",
+      quoteChar: '"',
+      escapeChar: '"',
       complete: (results) => {
+        console.log("Parse results:", results);
+        console.log("Headers found:", results.meta.fields);
+        console.log("Expected headers:", SAMPLE_CSV_HEADERS);
+        
         if (results.errors?.length) {
-          console.error(results.errors);
-          toast({
-            title: "Import warning",
-            description: `Some rows had issues. Processed ${results.data.length} rows.`,
-          });
+          console.error("Parse errors:", results.errors);
+          // Only show error if there are actual data issues, not parsing warnings
+          const criticalErrors = results.errors.filter(e => e.type !== "Quotes" && e.type !== "FieldMismatch");
+          if (criticalErrors.length > 0) {
+            toast({
+              title: "Import warning",
+              description: `Some rows had issues. Processed ${results.data.length} rows.`,
+            });
+          }
         }
 
         // Validate headers
@@ -99,7 +111,7 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
         if (missing.length) {
           toast({
             title: "Invalid file format",
-            description: `Missing columns: ${missing.join(", ")}`,
+            description: `Missing columns: ${missing.join(", ")}. Found: ${headers.join(", ")}`,
           });
           return;
         }
