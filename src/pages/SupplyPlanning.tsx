@@ -79,8 +79,15 @@ const SupplyPlanning: React.FC = () => {
   };
 
   const handleClearAndManualEntry = () => {
-    setEditableValues({});
-    setManualEntryMode(true);
+    if (manualEntryMode) {
+      // Switch back to auto forecast mode
+      setManualEntryMode(false);
+      setEditableValues({});
+    } else {
+      // Switch to manual entry mode
+      setEditableValues({});
+      setManualEntryMode(true);
+    }
   };
 
   const handleImportFromExcel = () => {
@@ -175,7 +182,7 @@ const SupplyPlanning: React.FC = () => {
                   onClick={handleClearAndManualEntry}
                   className="flex items-center gap-2"
                 >
-                  Clear values and Enter Manually
+                  {manualEntryMode ? "Switch to Auto Forecast using inventory" : "Clear values and Enter Manually"}
                 </Button>
                 <Button 
                   variant="outline" 
