@@ -59,9 +59,7 @@ const dataCapture: ItemWithComingSoon[] = [
 
 const forecasting: Item[] = [
   { title: "Run Forecast", url: "/forecast", icon: TrendingUp },
-  { title: "Forecast Workbench", url: "/forecast-workbench", icon: BarChart3 },
-  { title: "View Assumptions", url: "/forecast/assumptions", icon: FileText },
-  { title: "Download Reports", url: "/forecast/reports", icon: Download },
+  { title: "Validate Excel Forecast", url: "/forecast-workbench", icon: BarChart3 },
 ];
 
 const supplyPlanning: Item[] = [
