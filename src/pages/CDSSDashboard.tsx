@@ -4,11 +4,10 @@ import { useLocation } from "react-router-dom";
 import PageHeader from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import OSMFacilitiesMap from "@/components/map/OSMFacilitiesMap";
-import { DollarSign, Building2, Calculator, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { DollarSign, Building2, Calculator, TrendingUp, AlertTriangle, CheckCircle2, TrendingDown } from "lucide-react";
 
 const CDSSDashboard: React.FC = () => {
   const location = useLocation();
@@ -24,12 +23,12 @@ const CDSSDashboard: React.FC = () => {
     facilitiesSubmitted: 98
   };
 
-  // Mock data for product cost by category
+  // Mock data for product cost by category with colors
   const categoryData = [
-    { category: "Essential Medicines", cost: 1200000, percentage: 42 },
-    { category: "Medical Supplies", cost: 850000, percentage: 30 },
-    { category: "Diagnostics", cost: 450000, percentage: 16 },
-    { category: "Equipment", cost: 345000, percentage: 12 }
+    { category: "Essential Medicines", cost: 1200000, percentage: 42, color: "hsl(var(--brand))" },
+    { category: "Medical Supplies", cost: 850000, percentage: 30, color: "hsl(var(--moh-secondary))" },
+    { category: "Diagnostics", cost: 450000, percentage: 16, color: "hsl(var(--status-warning))" },
+    { category: "Equipment", cost: 345000, percentage: 12, color: "hsl(var(--status-ok))" }
   ];
 
   // Mock data for top 10 products by cost
@@ -46,21 +45,31 @@ const CDSSDashboard: React.FC = () => {
     { name: "Zinc Sulfate", cost: 76000, category: "Essential Medicines" }
   ];
 
-  // Mock data for regional costs
+  // Mock data for regional costs (enhanced)
   const regionalData = [
-    { region: "Addis Ababa", cost: 485000 },
-    { region: "Oromia", cost: 425000 },
-    { region: "Amhara", cost: 398000 },
-    { region: "SNNP", cost: 356000 },
-    { region: "Tigray", cost: 298000 },
-    { region: "Somali", cost: 245000 },
-    { region: "Afar", cost: 198000 }
+    { region: "Addis Ababa", cost: 485000, facilities: 25, trend: 8.5 },
+    { region: "Oromia", cost: 425000, facilities: 45, trend: 5.2 },
+    { region: "Amhara", cost: 398000, facilities: 38, trend: -2.1 },
+    { region: "SNNP", cost: 356000, facilities: 32, trend: 3.8 },
+    { region: "Tigray", cost: 298000, facilities: 18, trend: 12.5 },
+    { region: "Somali", cost: 245000, facilities: 15, trend: 7.2 },
+    { region: "Afar", cost: 198000, facilities: 12, trend: 4.6 }
   ];
+
+  const pieChartConfig: ChartConfig = {
+    cost: {
+      label: "Cost (ETB)"
+    }
+  };
 
   const chartConfig: ChartConfig = {
     cost: {
       label: "Cost (ETB)",
       color: "hsl(var(--brand))"
+    },
+    trend: {
+      label: "Trend (%)",
+      color: "hsl(var(--moh-secondary))"
     }
   };
 
@@ -95,8 +104,11 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.totalForecastCost)}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from previous period
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="inline-flex items-center gap-1">
+                <TrendingUp className="h-3 w-3 text-status-ok" />
+                +12% from previous period
+              </span>
             </p>
           </CardContent>
         </Card>
@@ -108,9 +120,12 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.allocatedBudget)}</div>
-            <p className="text-xs text-muted-foreground">
-              {((metrics.allocatedBudget / metrics.totalForecastCost) * 100).toFixed(1)}% of forecast
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                {((metrics.allocatedBudget / metrics.totalForecastCost) * 100).toFixed(1)}% of forecast
+              </p>
+              <Badge variant="secondary" className="text-xs">87.9%</Badge>
+            </div>
           </CardContent>
         </Card>
 
@@ -121,9 +136,10 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-status-warning">{formatCurrency(metrics.fundingGap)}</div>
-            <p className="text-xs text-muted-foreground">
-              Requires additional funding
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">Requires additional funding</p>
+              <Badge variant="destructive" className="text-xs">12.1%</Badge>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -137,8 +153,10 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.facilitiesGenerated}</div>
-            <p className="text-xs text-muted-foreground">Health facilities</p>
-            <Progress value={100} className="mt-2" />
+            <p className="text-xs text-muted-foreground mt-1">
+              All health facilities completed
+            </p>
+            <Badge className="mt-2 bg-status-ok text-white">100% Complete</Badge>
           </CardContent>
         </Card>
 
@@ -149,10 +167,12 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.facilitiesAdjusted}</div>
-            <p className="text-xs text-muted-foreground">
-              {((metrics.facilitiesAdjusted / metrics.facilitiesGenerated) * 100).toFixed(1)}% completion
-            </p>
-            <Progress value={(metrics.facilitiesAdjusted / metrics.facilitiesGenerated) * 100} className="mt-2" />
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                {((metrics.facilitiesAdjusted / metrics.facilitiesGenerated) * 100).toFixed(1)}% completion
+              </p>
+              <Badge variant="outline">{metrics.facilitiesGenerated - metrics.facilitiesAdjusted} pending</Badge>
+            </div>
           </CardContent>
         </Card>
 
@@ -163,34 +183,55 @@ const CDSSDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-status-ok">{metrics.facilitiesSubmitted}</div>
-            <p className="text-xs text-muted-foreground">
-              {((metrics.facilitiesSubmitted / metrics.facilitiesGenerated) * 100).toFixed(1)}% submitted
-            </p>
-            <Progress value={(metrics.facilitiesSubmitted / metrics.facilitiesGenerated) * 100} className="mt-2" />
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                {((metrics.facilitiesSubmitted / metrics.facilitiesGenerated) * 100).toFixed(1)}% submitted
+              </p>
+              <Badge className="bg-status-ok text-white">On Track</Badge>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Product Cost by Category */}
+        {/* Advanced Pie Chart for Product Categories */}
         <Card className="surface">
           <CardHeader>
-            <CardTitle>Product Cost by Category</CardTitle>
+            <CardTitle>Product Cost Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {categoryData.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{category.category}</span>
-                      <span className="text-sm text-muted-foreground">{formatCurrency(category.cost)}</span>
-                    </div>
-                    <Progress value={category.percentage} className="h-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ChartContainer config={pieChartConfig} className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ category, percentage }) => `${category}: ${percentage}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="cost"
+                    stroke="hsl(var(--border))"
+                    strokeWidth={2}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={<ChartTooltipContent 
+                      formatter={(value) => [formatCurrency(value as number), "Cost"]}
+                    />}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    formatter={(value) => <span className="text-sm">{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
@@ -228,15 +269,15 @@ const CDSSDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Regional Cost Distribution */}
+        {/* Enhanced Regional Cost Distribution */}
         <Card className="surface">
           <CardHeader>
-            <CardTitle>Total Cost by Region</CardTitle>
+            <CardTitle>Regional Cost Analysis</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-96">
+            <ChartContainer config={chartConfig} className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={regionalData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={regionalData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis 
                     dataKey="region" 
@@ -251,7 +292,12 @@ const CDSSDashboard: React.FC = () => {
                   />
                   <ChartTooltip 
                     content={<ChartTooltipContent 
-                      formatter={(value) => [formatCurrency(value as number), "Cost"]}
+                      formatter={(value, name) => {
+                        if (name === 'cost') return [formatCurrency(value as number), "Total Cost"];
+                        if (name === 'facilities') return [value, "Facilities"];
+                        if (name === 'trend') return [`${value}%`, "Growth"];
+                        return [value, name];
+                      }}
                     />} 
                   />
                   <Bar dataKey="cost" fill="hsl(var(--brand))" radius={[4, 4, 0, 0]} />
