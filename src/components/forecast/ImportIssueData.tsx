@@ -80,38 +80,58 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
   }, [session?.user?.id]);
 
   const handleFile = (file: File) => {
+    // Handle Excel files differently
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      toast({
+        title: "Excel files not supported",
+        description: "Please save your Excel file as CSV format and try again.",
+      });
+      return;
+    }
+
     Papa.parse<IssueDataRow>(file, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (h) => h.trim(),
-      delimiter: ",",
-      newline: "\n",
+      delimiter: "",  // Auto-detect delimiter
+      newline: "",    // Auto-detect newline
       quoteChar: '"',
       escapeChar: '"',
+      comments: false,
       complete: (results) => {
         console.log("Parse results:", results);
         console.log("Headers found:", results.meta.fields);
         console.log("Expected headers:", SAMPLE_CSV_HEADERS);
+        console.log("Data rows:", results.data.length);
         
         if (results.errors?.length) {
           console.error("Parse errors:", results.errors);
-          // Only show error if there are actual data issues, not parsing warnings
-          const criticalErrors = results.errors.filter(e => e.type !== "Quotes" && e.type !== "FieldMismatch");
+          // Filter out common non-critical parsing warnings
+          const criticalErrors = results.errors.filter(e => 
+            e.type !== "Quotes" && 
+            e.type !== "FieldMismatch" && 
+            e.code !== "InvalidQuotes" &&
+            e.code !== "TooFewFields" &&
+            e.code !== "TooManyFields"
+          );
           if (criticalErrors.length > 0) {
             toast({
               title: "Import warning",
-              description: `Some rows had issues. Processed ${results.data.length} rows.`,
+              description: `Some rows had parsing issues. Processed ${results.data.length} rows.`,
             });
           }
         }
 
-        // Validate headers
+        // Validate headers - be more flexible with header matching
         const headers = results.meta.fields || [];
-        const missing = SAMPLE_CSV_HEADERS.filter((h) => !headers.includes(h));
+        const normalizedHeaders = headers.map(h => h.trim().toLowerCase());
+        const normalizedExpected = SAMPLE_CSV_HEADERS.map(h => h.toLowerCase());
+        
+        const missing = normalizedExpected.filter((h) => !normalizedHeaders.includes(h));
         if (missing.length) {
           toast({
             title: "Invalid file format",
-            description: `Missing columns: ${missing.join(", ")}. Found: ${headers.join(", ")}`,
+            description: `Missing columns: ${missing.join(", ")}. Found: ${headers.join(", ")}. Please ensure your CSV has the exact column names from the template.`,
           });
           return;
         }
