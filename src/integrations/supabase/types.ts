@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1104,6 +1104,42 @@ export type Database = {
         }
         Relationships: []
       }
+      product_issues: {
+        Row: {
+          created_at: string
+          id: string
+          items_description: string
+          program: string
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+          user_id: string | null
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items_description: string
+          program: string
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items_description?: string
+          program?: string
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       product_mappings: {
         Row: {
           confidence: number | null
@@ -1974,11 +2010,11 @@ export type Database = {
         Returns: undefined
       }
       approve_rrf: {
-        Args: { p_rrf_id: string; p_decision?: string; p_comment?: string }
+        Args: { p_comment?: string; p_decision?: string; p_rrf_id: string }
         Returns: undefined
       }
       can_update_registration_request: {
-        Args: { _user_id: string; _request_id: string }
+        Args: { _request_id: string; _user_id: string }
         Returns: boolean
       }
       get_current_user_role: {
@@ -1988,16 +2024,16 @@ export type Database = {
       get_procurement_summary: {
         Args: {
           p_fiscal_year?: number
-          p_region_name?: string
           p_procurement_source?: string
+          p_region_name?: string
         }
         Returns: {
-          total_records: number
-          total_value: number
           avg_price: number
+          epss_percentage: number
           total_facilities: number
           total_products: number
-          epss_percentage: number
+          total_records: number
+          total_value: number
         }[]
       }
       has_admin_scope_for_national: {
@@ -2005,7 +2041,7 @@ export type Database = {
         Returns: boolean
       }
       has_admin_scope_for_region: {
-        Args: { _user_id: string; _region_id: number }
+        Args: { _region_id: number; _user_id: string }
         Returns: boolean
       }
       has_admin_scope_for_woreda: {
@@ -2018,8 +2054,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }

@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { ImportForecast } from "@/components/forecast/ImportForecast";
+import ImportIssueData from "@/components/forecast/ImportIssueData";
 import { ForecastDataset, ForecastRow, buildDataset } from "@/types/forecast";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Link } from "react-router-dom";
@@ -192,9 +193,9 @@ const filteredTotals = React.useMemo(() => {
                   <DialogTitle>Import Issue Data</DialogTitle>
                   <DialogDescription>Upload issue data to analyze forecast problems.</DialogDescription>
                 </DialogHeader>
-                <div className="p-4 text-center text-muted-foreground">
-                  Import functionality for issue data will be implemented here.
-                </div>
+                <ImportIssueData onData={() => {
+                  // Refresh or handle issue data import completion
+                }} />
               </DialogContent>
             </Dialog>
           </div>
