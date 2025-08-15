@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
+import { ForecastAccuracyChart } from "@/components/dashboard/ForecastAccuracyChart";
 import PageHeader from "@/components/layout/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -318,6 +319,13 @@ const filteredTotals = React.useMemo(() => {
         )}
 
         {dataset && <ProgramInsights rows={filteredRows} />}
+
+        {dataset && (
+          <ForecastAccuracyChart 
+            selectedPrograms={selectedPrograms}
+            selectedYears={selectedYears}
+          />
+        )}
 
         {dataset && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
