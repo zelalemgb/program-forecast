@@ -17,7 +17,7 @@ const SupplyPlanning: React.FC = () => {
   const canonical = `${window.location.origin}${location.pathname}`;
   
   const [periodType, setPeriodType] = useState<string>("monthly");
-  const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2016");
+  const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2017");
   const [showWizard, setShowWizard] = useState(false);
   const [manualEntryMode, setManualEntryMode] = useState(false);
 
@@ -30,6 +30,9 @@ const SupplyPlanning: React.FC = () => {
       const hamleMonths = ["Hamle", "Nehase", "Meskerem", "Tekemet", "Hedar", "Tahsas", 
                           "Tir", "Yekatit", "Megabit", "Miazia", "Ginbot", "Sene"];
       return hamleMonths;
+    } else if (periodType === "bi-monthly") {
+      // 6 bi-monthly periods
+      return ["Hamle-Nehase", "Meskerem-Tekemet", "Hedar-Tahsas", "Tir-Yekatit", "Megabit-Miazia", "Ginbot-Sene"];
     } else if (periodType === "quarterly") {
       // 4 quarters
       return ["Q1 (Hamle-Meskerem)", "Q2 (Tekemet-Tahsas)", "Q3 (Tir-Miazia)", "Q4 (Ginbot-Sene)"];
@@ -158,6 +161,7 @@ const SupplyPlanning: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
                     <SelectItem value="biannually">Biannually</SelectItem>
                   </SelectContent>
@@ -168,13 +172,15 @@ const SupplyPlanning: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="hamle-2017">Hamle 2017 E.C.</SelectItem>
                     <SelectItem value="hamle-2016">Hamle 2016 E.C.</SelectItem>
                     <SelectItem value="hamle-2015">Hamle 2015 E.C.</SelectItem>
                     <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
+                    <SelectItem value="hamle-2013">Hamle 2013 E.C.</SelectItem>
                   </SelectContent>
                 </Select>
                 <Badge variant="outline" className="ml-2">
-                  One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "quarterly" ? "quarters" : "periods"})
+                  One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "bi-monthly" ? "bi-monthly periods" : periodType === "quarterly" ? "quarters" : "periods"})
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
