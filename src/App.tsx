@@ -41,35 +41,37 @@ const AppShell: React.FC = () => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         {user && !isAuth && <AppSidebar />}
-        <main className="flex-1">
+        <div className="flex-1 flex flex-col">
           {user && !isAuth && <DashboardHeader currentLocation="Boru Meda Hospital – Facility View" />}
           
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
-            <Route path="/forecast" element={<RunForecast />} />
-            <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
-            <Route path="/dagu" element={<Dagu />} />
-            <Route path="/supply-planning" element={<SupplyPlanning />} />
-            <Route path="/budget-alignment" element={<BudgetAlignment />} />
-            <Route path="/validation" element={<Validation />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/register" element={<RegisterFacility />} />
-            <Route path="/approvals" element={<Approvals />} />
-            <Route path="/admin" element={<SuperAdminDashboard />} />
-            <Route path="/program-settings" element={<ProgramSettings />} />
-            <Route path="/requests" element={<Requests />} />
-            <Route path="/requests/new" element={<RequestWizard />} />
-            <Route path="/requests/:id" element={<RequestDetail />} />
-            <Route path="/help/guides" element={<Guides />} />
-            <Route path="/help/videos" element={<Videos />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
+              <Route path="/forecast" element={<RunForecast />} />
+              <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
+              <Route path="/dagu" element={<Dagu />} />
+              <Route path="/supply-planning" element={<SupplyPlanning />} />
+              <Route path="/budget-alignment" element={<BudgetAlignment />} />
+              <Route path="/validation" element={<Validation />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/register" element={<RegisterFacility />} />
+              <Route path="/approvals" element={<Approvals />} />
+              <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="/program-settings" element={<ProgramSettings />} />
+              <Route path="/requests" element={<Requests />} />
+              <Route path="/requests/new" element={<RequestWizard />} />
+              <Route path="/requests/:id" element={<RequestDetail />} />
+              <Route path="/help/guides" element={<Guides />} />
+              <Route path="/help/videos" element={<Videos />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
 
           {user && !isAuth && (
-            <footer className="border-t bg-background">
+            <footer className="border-t bg-background mt-auto">
               <div className="container py-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-4">
                   <span>v2.1.4</span>
@@ -85,7 +87,7 @@ const AppShell: React.FC = () => {
               </div>
             </footer>
           )}
-        </main>
+        </div>
       </div>
     </SidebarProvider>
   );
