@@ -206,42 +206,405 @@ const BudgetAlignment: React.FC = () => {
   };
 
   const handlePrint = () => {
-    // Create a new window with the agreement letter
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
-      // Import React and ReactDOM for rendering
       printWindow.document.write(`
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>CDSS Agreement - ${facilityName}</title>
-          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
           <style>
-            @media print {
-              .page-break-before { page-break-before: always; }
-              body { -webkit-print-color-adjust: exact; }
-              .print\\:shadow-none { box-shadow: none !important; }
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
             }
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+            
+            body {
+              font-family: 'Times New Roman', Times, serif;
+              line-height: 1.6;
+              color: #000;
+              background: white;
+              font-size: 12pt;
+            }
+            
+            .container {
+              max-width: 210mm;
+              margin: 0 auto;
+              padding: 20mm;
+              background: white;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 3px double #000;
+              padding-bottom: 20px;
+            }
+            
+            .header h1 {
+              font-size: 18pt;
+              font-weight: bold;
+              margin-bottom: 8px;
+            }
+            
+            .header h2 {
+              font-size: 16pt;
+              font-weight: bold;
+              margin-bottom: 8px;
+            }
+            
+            .header h3 {
+              font-size: 14pt;
+              margin-bottom: 15px;
+            }
+            
+            .agreement-title {
+              font-size: 14pt;
+              font-weight: bold;
+              border: 2px solid #000;
+              padding: 10px;
+              margin-top: 15px;
+            }
+            
+            .details-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+              margin-bottom: 25px;
+            }
+            
+            .content {
+              text-align: justify;
+              margin-bottom: 25px;
+            }
+            
+            .content p {
+              margin-bottom: 12px;
+            }
+            
+            .financial-summary {
+              background: #f8f9fa;
+              border: 1px solid #ddd;
+              padding: 15px;
+              margin: 20px 0;
+            }
+            
+            .financial-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr 1fr;
+              gap: 15px;
+              margin-top: 10px;
+            }
+            
+            .terms {
+              margin: 20px 0;
+            }
+            
+            .terms ol {
+              margin-left: 20px;
+            }
+            
+            .terms li {
+              margin-bottom: 5px;
+            }
+            
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 15px 0;
+            }
+            
+            th, td {
+              border: 1px solid #000;
+              padding: 8px;
+              text-align: left;
+            }
+            
+            th {
+              background: #f0f0f0;
+              font-weight: bold;
+              text-align: center;
+            }
+            
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            
+            .category-header {
+              background: #e9ecef;
+              border-left: 4px solid #007bff;
+              padding: 10px;
+              margin-top: 20px;
+              font-weight: bold;
+              display: flex;
+              justify-content: space-between;
+            }
+            
+            .total-summary {
+              background: #f8f9fa;
+              border: 2px solid #ddd;
+              padding: 15px;
+              margin: 20px 0;
+              text-align: center;
+            }
+            
+            .signatures {
+              margin-top: 50px;
+              page-break-inside: avoid;
+            }
+            
+            .signature-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 40px;
+              margin-top: 30px;
+            }
+            
+            .signature-field {
+              margin: 15px 0;
+            }
+            
+            .signature-line {
+              border-bottom: 1px solid #000;
+              height: 30px;
+              margin-top: 5px;
+            }
+            
+            .signature-line.big {
+              height: 50px;
+            }
+            
+            .stamp-box {
+              border: 1px solid #000;
+              padding: 20px;
+              text-align: center;
+              margin-top: 15px;
+              height: 80px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+              .page-break { page-break-before: always; }
+              .no-print { display: none; }
+            }
+            
+            @page {
+              margin: 2cm;
+              size: A4;
+            }
           </style>
         </head>
         <body>
-          <div id="agreement-content"></div>
-          <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-          <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+          <div class="container">
+            <!-- Header -->
+            <div class="header">
+              <h1>FEDERAL DEMOCRATIC REPUBLIC OF ETHIOPIA</h1>
+              <h2>MINISTRY OF HEALTH</h2>
+              <h3>Ethiopian Pharmaceutical Supply Service (EPSS)</h3>
+              <div class="agreement-title">
+                COMMITTED DEMAND SUPPLY SYSTEM (CDSS) AGREEMENT
+              </div>
+            </div>
+
+            <!-- Agreement Details -->
+            <div class="details-grid">
+              <div><strong>Agreement Date:</strong> ${new Date().toLocaleDateString('en-GB')}</div>
+              <div><strong>Agreement No:</strong> CDSS-${facilityName.replace(/\s+/g, '')}-${new Date().getFullYear()}</div>
+              <div><strong>Health Facility:</strong> ${facilityName}</div>
+              <div><strong>Supply Period:</strong> ${period}</div>
+            </div>
+
+            <!-- Agreement Body -->
+            <div class="content">
+              <p>
+                This agreement is entered into between the <strong>Ethiopian Pharmaceutical Supply Service (EPSS)</strong> 
+                and <strong>${facilityName}</strong> under the Committed Demand Supply System (CDSS) framework 
+                for the supply period of ${period}.
+              </p>
+              
+              <p>
+                Under this agreement, ${facilityName} commits to procure the pharmaceutical products listed 
+                in Annex A at the agreed quantities and prices. This commitment is binding and represents 
+                the facility's verified demand based on their available budget allocation.
+              </p>
+
+              <div class="financial-summary">
+                <div class="font-bold">Financial Summary:</div>
+                <div class="financial-grid">
+                  <div>
+                    <strong>Original Forecast Cost:</strong><br />
+                    ${originalCost.toLocaleString()} ETB
+                  </div>
+                  <div>
+                    <strong>Available Budget:</strong><br />
+                    ${budget.toLocaleString()} ETB
+                  </div>
+                  <div>
+                    <strong>Committed Amount:</strong><br />
+                    <span style="font-size: 14pt; font-weight: bold;">${totalCost.toLocaleString()} ETB</span>
+                  </div>
+                </div>
+                ${budget - totalCost >= 0 ? `<div style="margin-top: 10px; color: #28a745;"><strong>Budget Surplus:</strong> ${(budget - totalCost).toLocaleString()} ETB</div>` : ''}
+              </div>
+
+              <div class="terms">
+                <div class="font-bold">Terms and Conditions:</div>
+                <ol>
+                  <li>The health facility commits to procure all items listed in Annex A at the specified quantities.</li>
+                  <li>Payment terms: Net 30 days from delivery confirmation.</li>
+                  <li>Delivery schedule: As per EPSS standard delivery calendar.</li>
+                  <li>Quality assurance: All products meet Ethiopian regulatory standards.</li>
+                  <li>This agreement is valid for the specified supply period only.</li>
+                  <li>Any modifications require written consent from both parties.</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Page Break -->
+            <div class="page-break"></div>
+
+            <!-- Annex A -->
+            <div>
+              <h3 style="font-size: 16pt; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                ANNEX A: COMMITTED PHARMACEUTICAL PRODUCTS
+              </h3>
+              
+              ${productCategories.map((category, categoryIndex) => {
+                const categoryTotal = category.drugs.reduce((sum, drug) => 
+                  sum + (drug.adjustedQty * drug.estimatedUnitPrice), 0);
+                
+                return `
+                  <div style="margin-bottom: 30px;">
+                    <div class="category-header">
+                      <span>${category.name}</span>
+                      <span style="font-weight: normal;">Total: ${categoryTotal.toLocaleString()} ETB</span>
+                    </div>
+                    
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>No.</th>
+                          <th>Drug Name</th>
+                          <th>Unit</th>
+                          <th>Unit Price (ETB)</th>
+                          <th>Original Qty</th>
+                          <th>Committed Qty</th>
+                          <th>Total Price (ETB)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${category.drugs.map((drug, drugIndex) => `
+                          <tr>
+                            <td class="text-center">${categoryIndex + 1}.${drugIndex + 1}</td>
+                            <td>${drug.name}</td>
+                            <td class="text-center">${drug.unit}</td>
+                            <td class="text-right">${drug.estimatedUnitPrice.toFixed(2)}</td>
+                            <td class="text-right" style="color: #666;">${drug.originalQty.toLocaleString()}</td>
+                            <td class="text-right font-bold">${drug.adjustedQty.toLocaleString()}</td>
+                            <td class="text-right font-bold">${(drug.adjustedQty * drug.estimatedUnitPrice).toLocaleString()}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `;
+              }).join('')}
+              
+              <div class="total-summary">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                  <div>
+                    <strong>Total Original Forecast:</strong><br />
+                    ${originalCost.toLocaleString()} ETB
+                  </div>
+                  <div>
+                    <strong>Total Committed Amount:</strong><br />
+                    <span style="font-size: 16pt; font-weight: bold;">${totalCost.toLocaleString()} ETB</span>
+                  </div>
+                  <div>
+                    <strong>Budget Utilization:</strong><br />
+                    ${((totalCost / budget) * 100).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Page Break -->
+            <div class="page-break"></div>
+
+            <!-- Signatures -->
+            <div class="signatures">
+              <h3 style="font-size: 16pt; font-weight: bold; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                AGREEMENT SIGNATURES
+              </h3>
+              
+              <div class="signature-grid">
+                <div>
+                  <h4 style="font-weight: bold; margin-bottom: 20px;">HEALTH FACILITY REPRESENTATIVE</h4>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Name:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Title:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Signature:</label>
+                    <div class="signature-line big"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Date:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="stamp-box">
+                    <strong>FACILITY STAMP</strong>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style="font-weight: bold; margin-bottom: 20px;">EPSS REPRESENTATIVE</h4>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Name:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Title:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Signature:</label>
+                    <div class="signature-line big"></div>
+                  </div>
+                  <div class="signature-field">
+                    <label style="font-size: 10pt; color: #666;">Date:</label>
+                    <div class="signature-line"></div>
+                  </div>
+                  <div class="stamp-box">
+                    <strong>EPSS OFFICIAL SEAL</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: 40px; text-align: center; font-size: 10pt; color: #666;">
+                <p>This agreement is binding upon signature by both parties.</p>
+                <p>For inquiries contact EPSS at: info@epss.gov.et | Tel: +251-11-XXX-XXXX</p>
+              </div>
+            </div>
+          </div>
         </body>
         </html>
       `);
-      
-      // Generate the agreement content
-      const agreementHTML = generateAgreementHTML();
-      printWindow.document.getElementById('agreement-content')!.innerHTML = agreementHTML;
-      
       printWindow.document.close();
+      printWindow.focus();
       setTimeout(() => {
         printWindow.print();
-        printWindow.close();
-      }, 500);
+      }, 250);
     }
   };
 
