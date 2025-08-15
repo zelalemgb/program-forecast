@@ -20,6 +20,7 @@ import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
 import RunForecast from "./pages/RunForecast";
+import HealthProgramsDashboard from "./pages/HealthProgramsDashboard";
 import Dagu from "./pages/Dagu";
 import SupplyPlanning from "./pages/SupplyPlanning";
 import Guides from "./pages/Guides";
@@ -45,6 +46,7 @@ const AppShell: React.FC = () => {
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/forecast" element={<RunForecast />} />
+            <Route path="/health-programs-dashboard" element={<HealthProgramsDashboard />} />
             <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
             <Route path="/dagu" element={<Dagu />} />
             <Route path="/supply-planning" element={<SupplyPlanning />} />
