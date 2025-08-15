@@ -146,17 +146,20 @@ const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
-      <SidebarHeader>
+      <SidebarHeader className="p-0">
         <Link 
           to="/" 
-          className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-md transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-2 py-1.5 mx-2 hover:bg-muted/50 rounded-md transition-colors cursor-pointer relative z-10"
           title="Go to Dashboard"
+          onClick={(e) => {
+            console.log("Logo clicked - navigating to /");
+          }}
         >
           <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
             <TrendingUp className="h-5 w-5 text-white" />
           </div>
           {state !== "collapsed" && (
-            <div>
+            <div className="pointer-events-none">
               <div className="text-sm font-semibold">Forlab+</div>
               <div className="text-xs text-muted-foreground">MoH Platform</div>
             </div>
