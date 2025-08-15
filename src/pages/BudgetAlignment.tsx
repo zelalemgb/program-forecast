@@ -206,7 +206,208 @@ const BudgetAlignment: React.FC = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    // Create a new window with the agreement letter
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      // Import React and ReactDOM for rendering
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>CDSS Agreement - ${facilityName}</title>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          <style>
+            @media print {
+              .page-break-before { page-break-before: always; }
+              body { -webkit-print-color-adjust: exact; }
+              .print\\:shadow-none { box-shadow: none !important; }
+            }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          <div id="agreement-content"></div>
+          <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+          <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+        </body>
+        </html>
+      `);
+      
+      // Generate the agreement content
+      const agreementHTML = generateAgreementHTML();
+      printWindow.document.getElementById('agreement-content')!.innerHTML = agreementHTML;
+      
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
+  };
+
+  const facilityName = "Boru Meda Hospital";
+  const period = "FY 2024/25";
+
+  const generateAgreementHTML = () => {
+    const currentDate = new Date().toLocaleDateString('en-GB');
+    const budgetGap = budget - totalCost;
+    
+    let categoriesHTML = '';
+    productCategories.forEach((category, categoryIndex) => {
+      const categoryTotal = category.drugs.reduce((sum, drug) => 
+        sum + (drug.adjustedQty * drug.estimatedUnitPrice), 0);
+      
+      let drugsHTML = '';
+      category.drugs.forEach((drug, drugIndex) => {
+        drugsHTML += `
+          <tr>
+            <td class="border p-2 text-center">${categoryIndex + 1}.${drugIndex + 1}</td>
+            <td class="border p-2">${drug.name}</td>
+            <td class="border p-2 text-center">${drug.unit}</td>
+            <td class="border p-2 text-right">${drug.estimatedUnitPrice.toFixed(2)}</td>
+            <td class="border p-2 text-right text-gray-600">${drug.originalQty.toLocaleString()}</td>
+            <td class="border p-2 text-right font-medium">${drug.adjustedQty.toLocaleString()}</td>
+            <td class="border p-2 text-right font-medium">${(drug.adjustedQty * drug.estimatedUnitPrice).toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      
+      categoriesHTML += `
+        <div class="mb-6">
+          <div class="bg-gray-100 p-3 rounded-t border-l-4 border-blue-600">
+            <h4 class="font-semibold flex justify-between">
+              ${category.name}
+              <span class="text-sm font-normal">Total: ${categoryTotal.toLocaleString()} ETB</span>
+            </h4>
+          </div>
+          <table class="w-full border-collapse border">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="border p-2 font-semibold">No.</th>
+                <th class="border p-2 font-semibold">Drug Name</th>
+                <th class="border p-2 font-semibold">Unit</th>
+                <th class="border p-2 font-semibold">Unit Price (ETB)</th>
+                <th class="border p-2 font-semibold">Original Qty</th>
+                <th class="border p-2 font-semibold">Committed Qty</th>
+                <th class="border p-2 font-semibold">Total Price (ETB)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${drugsHTML}
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+
+    return `
+      <div class="max-w-4xl mx-auto p-8 bg-white text-black">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-2xl font-bold mb-2">FEDERAL DEMOCRATIC REPUBLIC OF ETHIOPIA</h1>
+          <h2 class="text-xl font-semibold mb-2">MINISTRY OF HEALTH</h2>
+          <h3 class="text-lg font-medium mb-4">Ethiopian Pharmaceutical Supply Service (EPSS)</h3>
+          <div class="border-t-2 border-b-2 border-black py-2">
+            <h4 class="text-lg font-bold">COMMITTED DEMAND SUPPLY SYSTEM (CDSS) AGREEMENT</h4>
+          </div>
+        </div>
+
+        <!-- Agreement Details -->
+        <div class="mb-6">
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div><strong>Agreement Date:</strong> ${currentDate}</div>
+            <div><strong>Agreement No:</strong> CDSS-${facilityName.replace(/\s+/g, '')}-${new Date().getFullYear()}</div>
+            <div><strong>Health Facility:</strong> ${facilityName}</div>
+            <div><strong>Supply Period:</strong> ${period}</div>
+          </div>
+        </div>
+
+        <!-- Agreement Body -->
+        <div class="mb-6 text-sm leading-6">
+          <p class="mb-4">
+            This agreement is entered into between the <strong>Ethiopian Pharmaceutical Supply Service (EPSS)</strong> 
+            and <strong>${facilityName}</strong> under the Committed Demand Supply System (CDSS) framework 
+            for the supply period of ${period}.
+          </p>
+          
+          <p class="mb-4">
+            Under this agreement, ${facilityName} commits to procure the pharmaceutical products listed 
+            in Annex A at the agreed quantities and prices. This commitment is binding and represents 
+            the facility's verified demand based on their available budget allocation.
+          </p>
+
+          <div class="bg-gray-50 p-4 rounded mb-4">
+            <h4 class="font-semibold mb-2">Financial Summary:</h4>
+            <div class="grid grid-cols-3 gap-4 text-sm">
+              <div><strong>Original Forecast Cost:</strong><br/>${originalCost.toLocaleString()} ETB</div>
+              <div><strong>Available Budget:</strong><br/>${budget.toLocaleString()} ETB</div>
+              <div><strong>Committed Amount:</strong><br/><span class="text-lg font-bold">${totalCost.toLocaleString()} ETB</span></div>
+            </div>
+            ${budgetGap >= 0 ? `<div class="mt-2 text-green-700"><strong>Budget Surplus:</strong> ${budgetGap.toLocaleString()} ETB</div>` : ''}
+          </div>
+
+          <div class="mb-4">
+            <h4 class="font-semibold mb-2">Terms and Conditions:</h4>
+            <ol class="list-decimal list-inside space-y-1 ml-4">
+              <li>The health facility commits to procure all items listed in Annex A at the specified quantities.</li>
+              <li>Payment terms: Net 30 days from delivery confirmation.</li>
+              <li>Delivery schedule: As per EPSS standard delivery calendar.</li>
+              <li>Quality assurance: All products meet Ethiopian regulatory standards.</li>
+              <li>This agreement is valid for the specified supply period only.</li>
+              <li>Any modifications require written consent from both parties.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Annex A -->
+        <div class="mb-8 page-break-before">
+          <h3 class="text-lg font-bold mb-4 border-b-2 border-black pb-2">ANNEX A: COMMITTED PHARMACEUTICAL PRODUCTS</h3>
+          ${categoriesHTML}
+          
+          <div class="mt-6 p-4 border-2 border-gray-300 bg-gray-50">
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div><strong>Total Original Forecast:</strong><br/>${originalCost.toLocaleString()} ETB</div>
+              <div><strong>Total Committed Amount:</strong><br/><span class="text-xl font-bold">${totalCost.toLocaleString()} ETB</span></div>
+              <div><strong>Budget Utilization:</strong><br/>${((totalCost / budget) * 100).toFixed(1)}%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="mt-12 page-break-before">
+          <h3 class="text-lg font-bold mb-6 border-b-2 border-black pb-2">AGREEMENT SIGNATURES</h3>
+          
+          <div class="grid grid-cols-2 gap-12">
+            <div>
+              <h4 class="font-semibold mb-4">HEALTH FACILITY REPRESENTATIVE</h4>
+              <div class="space-y-4">
+                <div><label class="text-sm text-gray-600">Name:</label><div class="border-b border-black h-8"></div></div>
+                <div><label class="text-sm text-gray-600">Title:</label><div class="border-b border-black h-8"></div></div>
+                <div><label class="text-sm text-gray-600">Signature:</label><div class="border-b border-black h-12"></div></div>
+                <div><label class="text-sm text-gray-600">Date:</label><div class="border-b border-black h-8"></div></div>
+              </div>
+              <div class="mt-4"><div class="border border-black p-2 text-center"><strong>FACILITY STAMP</strong></div></div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-4">EPSS REPRESENTATIVE</h4>
+              <div class="space-y-4">
+                <div><label class="text-sm text-gray-600">Name:</label><div class="border-b border-black h-8"></div></div>
+                <div><label class="text-sm text-gray-600">Title:</label><div class="border-b border-black h-8"></div></div>
+                <div><label class="text-sm text-gray-600">Signature:</label><div class="border-b border-black h-12"></div></div>
+                <div><label class="text-sm text-gray-600">Date:</label><div class="border-b border-black h-8"></div></div>
+              </div>
+              <div class="mt-4"><div class="border border-black p-2 text-center"><strong>EPSS OFFICIAL SEAL</strong></div></div>
+            </div>
+          </div>
+
+          <div class="mt-8 text-center text-sm text-gray-600">
+            <p>This agreement is binding upon signature by both parties.</p>
+            <p>For inquiries contact EPSS at: info@epss.gov.et | Tel: +251-11-XXX-XXXX</p>
+          </div>
+        </div>
+      </div>
+    `;
   };
 
   const resetToOriginal = () => {
