@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import ForecastingWizardModal from "@/components/forecast/ForecastingWizardModal";
+import { ForecastSummaryModal } from "@/components/forecast/ForecastSummaryModal";
 
 interface Forecast {
   id: string;
@@ -89,6 +90,8 @@ const mockForecasts: Forecast[] = [
 const RunForecast: React.FC = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [forecasts, setForecasts] = useState<Forecast[]>(mockForecasts);
+  const [selectedForecast, setSelectedForecast] = useState<Forecast | null>(null);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
   const handleForecastComplete = (wizardData: any) => {
     // Create a new forecast from wizard data
@@ -147,6 +150,11 @@ const RunForecast: React.FC = () => {
       default:
         return status;
     }
+  };
+
+  const handleForecastClick = (forecast: Forecast) => {
+    setSelectedForecast(forecast);
+    setIsSummaryOpen(true);
   };
 
   return (
@@ -244,7 +252,11 @@ const RunForecast: React.FC = () => {
             </TableHeader>
             <TableBody>
               {forecasts.map((forecast) => (
-                <TableRow key={forecast.id}>
+                <TableRow 
+                  key={forecast.id} 
+                  className="cursor-pointer hover:bg-accent/50"
+                  onClick={() => handleForecastClick(forecast)}
+                >
                   <TableCell className="font-medium">{forecast.name}</TableCell>
                   <TableCell>{forecast.healthProgram}</TableCell>
                   <TableCell>
@@ -271,10 +283,21 @@ const RunForecast: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleForecastClick(forecast);
+                        }}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
@@ -304,6 +327,12 @@ const RunForecast: React.FC = () => {
         open={isWizardOpen}
         onOpenChange={setIsWizardOpen}
         onComplete={handleForecastComplete}
+      />
+
+      <ForecastSummaryModal
+        forecast={selectedForecast}
+        open={isSummaryOpen}
+        onOpenChange={setIsSummaryOpen}
       />
     </div>
   );
