@@ -147,7 +147,11 @@ const AppSidebar = () => {
     <Sidebar collapsible="icon">
       <SidebarRail />
       <SidebarHeader>
-        <Link to="/" className="flex items-center gap-2 px-2 py-1.5">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-md transition-colors cursor-pointer"
+          title="Go to Dashboard"
+        >
           <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
             <TrendingUp className="h-5 w-5 text-white" />
           </div>
