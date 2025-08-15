@@ -176,7 +176,7 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
       return;
     }
 
-    // Transform and insert rows into Supabase
+    // Transform rows
     const transformedRows = rows.map((r) => ({
       user_id: session?.user?.id,
       program: String(r["Program"] || "").trim(),
@@ -187,14 +187,54 @@ export const ImportIssueData: React.FC<ImportIssueDataProps> = ({ onData }) => {
     }));
 
     (async () => {
-      const { error } = await supabase.from("product_issues").insert(transformedRows);
-      if (error) {
-        toast({ title: "Database insert failed", description: error.message });
-      } else {
-        toast({ title: "Import successful", description: `${transformedRows.length} issue records imported.` });
-        onData?.();
+      try {
+        // Check for existing records to avoid duplicates
+        const { data: existingRecords, error: fetchError } = await supabase
+          .from("product_issues")
+          .select("program, items_description, unit, year, user_id");
+
+        if (fetchError) {
+          toast({ title: "Error checking duplicates", description: fetchError.message });
+          return;
+        }
+
+        // Filter out duplicates
+        const newRecords = transformedRows.filter(newRow => {
+          return !existingRecords?.some(existingRow => 
+            existingRow.program === newRow.program &&
+            existingRow.items_description === newRow.items_description &&
+            existingRow.unit === newRow.unit &&
+            existingRow.year === newRow.year &&
+            existingRow.user_id === newRow.user_id
+          );
+        });
+
+        if (newRecords.length === 0) {
+          toast({ 
+            title: "No new records", 
+            description: "All records already exist in the database. No duplicates imported." 
+          });
+          return;
+        }
+
+        // Insert only new records
+        const { error } = await supabase.from("product_issues").insert(newRecords);
+        if (error) {
+          toast({ title: "Database insert failed", description: error.message });
+        } else {
+          const duplicateCount = transformedRows.length - newRecords.length;
+          const message = duplicateCount > 0 
+            ? `${newRecords.length} new records imported, ${duplicateCount} duplicates skipped.`
+            : `${newRecords.length} issue records imported.`;
+          
+          toast({ title: "Import successful", description: message });
+          onData?.();
+        }
+      } catch (e) {
+        console.error(e);
+        toast({ title: "Import failed", description: "An unexpected error occurred during import." });
       }
-    })().catch((e) => console.error(e));
+    })();
   };
 
   const onUploadClick = () => {
