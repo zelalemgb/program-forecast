@@ -33,16 +33,16 @@ const CDSSDashboard: React.FC = () => {
 
   // Mock data for top 10 products by cost
   const topProducts = [
-    { name: "Artemether + Lumefantrine", cost: 285000, category: "Essential Medicines" },
-    { name: "Rapid Diagnostic Test (RDT)", cost: 245000, category: "Diagnostics" },
-    { name: "Oral Rehydration Salt", cost: 195000, category: "Essential Medicines" },
-    { name: "Amoxicillin", cost: 165000, category: "Essential Medicines" },
-    { name: "Disposable Syringes", cost: 145000, category: "Medical Supplies" },
-    { name: "Blood Pressure Monitor", cost: 125000, category: "Equipment" },
-    { name: "Paracetamol", cost: 115000, category: "Essential Medicines" },
-    { name: "Examination Gloves", cost: 98000, category: "Medical Supplies" },
-    { name: "Iron Folate Tablets", cost: 87000, category: "Essential Medicines" },
-    { name: "Zinc Sulfate", cost: 76000, category: "Essential Medicines" }
+    { name: "Artemether + Lumefantrine", lineItems: 156, procurementValue: 285000, sharePercentage: 10.0, category: "Essential Medicines" },
+    { name: "Rapid Diagnostic Test (RDT)", lineItems: 134, procurementValue: 245000, sharePercentage: 8.6, category: "Diagnostics" },
+    { name: "Oral Rehydration Salt", lineItems: 128, procurementValue: 195000, sharePercentage: 6.9, category: "Essential Medicines" },
+    { name: "Amoxicillin", lineItems: 98, procurementValue: 165000, sharePercentage: 5.8, category: "Essential Medicines" },
+    { name: "Disposable Syringes", lineItems: 87, procurementValue: 145000, sharePercentage: 5.1, category: "Medical Supplies" },
+    { name: "Blood Pressure Monitor", lineItems: 76, procurementValue: 125000, sharePercentage: 4.4, category: "Equipment" },
+    { name: "Paracetamol", lineItems: 65, procurementValue: 115000, sharePercentage: 4.0, category: "Essential Medicines" },
+    { name: "Examination Gloves", lineItems: 58, procurementValue: 98000, sharePercentage: 3.4, category: "Medical Supplies" },
+    { name: "Iron Folate Tablets", lineItems: 52, procurementValue: 87000, sharePercentage: 3.1, category: "Essential Medicines" },
+    { name: "Zinc Sulfate", lineItems: 45, procurementValue: 76000, sharePercentage: 2.7, category: "Essential Medicines" }
   ];
 
   // Mock data for regional costs (enhanced)
@@ -241,14 +241,33 @@ const CDSSDashboard: React.FC = () => {
             <CardTitle>Top 10 Products by Cost</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground border-b pb-2">
+                <div className="col-span-5">Product</div>
+                <div className="col-span-2 text-center"># Line Items</div>
+                <div className="col-span-3 text-right">Procurement Value</div>
+                <div className="col-span-2 text-right">% Share</div>
+              </div>
+              
+              {/* Table Rows */}
               {topProducts.map((product, index) => (
-                <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-                  <div className="flex-1">
+                <div key={index} className="grid grid-cols-12 gap-2 items-center p-2 rounded-md hover:bg-muted/50 transition-colors">
+                  <div className="col-span-5">
                     <div className="font-medium text-sm">{product.name}</div>
                     <Badge variant="secondary" className="text-xs mt-1">{product.category}</Badge>
                   </div>
-                  <div className="text-sm font-semibold">{formatCurrency(product.cost)}</div>
+                  <div className="col-span-2 text-center font-semibold text-sm">
+                    {product.lineItems}
+                  </div>
+                  <div className="col-span-3 text-right font-semibold text-sm">
+                    {formatCurrency(product.procurementValue)}
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <Badge variant="outline" className="font-medium">
+                      {product.sharePercentage}%
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
