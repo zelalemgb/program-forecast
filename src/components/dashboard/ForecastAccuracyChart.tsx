@@ -48,7 +48,28 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           return;
         }
 
-        // Process and match data by program and year
+        console.log("Raw forecast data sample:", forecastData?.slice(0, 3));
+        console.log("Raw issue data sample:", issueData?.slice(0, 3));
+
+        // Extract unique years and programs for debugging
+        const forecastYears = [...new Set(forecastData?.map(r => r.year) || [])];
+        const issueYears = [...new Set(issueData?.map(r => r.year) || [])];
+        const forecastPrograms = [...new Set(forecastData?.map(r => r.program?.toLowerCase()) || [])];
+        const issuePrograms = [...new Set(issueData?.map(r => r.program?.toLowerCase()) || [])];
+        
+        console.log("Forecast years:", forecastYears);
+        console.log("Issue years:", issueYears);
+        console.log("Forecast programs:", forecastPrograms);
+        console.log("Issue programs:", issuePrograms);
+
+        // Find overlapping years and programs
+        const commonYears = forecastYears.filter(year => issueYears.includes(year));
+        const commonPrograms = forecastPrograms.filter(prog => issuePrograms.includes(prog));
+        
+        console.log("Common years:", commonYears);
+        console.log("Common programs:", commonPrograms);
+
+        // Process and match data by program and year with case-insensitive matching
         const accuracyMap = new Map<string, {
           year: string;
           program: string;
@@ -61,14 +82,16 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
         forecastData?.forEach(row => {
           if (!row.program || !row.year) return;
           
-          // Apply filters
-          if (selectedPrograms.length > 0 && !selectedPrograms.includes(row.program)) return;
+          const normalizedProgram = row.program.toLowerCase().trim();
+          
+          // Apply filters with case-insensitive matching
+          if (selectedPrograms.length > 0 && !selectedPrograms.some(p => p.toLowerCase() === normalizedProgram)) return;
           if (selectedYears.length > 0 && !selectedYears.includes(row.year)) return;
           
-          const key = `${row.program}-${row.year}`;
+          const key = `${normalizedProgram}-${row.year}`;
           const existing = accuracyMap.get(key) || {
             year: row.year,
-            program: row.program,
+            program: row.program, // Keep original casing for display
             totalForecasted: 0,
             totalIssue: 0,
             productCount: 0
@@ -79,15 +102,17 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
           accuracyMap.set(key, existing);
         });
 
-        // Aggregate issue data and match with forecast
+        // Aggregate issue data and match with forecast using case-insensitive matching
         issueData?.forEach(row => {
           if (!row.program || !row.year) return;
           
-          // Apply filters
-          if (selectedPrograms.length > 0 && !selectedPrograms.includes(row.program)) return;
+          const normalizedProgram = row.program.toLowerCase().trim();
+          
+          // Apply filters with case-insensitive matching  
+          if (selectedPrograms.length > 0 && !selectedPrograms.some(p => p.toLowerCase() === normalizedProgram)) return;
           if (selectedYears.length > 0 && !selectedYears.includes(row.year)) return;
           
-          const key = `${row.program}-${row.year}`;
+          const key = `${normalizedProgram}-${row.year}`;
           const existing = accuracyMap.get(key);
           
           if (existing) {
@@ -144,9 +169,20 @@ export const ForecastAccuracyChart: React.FC<ForecastAccuracyChartProps> = ({
         <CardHeader>
           <CardTitle>Forecast Accuracy Analysis</CardTitle>
         </CardHeader>
-        <CardContent className="h-80 flex items-center justify-center">
-          <div className="text-muted-foreground">
-            No matching data found. Import both forecast and issue data for the same programs and years to see accuracy analysis.
+        <CardContent className="h-80 flex flex-col items-center justify-center space-y-4">
+          <div className="text-muted-foreground text-center">
+            <p className="mb-2">No matching data found between forecast and issue data.</p>
+            <p className="text-sm">
+              <strong>Possible reasons:</strong>
+            </p>
+            <ul className="text-sm text-left mt-2 space-y-1">
+              <li>• Different year formats (e.g., forecast: "2025/26" vs issues: "2021/22")</li>
+              <li>• Different program names (case sensitivity)</li>
+              <li>• No overlapping time periods between forecast and actual issue data</li>
+            </ul>
+            <p className="text-sm mt-3">
+              Import both forecast and issue data for the same programs and years to see accuracy analysis.
+            </p>
           </div>
         </CardContent>
       </Card>
