@@ -52,10 +52,10 @@ interface ItemWithComingSoon extends Item {
 }
 
 const dataCapture: ItemWithComingSoon[] = [
-  { title: "Dagu Mini", url: "/dagu", icon: Database },
+  { title: "Inventory Management", url: "/dagu", icon: Database },
+  { title: "Guided Forecast", url: "/forecast-wizard", icon: TrendingUp },
   { title: "Forecast Upload", url: "/forecast-upload", icon: Upload },
   { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera, comingSoon: true },
-  { title: "API/Data Feeds", url: "/data-feeds", icon: Database, comingSoon: true },
 ];
 
 const forecasting: Item[] = [
