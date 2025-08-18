@@ -77,6 +77,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cdss_budget_alignments: {
+        Row: {
+          adjusted_cost: number
+          available_budget: number
+          budget_gap: number
+          created_at: string
+          facility_name: string
+          id: string
+          original_cost: number
+          period: string
+          printed_at: string | null
+          product_data: Json
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adjusted_cost?: number
+          available_budget?: number
+          budget_gap?: number
+          created_at?: string
+          facility_name: string
+          id?: string
+          original_cost?: number
+          period: string
+          printed_at?: string | null
+          product_data: Json
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adjusted_cost?: number
+          available_budget?: number
+          budget_gap?: number
+          created_at?: string
+          facility_name?: string
+          id?: string
+          original_cost?: number
+          period?: string
+          printed_at?: string | null
+          product_data?: Json
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       commodity_issues: {
         Row: {
           created_at: string
