@@ -82,6 +82,7 @@ const RegisterFacility: React.FC = () => {
     userLevel === "woreda" ? (!woredaId) :
     userLevel === "zonal" ? (!zoneId) :
     userLevel === "regional" ? (!regionId) :
+    userLevel === "national" ? false :
     false
   );
 
@@ -157,41 +158,53 @@ const RegisterFacility: React.FC = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm">Region</label>
-                  <Select onValueChange={(v) => setRegionId(Number(v))} value={regionId?.toString() || undefined}>
-                    <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
-                    <SelectContent>
-                      {regions.map(r => (
-                        <SelectItem key={r.region_id} value={r.region_id.toString()}>{r.region_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {userLevel !== "national" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm">Region</label>
+                    <Select onValueChange={(v) => setRegionId(Number(v))} value={regionId?.toString() || undefined}>
+                      <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
+                      <SelectContent>
+                        {regions.map(r => (
+                          <SelectItem key={r.region_id} value={r.region_id.toString()}>{r.region_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {userLevel !== "regional" && (
+                    <div className="space-y-1">
+                      <label className="text-sm">Zone</label>
+                      <Select onValueChange={(v) => setZoneId(Number(v))} value={zoneId?.toString() || undefined}>
+                        <SelectTrigger><SelectValue placeholder="Select zone" /></SelectTrigger>
+                        <SelectContent>
+                          {zones.map(z => (
+                            <SelectItem key={z.zone_id} value={z.zone_id.toString()}>{z.zone_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {(userLevel === "facility" || userLevel === "woreda") && (
+                    <div className="space-y-1">
+                      <label className="text-sm">Woreda</label>
+                      <Select onValueChange={(v) => setWoredaId(Number(v))} value={woredaId?.toString() || undefined}>
+                        <SelectTrigger><SelectValue placeholder="Select woreda" /></SelectTrigger>
+                        <SelectContent>
+                          {woredas.map(w => (
+                            <SelectItem key={w.woreda_id} value={w.woreda_id.toString()}>{w.woreda_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm">Zone</label>
-                  <Select onValueChange={(v) => setZoneId(Number(v))} value={zoneId?.toString() || undefined}>
-                    <SelectTrigger><SelectValue placeholder="Select zone" /></SelectTrigger>
-                    <SelectContent>
-                      {zones.map(z => (
-                        <SelectItem key={z.zone_id} value={z.zone_id.toString()}>{z.zone_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              )}
+              
+              {userLevel === "national" && (
+                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">National level users have access to all regions and facilities</p>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm">Woreda</label>
-                  <Select onValueChange={(v) => setWoredaId(Number(v))} value={woredaId?.toString() || undefined}>
-                    <SelectTrigger><SelectValue placeholder="Select woreda" /></SelectTrigger>
-                    <SelectContent>
-                      {woredas.map(w => (
-                        <SelectItem key={w.woreda_id} value={w.woreda_id.toString()}>{w.woreda_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              )}
 
               <div className="space-y-1">
                 <label className="text-sm">User Level</label>
