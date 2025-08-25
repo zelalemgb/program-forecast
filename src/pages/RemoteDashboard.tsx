@@ -35,6 +35,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 const RemoteDashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionTestResult | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -103,6 +104,32 @@ const RemoteDashboard = () => {
       setConnectionStatus({
         success: false,
         message: `Connection test failed: ${error.message || 'Unable to reach MySQL database'}`
+      });
+    }
+  };
+
+  const debugConnection = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('debug-mysql-config');
+      
+      if (error) {
+        console.error('Debug check error:', error);
+        throw error;
+      }
+
+      setDebugInfo(data);
+      console.log('Debug info:', data);
+      
+      toast({
+        title: "Debug Info Retrieved",
+        description: "Check the connection details below.",
+      });
+    } catch (error) {
+      console.error('Failed to get debug info:', error);
+      toast({
+        title: "Debug Check Failed",
+        description: "Could not retrieve debug information.",
+        variant: "destructive",
       });
     }
   };
@@ -190,6 +217,15 @@ const RemoteDashboard = () => {
               {connectionStatus.success ? "Connected" : "Disconnected"}
             </Badge>
           )}
+          
+          <Button 
+            onClick={debugConnection}
+            variant="outline"
+            size="sm"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            Debug Connection
+          </Button>
           
           <Button 
             onClick={handleRefresh} 
@@ -329,6 +365,43 @@ const RemoteDashboard = () => {
                   </Badge>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debug Information */}
+      {debugInfo && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              MySQL Connection Debug Information
+            </CardTitle>
+            <CardDescription>Configuration and connectivity details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2">Connection Configuration:</h4>
+                <div className="bg-muted p-3 rounded-lg font-mono text-sm">
+                  <div>Host: {debugInfo.secrets?.hostname}</div>
+                  <div>Port: {debugInfo.secrets?.port}</div>
+                  <div>Database: {debugInfo.secrets?.database}</div>
+                  <div>Username: {debugInfo.secrets?.username}</div>
+                  <div>Password: {debugInfo.secrets?.password}</div>
+                </div>
+              </div>
+              
+              {debugInfo.recommendation && (
+                <div>
+                  <h4 className="font-semibold mb-2">Recommendation:</h4>
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{debugInfo.recommendation}</AlertDescription>
+                  </Alert>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
