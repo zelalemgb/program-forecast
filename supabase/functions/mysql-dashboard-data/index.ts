@@ -16,13 +16,20 @@ interface DashboardData {
 }
 
 async function createMySQLConnection(): Promise<Client> {
-  const client = await new Client().connect({
+  const config = {
     hostname: Deno.env.get('MYSQL_HOST') || '',
     port: parseInt(Deno.env.get('MYSQL_PORT') || '3306'),
     username: Deno.env.get('MYSQL_USERNAME') || '',
     password: Deno.env.get('MYSQL_PASSWORD') || '',
     db: Deno.env.get('MYSQL_DATABASE') || '',
-  });
+    timeout: 10000, // 10 second timeout instead of default 30 seconds
+    poolSize: 3,
+    acquireTimeout: 10000,
+  };
+  
+  console.log(`Attempting connection to ${config.hostname}:${config.port}`);
+  
+  const client = await new Client().connect(config);
   
   return client;
 }

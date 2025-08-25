@@ -21,16 +21,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
     console.log('Testing MySQL connection...');
     
-    const client = await new Client().connect({
+    const config = {
       hostname: Deno.env.get('MYSQL_HOST') || '',
       port: parseInt(Deno.env.get('MYSQL_PORT') || '3306'),
       username: Deno.env.get('MYSQL_USERNAME') || '',
       password: Deno.env.get('MYSQL_PASSWORD') || '',
       db: Deno.env.get('MYSQL_DATABASE') || '',
-    });
+      timeout: 10000, // 10 second timeout
+      poolSize: 1,
+      acquireTimeout: 10000,
+    };
+
+    console.log(`Attempting to connect to: ${config.hostname}:${config.port}/${config.db}`);
+    
+    const client = await new Client().connect(config);
 
     console.log('Connected successfully! Gathering table information...');
 
@@ -54,10 +63,12 @@ serve(async (req) => {
     }
 
     await client.close();
+    
+    const connectionTime = Date.now() - startTime;
 
     const result: ConnectionTestResult = {
       success: true,
-      message: `Successfully connected to MySQL database. Found ${tableInfo.length} tables.`,
+      message: `Successfully connected to MySQL database in ${connectionTime}ms. Found ${tableInfo.length} tables.`,
       tableInfo
     };
 
@@ -67,11 +78,12 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('MySQL connection test failed:', error);
+    const connectionTime = Date.now() - startTime;
+    console.error(`MySQL connection test failed after ${connectionTime}ms:`, error);
     
     const result: ConnectionTestResult = {
       success: false,
-      message: `Connection failed: ${error.message}`
+      message: `Connection failed after ${connectionTime}ms: ${error.message}. Please check if the MySQL server is accessible and allows external connections.`
     };
 
     return new Response(JSON.stringify(result), {

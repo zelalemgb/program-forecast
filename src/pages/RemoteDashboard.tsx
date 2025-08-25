@@ -28,6 +28,8 @@ interface ConnectionTestResult {
   tableInfo?: Array<{ tableName: string; rowCount: number }>;
 }
 
+const CONNECTION_TIMEOUT = 12000; // 12 seconds timeout for better UX
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 const RemoteDashboard = () => {
@@ -39,7 +41,14 @@ const RemoteDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('mysql-dashboard-data');
+      // Add timeout promise to fail faster
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_TIMEOUT)
+      );
+      
+      const dataPromise = supabase.functions.invoke('mysql-dashboard-data');
+      
+      const { data, error } = await Promise.race([dataPromise, timeoutPromise]) as any;
       
       if (error) {
         console.error('Error fetching dashboard data:', error);
@@ -51,12 +60,12 @@ const RemoteDashboard = () => {
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
       toast({
-        title: "Error loading dashboard data",
-        description: "Using fallback data. Please check your MySQL connection.",
+        title: "MySQL Connection Issue",
+        description: "Cannot connect to remote database. Using fallback data.",
         variant: "destructive",
       });
       
-      // Set fallback data
+      // Set fallback data immediately
       setDashboardData({
         facilitiesByRegion: [
           { region: 'Addis Ababa', count: 25 },
@@ -73,7 +82,14 @@ const RemoteDashboard = () => {
 
   const testConnection = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('test-mysql-connection');
+      // Add timeout for connection test too
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection test timeout')), CONNECTION_TIMEOUT)
+      );
+      
+      const testPromise = supabase.functions.invoke('test-mysql-connection');
+      
+      const { data, error } = await Promise.race([testPromise, timeoutPromise]) as any;
       
       if (error) {
         console.error('Connection test error:', error);
@@ -86,7 +102,7 @@ const RemoteDashboard = () => {
       console.error('Failed to test connection:', error);
       setConnectionStatus({
         success: false,
-        message: 'Failed to test connection'
+        message: `Connection test failed: ${error.message || 'Unable to reach MySQL database'}`
       });
     }
   };
