@@ -2,3 +2,9 @@ project_id = "ueisbsvhbqsjetppruwt"
 
 [functions.bootstrap-super-admin]
 verify_jwt = false
+
+[functions.mysql-dashboard-data]
+verify_jwt = false
+
+[functions.test-mysql-connection]
+verify_jwt = false
