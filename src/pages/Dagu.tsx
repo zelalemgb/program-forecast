@@ -420,13 +420,14 @@ const Dagu: React.FC = () => {
 
           {/* Ward Requests Tab */}
           <TabsContent value="ward-requests" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>New Request</CardTitle>
-                  <CardDescription>Submit request from ward or department</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            {/* New Request Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>New Ward Request</CardTitle>
+                <CardDescription>Submit request from ward or department</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="department">Requesting Department</Label>
                     <Select>
@@ -455,50 +456,242 @@ const Dagu: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="notes">Request Notes</Label>
-                    <Textarea placeholder="Additional notes or special instructions" />
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Items Requested</h4>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
                   </div>
-                  
-                  <Button className="w-full">Submit Request</Button>
-                </CardContent>
-              </Card>
+                  <div className="grid grid-cols-5 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                    <span>Product Name</span>
+                    <span>Requested Qty</span>
+                    <span>Unit</span>
+                    <span>Available Stock</span>
+                    <span>Notes</span>
+                  </div>
+                  <div className="py-4 text-center text-muted-foreground">
+                    No items added yet. Click "Add Item" to specify requested items.
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="notes">Request Notes</Label>
+                  <Textarea placeholder="Additional notes or special instructions" />
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline">Save Draft</Button>
+                  <Button>Submit Request</Button>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Pending Requests
-                    <Badge variant="secondary">3</Badge>
-                  </CardTitle>
-                  <CardDescription>Requests awaiting approval and fulfillment</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Maternity Ward</div>
-                        <div className="text-sm text-muted-foreground">5 items requested</div>
+            {/* Pending Requests with Item Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Pending Ward Requests
+                  <Badge variant="secondary">3</Badge>
+                </CardTitle>
+                <CardDescription>Requests awaiting approval and fulfillment</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Maternity Ward Request */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Maternity Ward</div>
+                          <div className="text-sm text-muted-foreground">5 items requested • Submitted 2 hours ago</div>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">View</Button>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Normal Priority</Badge>
+                        <Button size="sm" variant="outline">View Full</Button>
                         <Button size="sm">Approve & Issue</Button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">Emergency Room</div>
-                        <div className="text-sm text-muted-foreground">2 items requested • Urgent</div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="border-t mt-4 pt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Requested</TableHead>
+                          <TableHead>Available</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">Paracetamol 500mg</TableCell>
+                          <TableCell>50 tablets</TableCell>
+                          <TableCell>0 tablets</TableCell>
+                          <TableCell>
+                            <Badge variant="destructive">Out of Stock</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Gloves (Medium)</TableCell>
+                          <TableCell>2 boxes</TableCell>
+                          <TableCell>15 boxes</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Gauze Pads</TableCell>
+                          <TableCell>10 packs</TableCell>
+                          <TableCell>25 packs</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Antiseptic Solution</TableCell>
+                          <TableCell>3 bottles</TableCell>
+                          <TableCell>8 bottles</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Syringes 5ml</TableCell>
+                          <TableCell>100 pieces</TableCell>
+                          <TableCell>350 pieces</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm">
+                      <strong>Request Notes:</strong> Weekly restocking for maternity unit. Urgent need for gloves and gauze for deliveries this week.
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Emergency Room Request */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Emergency Room</div>
+                          <div className="text-sm text-muted-foreground">2 items requested • Submitted 30 mins ago</div>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">View</Button>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive">Urgent</Badge>
+                        <Button size="sm" variant="outline">View Full</Button>
                         <Button size="sm">Approve & Issue</Button>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="border-t mt-4 pt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Requested</TableHead>
+                          <TableHead>Available</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">IV Fluids (Normal Saline)</TableCell>
+                          <TableCell>10 bags</TableCell>
+                          <TableCell>45 bags</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Adrenaline 1mg</TableCell>
+                          <TableCell>5 vials</TableCell>
+                          <TableCell>12 vials</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                    <div className="mt-3 p-3 bg-destructive/10 rounded-lg text-sm border border-destructive/20">
+                      <strong>Request Notes:</strong> <span className="text-destructive font-medium">URGENT:</span> Multiple trauma cases in ER. Need immediate restocking of emergency supplies.
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Pediatrics Request */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <ChevronRight className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Pediatrics Ward</div>
+                          <div className="text-sm text-muted-foreground">3 items requested • Submitted 1 day ago</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Normal Priority</Badge>
+                        <Button size="sm" variant="outline">View Full</Button>
+                        <Button size="sm">Approve & Issue</Button>
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="border-t mt-4 pt-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Requested</TableHead>
+                          <TableHead>Available</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">ORS Sachets</TableCell>
+                          <TableCell>50 sachets</TableCell>
+                          <TableCell>25 sachets</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="border-yellow-300 text-yellow-700">Partial Stock</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Amoxicillin Suspension</TableCell>
+                          <TableCell>20 bottles</TableCell>
+                          <TableCell>35 bottles</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Thermometers (Digital)</TableCell>
+                          <TableCell>5 pieces</TableCell>
+                          <TableCell>8 pieces</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Available</Badge>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm">
+                      <strong>Request Notes:</strong> Monthly supply for pediatric unit. High demand for ORS due to current diarrhea cases.
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Transfers Out Tab */}
