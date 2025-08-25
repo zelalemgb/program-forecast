@@ -45,7 +45,6 @@ interface Item {
 const dashboardItems: Item[] = [
   { title: "Facility Dashboard", url: "/", icon: LayoutDashboard },
   { title: "CDSS Dashboard", url: "/cdss-dashboard", icon: Banknote },
-  { title: "Remote Dashboard", url: "/remote-dashboard", icon: Database },
 ];
 
 interface ItemWithComingSoon extends Item {
