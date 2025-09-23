@@ -482,8 +482,7 @@ export const ReceivingModule: React.FC = () => {
 
           {/* Items Section */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">Items to Receive</h3>
+            <div className="flex items-center justify-end mb-3">
               <div className="flex items-center gap-2">
                 <Label htmlFor="program-filter" className="text-sm">Program:</Label>
                 <Select value={programFilter} onValueChange={setProgramFilter}>
