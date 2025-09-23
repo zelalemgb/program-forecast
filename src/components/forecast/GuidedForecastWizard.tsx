@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +111,29 @@ export const GuidedForecastWizard: React.FC = () => {
   const [forecastData, setForecastData] = useState(mockForecastData);
   const [calculationResults, setCalculationResults] = useState<any>(null);
   const [collectedData, setCollectedData] = useState<any>(null);
+
+  // Get URL parameters and auto-populate wizard data
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const method = urlParams.get('method');
+    const program = urlParams.get('program');
+    const commodities = urlParams.get('commodities');
+
+    if (method) {
+      // Map method names to our format
+      const methodMap: { [key: string]: string } = {
+        'Consumption Method': 'consumption-based',
+        'Service Data Method': 'trend-analysis', 
+        'Demographic Method': 'hybrid'
+      };
+      setForecastMethod(methodMap[method] || 'consumption-based');
+    }
+
+    // If we have URL parameters, show a welcome message
+    if (method || program || commodities) {
+      console.log('Forecast parameters received:', { method, program, commodities });
+    }
+  }, []);
 
   const handleNext = () => {
     if (currentStep < wizardSteps.length - 1) {

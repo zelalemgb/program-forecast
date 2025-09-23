@@ -94,22 +94,13 @@ const RunForecast: React.FC = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
   const handleForecastComplete = (wizardData: any) => {
-    // Create a new forecast from wizard data
-    const newForecast: Forecast = {
-      id: Date.now().toString(),
-      name: `${wizardData.healthProgram || wizardData.customProgram} Forecast`,
-      healthProgram: wizardData.healthProgram || wizardData.customProgram,
-      commodityTypes: wizardData.commodityTypes,
-      method: getRecommendedMethod(wizardData),
-      forecastPeriod: wizardData.forecastMonths === "custom" ? 
-        `${wizardData.customMonths} months` : 
-        `${wizardData.forecastMonths} months`,
-      status: "draft",
-      createdDate: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0]
-    };
+    // Navigate to forecast wizard with the collected data
+    const method = getRecommendedMethod(wizardData);
+    const program = wizardData.healthProgram || wizardData.customProgram;
+    const commodities = wizardData.commodityTypes.join(',');
     
-    setForecasts(prev => [newForecast, ...prev]);
+    setIsWizardOpen(false);
+    window.location.href = `/forecast?method=${method}&program=${program}&commodities=${commodities}`;
   };
 
   const getRecommendedMethod = (wizardData: any): string => {
