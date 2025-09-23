@@ -31,7 +31,7 @@ export interface ForecastData {
   };
   
   // Step 4: Method Selection
-  selectedMethod: 'consumption' | 'service' | 'demographic' | 'hybrid';
+  selectedMethod: 'consumption' | 'service' | 'demographic' | 'hybrid' | undefined;
   
   // Step 5: Data Collection (varies by method)
   collectedData: any;
@@ -67,7 +67,7 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
       population: false,
       stockData: false,
     },
-    selectedMethod: 'consumption',
+    selectedMethod: undefined,
     collectedData: null,
   });
 
