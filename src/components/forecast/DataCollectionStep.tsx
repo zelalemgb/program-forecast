@@ -284,3 +284,5 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
     </div>
   );
 };
+
+export default DataCollectionStep;

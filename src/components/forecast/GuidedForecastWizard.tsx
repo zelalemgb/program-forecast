@@ -23,7 +23,7 @@ import {
   Upload
 } from "lucide-react";
 import { ForecastCalculationStep } from "./ForecastCalculationStep";
-import { DataCollectionStep } from "./DataCollectionStep";
+import DataCollectionStep from "./DataCollectionStep";
 
 interface ForecastItem {
   id: string;
