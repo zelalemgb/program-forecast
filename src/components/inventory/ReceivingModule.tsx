@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,17 +6,38 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Camera, Upload, Plus, Trash2, Package, Truck, FileText, ScanLine, ArrowLeft, Smartphone } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Camera, Upload, Plus, Trash2, Package, Truck, FileText, ScanLine, ArrowLeft, Smartphone, Search, Check, ChevronsUpDown } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+interface Product {
+  id: string;
+  canonical_name: string;
+  program: string;
+  default_unit: string;
+  base_unit: string;
+  pack_size: number | null;
+  price_benchmark_low: number | null;
+  price_benchmark_high: number | null;
+  recommended_formulation: string | null;
+  strength: string | null;
+  form: string | null;
+}
 
 interface ReceivedItem {
   id: string;
+  productId: string;
   productName: string;
   quantity: number;
+  unit: string;
+  packSize?: number;
+  unitCost?: number;
   batchNumber?: string;
   expiryDate?: string;
-  unitCost?: number;
   supplier?: string;
 }
 
@@ -40,9 +61,56 @@ export const ReceivingModule: React.FC = () => {
   const [documentImage, setDocumentImage] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Product search states
+  const [products, setProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [open, setOpen] = useState(false);
+  const [programFilter, setProgramFilter] = useState<string>("all");
+  
   const facilityId = 1; // Would come from user context
   const { addTransaction } = useInventoryData(facilityId);
   const { toast } = useToast();
+
+  // Fetch products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        let query = supabase
+          .from('product_reference')
+          .select('*')
+          .eq('active', true);
+        
+        if (programFilter !== "all") {
+          query = query.eq('program', programFilter);
+        }
+        
+        const { data, error } = await query
+          .order('canonical_name')
+          .limit(100);
+        
+        if (error) throw error;
+        
+        setProducts(data || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load products",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchProducts();
+  }, [programFilter, toast]);
+
+  // Filter products based on search query
+  const filteredProducts = products.filter(product =>
+    product.canonical_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (product.program && product.program.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (product.recommended_formulation && product.recommended_formulation.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const handleMethodSelect = (method: ReceivingMethod) => {
     setReceivingMethod(method);
@@ -74,16 +142,20 @@ export const ReceivingModule: React.FC = () => {
         const mockExtractedItems: ReceivedItem[] = [
           {
             id: "1",
+            productId: "10000000-0000-0000-0000-000000000001",
             productName: "Paracetamol 500mg",
             quantity: 500,
+            unit: "tablet",
             batchNumber: "PAR240301",
             expiryDate: "2025-12-31",
             unitCost: 0.25
           },
           {
-            id: "2", 
+            id: "2",
+            productId: "10000000-0000-0000-0000-000000000002",
             productName: "Amoxicillin 250mg",
             quantity: 200,
+            unit: "tablet",
             batchNumber: "AMX240301",
             expiryDate: "2025-06-30",
             unitCost: 0.85
@@ -102,19 +174,24 @@ export const ReceivingModule: React.FC = () => {
   };
 
   const addItemToList = () => {
-    if (newItem.productName && newItem.quantity) {
+    if (selectedProduct && newItem.quantity) {
       const item: ReceivedItem = {
         id: Date.now().toString(),
-        productName: newItem.productName,
+        productId: selectedProduct.id,
+        productName: selectedProduct.canonical_name,
         quantity: newItem.quantity,
+        unit: selectedProduct.default_unit,
+        packSize: selectedProduct.pack_size || undefined,
         batchNumber: newItem.batchNumber,
         expiryDate: newItem.expiryDate,
-        unitCost: newItem.unitCost,
+        unitCost: newItem.unitCost || selectedProduct.price_benchmark_low || undefined,
         supplier: newItem.supplier
       };
       
       setReceivedItems([...receivedItems, item]);
       setNewItem({});
+      setSelectedProduct(null);
+      setSearchQuery("");
       
       toast({
         title: "Item added",
@@ -130,21 +207,21 @@ export const ReceivingModule: React.FC = () => {
   const processReceiving = async () => {
     setIsProcessing(true);
     try {
-      // Process each item as an inventory transaction
-      for (const item of receivedItems) {
-        await addTransaction({
-          facility_id: facilityId,
-          product_id: "placeholder-id", // Would map from product name
-          transaction_type: "receipt",
-          quantity: item.quantity,
-          batch_number: item.batchNumber,
-          expiry_date: item.expiryDate,
-          unit_cost: item.unitCost,
-          transaction_date: new Date().toISOString().split('T')[0],
-          reference_number: deliveryInfo.deliveryNote,
-          notes: `Received from ${deliveryInfo.source}. Driver: ${deliveryInfo.driverName}`
-        });
-      }
+        // Process each item as an inventory transaction
+        for (const item of receivedItems) {
+          await addTransaction({
+            facility_id: facilityId,
+            product_id: item.productId,
+            transaction_type: "receipt",
+            quantity: item.quantity,
+            batch_number: item.batchNumber,
+            expiry_date: item.expiryDate,
+            unit_cost: item.unitCost,
+            transaction_date: new Date().toISOString().split('T')[0],
+            reference_number: deliveryInfo.deliveryNote,
+            notes: `Received from ${deliveryInfo.source}. Driver: ${deliveryInfo.driverName}`
+          });
+        }
       
       // Reset form
       setReceivedItems([]);
@@ -185,6 +262,8 @@ export const ReceivingModule: React.FC = () => {
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead>Quantity</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Unit Cost</TableHead>
                 <TableHead>Batch</TableHead>
                 <TableHead>Expiry</TableHead>
                 <TableHead>Action</TableHead>
@@ -193,8 +272,13 @@ export const ReceivingModule: React.FC = () => {
             <TableBody>
               {receivedItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.productName}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{item.productName}</div>
+                    {item.packSize && <div className="text-sm text-muted-foreground">Pack: {item.packSize}</div>}
+                  </TableCell>
                   <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                  <TableCell>{item.unit}</TableCell>
+                  <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
                   <TableCell>{item.batchNumber || "-"}</TableCell>
                   <TableCell>{item.expiryDate || "-"}</TableCell>
                   <TableCell>
@@ -418,18 +502,102 @@ export const ReceivingModule: React.FC = () => {
             </div>
 
             <div className="border rounded-lg p-4 space-y-4">
-              <h4 className="font-medium">Add New Item</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Product Name</Label>
-                  <Input
-                    value={newItem.productName || ""}
-                    onChange={(e) => setNewItem({...newItem, productName: e.target.value})}
-                    placeholder="Type to search products..."
-                  />
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Add New Item</h4>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="program-filter" className="text-sm">Program:</Label>
+                  <Select value={programFilter} onValueChange={setProgramFilter}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="CH">CH</SelectItem>
+                      <SelectItem value="HIV">HIV</SelectItem>
+                      <SelectItem value="TB">TB</SelectItem>
+                      <SelectItem value="MAL">MAL</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label>Search Product</Label>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full justify-between"
+                      >
+                        {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Search products..." 
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No product found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredProducts.map((product) => (
+                              <CommandItem
+                                key={product.id}
+                                value={product.canonical_name}
+                                onSelect={() => {
+                                  setSelectedProduct(product);
+                                  setNewItem({
+                                    ...newItem,
+                                    unitCost: product.price_benchmark_low || undefined
+                                  });
+                                  setOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{product.canonical_name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {product.program} • {product.default_unit}
+                                    {product.recommended_formulation && ` • ${product.recommended_formulation}`}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {selectedProduct && (
+                    <div className="mt-2 p-3 bg-muted rounded-lg">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div><strong>Unit:</strong> {selectedProduct.default_unit}</div>
+                        <div><strong>Program:</strong> {selectedProduct.program}</div>
+                        {selectedProduct.pack_size && (
+                          <div><strong>Pack Size:</strong> {selectedProduct.pack_size}</div>
+                        )}
+                        {selectedProduct.price_benchmark_low && (
+                          <div><strong>Est. Price:</strong> ${selectedProduct.price_benchmark_low} - ${selectedProduct.price_benchmark_high}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <div>
-                  <Label>Quantity</Label>
+                  <Label>Quantity *</Label>
                   <Input
                     type="number"
                     value={newItem.quantity || ""}
@@ -437,6 +605,18 @@ export const ReceivingModule: React.FC = () => {
                     placeholder="Enter quantity"
                   />
                 </div>
+                
+                <div>
+                  <Label>Unit Cost</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={newItem.unitCost || ""}
+                    onChange={(e) => setNewItem({...newItem, unitCost: Number(e.target.value)})}
+                    placeholder="Enter unit cost"
+                  />
+                </div>
+                
                 <div>
                   <Label>Batch Number</Label>
                   <Input
@@ -445,6 +625,7 @@ export const ReceivingModule: React.FC = () => {
                     placeholder="Enter batch number"
                   />
                 </div>
+                
                 <div>
                   <Label>Expiry Date</Label>
                   <Input
@@ -453,8 +634,22 @@ export const ReceivingModule: React.FC = () => {
                     onChange={(e) => setNewItem({...newItem, expiryDate: e.target.value})}
                   />
                 </div>
+                
+                <div className="md:col-span-2">
+                  <Label>Supplier</Label>
+                  <Input
+                    value={newItem.supplier || ""}
+                    onChange={(e) => setNewItem({...newItem, supplier: e.target.value})}
+                    placeholder="Enter supplier name"
+                  />
+                </div>
               </div>
-              <Button onClick={addItemToList} className="w-full">
+              
+              <Button 
+                onClick={addItemToList} 
+                className="w-full"
+                disabled={!selectedProduct || !newItem.quantity}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
