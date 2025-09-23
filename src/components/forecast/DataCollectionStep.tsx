@@ -42,7 +42,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
     treatmentSeekingRate: ''
   });
 
-  // Normalize the forecast method
+  // Normalize the forecast method - moved to top to ensure it's available for all functions
   const normalizeMethod = (method: string) => {
     const methodLower = method.toLowerCase();
     if (methodLower.includes('consumption')) return 'consumption-based';
