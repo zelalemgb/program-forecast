@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       if (currentStep === 4 && wizardData.skipRealityCheck) {
         setCurrentStep(5); // Go to methodology selection
       } else if (currentStep === 5 && wizardData.skipRealityCheck) {
-        setCurrentStep(6); // Skip reality check step, go to analysis
+        setCurrentStep(7); // Skip reality check and decision logic, go to data import
       } else {
         setCurrentStep((prev) => (prev + 1) as Step);
       }
@@ -91,7 +92,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
   const prevStep = () => {
     if (currentStep > 1) {
       // Handle skip logic in reverse
-      if (currentStep === 6 && wizardData.skipRealityCheck) {
+      if (currentStep === 7 && wizardData.skipRealityCheck) {
         setCurrentStep(5); // Go back to methodology selection
       } else if (currentStep === 5 && wizardData.skipRealityCheck) {
         setCurrentStep(4); // Go back to skip selection
@@ -163,9 +164,9 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
                  wizardData.diseaseIncidence !== "");
         }
       case 6:
-        return true; // Analysis step
+        return true; // Analysis step (only reached through reality check path)
       case 7:
-        return true; // Recommendation step
+        return true; // Data import step (reached when methodology manually selected)
       default:
         return false;
     }
@@ -240,6 +241,21 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     { value: "demographic", label: "Demographic Morbidity Method", description: "Based on population and disease incidence" },
     { value: "hybrid", label: "Hybrid Method", description: "Combines multiple data sources" }
   ];
+
+  const getDataImportOptions = (methodology: string) => {
+    switch (methodology) {
+      case "consumption":
+        return ["Historical consumption data (Excel/CSV)", "Stock card records", "LMIS data export"];
+      case "service":
+        return ["Patient visit records", "Service statistics", "HMIS data export"];
+      case "demographic":
+        return ["Population data", "Disease incidence rates", "Epidemiological data"];
+      case "hybrid":
+        return ["Multiple data sources", "Combined datasets", "Facility records"];
+      default:
+        return ["Various data sources"];
+    }
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -690,6 +706,76 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
                 <Button variant="ghost" size="lg">
                   ℹ️ Why this method?
                 </Button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 7:
+        // Data Import Step (for manual methodology selection)
+        const scopes = wizardData.forecastScope === "RDF" 
+          ? ["RDF"]
+          : Object.keys(wizardData.healthPrograms);
+        
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Database className="h-6 w-6 text-brand" />
+              <h2 className="text-xl font-semibold">Import Data for Forecasting</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <p className="text-muted-foreground">
+                Based on your selected methodology, please prepare the following data for import:
+              </p>
+              
+              {scopes.map((scope) => {
+                const methodology = wizardData.selectedMethods[scope];
+                const dataOptions = getDataImportOptions(methodology);
+                
+                return (
+                  <div key={scope} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{scope}</h3>
+                      <Badge variant="secondary">{methodology?.charAt(0).toUpperCase() + methodology?.slice(1)} Method</Badge>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Required data types:</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {dataOptions.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span className="text-sm">{option}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Database className="h-4 w-4 mr-2" />
+                        Upload Data
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        Use Sample Data
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-900">Pro Tip</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      You can upload multiple files or use our sample data to get started quickly. 
+                      Data should be in Excel (.xlsx) or CSV format with proper column headers.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
