@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Package, Plus, Check, X, FileText, Calculator } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AlertTriangle, Package, Plus, Check, X, FileText, Calculator, ChevronsUpDown, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+interface Product {
+  id: string;
+  canonical_name: string;
+  program: string;
+  default_unit: string;
+  price_benchmark_low: number | null;
+  price_benchmark_high: number | null;
+  recommended_formulation: string | null;
+  strength: string | null;
+  form: string | null;
+}
 
 interface AdjustmentRequest {
   id: string;
+  productId: string;
   productName: string;
   currentStock: number;
   adjustmentType: 'increase' | 'decrease';
@@ -30,10 +47,17 @@ interface AdjustmentRequest {
 
 export const AdjustmentModule: React.FC = () => {
   const { toast } = useToast();
+  const facilityId = 1; // Would come from user context/auth
   const [activeTab, setActiveTab] = useState("submit");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [stockBalances, setStockBalances] = useState<Record<string, number>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const [adjustmentRequests, setAdjustmentRequests] = useState<AdjustmentRequest[]>([
     {
       id: "ADJ001",
+      productId: "prod-1",
       productName: "Amoxicillin 250mg Capsules",
       currentStock: 450,
       adjustmentType: 'decrease',
@@ -48,7 +72,8 @@ export const AdjustmentModule: React.FC = () => {
       priority: "medium"
     },
     {
-      id: "ADJ002", 
+      id: "ADJ002",
+      productId: "prod-2", 
       productName: "Paracetamol 500mg Tablets",
       currentStock: 1200,
       adjustmentType: 'increase',
@@ -65,8 +90,6 @@ export const AdjustmentModule: React.FC = () => {
   ]);
 
   const [formData, setFormData] = useState({
-    productName: "",
-    currentStock: "",
     adjustmentType: "" as 'increase' | 'decrease' | "",
     adjustmentQuantity: "",
     reason: "",
@@ -74,6 +97,53 @@ export const AdjustmentModule: React.FC = () => {
     notes: "",
     priority: "" as 'low' | 'medium' | 'high' | ""
   });
+
+  // Fetch products on component mount
+  useEffect(() => {
+    fetchProducts();
+    fetchStockBalances();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('product_reference')
+        .select('id, canonical_name, program, default_unit, price_benchmark_low, price_benchmark_high, recommended_formulation, strength, form')
+        .eq('active', true)
+        .order('canonical_name');
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const fetchStockBalances = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_balances')
+        .select('product_id, current_stock')
+        .eq('facility_id', facilityId);
+
+      if (error) throw error;
+
+      const balancesMap = (data || []).reduce((acc, balance) => {
+        acc[balance.product_id] = balance.current_stock || 0;
+        return acc;
+      }, {} as Record<string, number>);
+
+      setStockBalances(balancesMap);
+    } catch (error) {
+      console.error('Error fetching stock balances:', error);
+    }
+  };
+
+  // Filter products based on search query
+  const filteredProducts = products.filter(product =>
+    product.canonical_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.program.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const adjustmentCategories = [
     { value: "damage", label: "Damage/Breakage" },
@@ -100,16 +170,16 @@ export const AdjustmentModule: React.FC = () => {
   const handleSubmitAdjustment = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.productName || !formData.adjustmentQuantity || !formData.adjustmentType || !formData.reason || !formData.category) {
+    if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType || !formData.reason || !formData.category) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields and select a product",
         variant: "destructive"
       });
       return;
     }
 
-    const currentStock = parseInt(formData.currentStock) || 0;
+    const currentStock = stockBalances[selectedProduct.id] || 0;
     const adjustmentQty = parseInt(formData.adjustmentQuantity);
     const newBalance = formData.adjustmentType === 'increase' 
       ? currentStock + adjustmentQty
@@ -117,7 +187,8 @@ export const AdjustmentModule: React.FC = () => {
 
     const newRequest: AdjustmentRequest = {
       id: `ADJ${String(adjustmentRequests.length + 3).padStart(3, '0')}`,
-      productName: formData.productName,
+      productId: selectedProduct.id,
+      productName: selectedProduct.canonical_name,
       currentStock,
       adjustmentType: formData.adjustmentType,
       adjustmentQuantity: adjustmentQty,
@@ -133,8 +204,6 @@ export const AdjustmentModule: React.FC = () => {
 
     setAdjustmentRequests([newRequest, ...adjustmentRequests]);
     setFormData({
-      productName: "",
-      currentStock: "",
       adjustmentType: "",
       adjustmentQuantity: "",
       reason: "",
@@ -142,6 +211,8 @@ export const AdjustmentModule: React.FC = () => {
       notes: "",
       priority: ""
     });
+    setSelectedProduct(null);
+    setSearchQuery("");
 
     toast({
       title: "Adjustment Request Submitted",
@@ -165,9 +236,9 @@ export const AdjustmentModule: React.FC = () => {
   };
 
   const calculateNewBalance = () => {
-    if (!formData.currentStock || !formData.adjustmentQuantity || !formData.adjustmentType) return null;
+    if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType) return null;
     
-    const current = parseInt(formData.currentStock);
+    const current = stockBalances[selectedProduct.id] || 0;
     const adjustment = parseInt(formData.adjustmentQuantity);
     
     return formData.adjustmentType === 'increase' ? current + adjustment : current - adjustment;
@@ -195,23 +266,68 @@ export const AdjustmentModule: React.FC = () => {
               <form onSubmit={handleSubmitAdjustment} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="productName">Product Name *</Label>
-                    <Input
-                      id="productName"
-                      value={formData.productName}
-                      onChange={(e) => setFormData({...formData, productName: e.target.value})}
-                      placeholder="Enter product name"
-                    />
+                    <Label htmlFor="productSearch">Product *</Label>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
+                        >
+                          {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search products..." 
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No product found.</CommandEmpty>
+                            <CommandGroup>
+                              {filteredProducts.map((product) => (
+                                <CommandItem
+                                  key={product.id}
+                                  value={product.canonical_name}
+                                  onSelect={() => {
+                                    setSelectedProduct(product);
+                                    setOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{product.canonical_name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {product.program} • {product.default_unit}
+                                      {product.recommended_formulation && ` • ${product.recommended_formulation}`}
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="currentStock">Current Stock</Label>
                     <Input
                       id="currentStock"
-                      type="number"
-                      value={formData.currentStock}
-                      onChange={(e) => setFormData({...formData, currentStock: e.target.value})}
-                      placeholder="Current stock quantity"
+                      type="text"
+                      value={selectedProduct ? (stockBalances[selectedProduct.id] || 0).toLocaleString() : ""}
+                      disabled
+                      placeholder="Select product to see current stock"
                     />
                   </div>
 
@@ -295,9 +411,9 @@ export const AdjustmentModule: React.FC = () => {
                       <span className="text-sm font-medium">Stock Impact:</span>
                       <div className="text-right">
                         <div className="text-sm text-muted-foreground">
-                          Current: {formData.currentStock} → New: 
+                          Current: {selectedProduct ? (stockBalances[selectedProduct.id] || 0).toLocaleString() : 0} → New: 
                           <span className={`ml-1 font-medium ${formData.adjustmentType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
-                            {newBalance}
+                            {newBalance.toLocaleString()}
                           </span>
                         </div>
                       </div>
