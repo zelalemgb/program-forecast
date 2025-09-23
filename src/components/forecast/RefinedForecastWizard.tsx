@@ -137,25 +137,33 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
           
           <Progress value={progressPercentage} className="w-full" />
           
-          {/* Step indicators */}
-          <div className="flex justify-between text-xs">
+          {/* Sleek step indicators */}
+          <div className="flex items-center justify-between relative">
             {STEPS.map((step, index) => (
-              <div 
-                key={step.id}
-                className={`flex flex-col items-center gap-1 ${
-                  index < currentStep ? 'text-primary' : 
+              <div key={step.id} className="flex flex-col items-center relative z-10">
+                {/* Step indicator dot */}
+                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index < currentStep ? 'bg-primary scale-110' : 
+                  index === currentStep - 1 ? 'bg-primary' : 'bg-muted border-2 border-muted-foreground/20'
+                }`} />
+                
+                {/* Step label - only show on larger screens */}
+                <span className={`text-xs mt-2 transition-colors duration-200 hidden sm:block ${
+                  index < currentStep ? 'text-primary font-medium' : 
                   index === currentStep - 1 ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                  index < currentStep ? 'bg-primary text-primary-foreground' :
-                  index === currentStep - 1 ? 'bg-muted' : 'bg-muted/50'
                 }`}>
-                  {index < currentStep ? '✓' : step.id}
-                </div>
-                <span className="hidden sm:block">{step.title}</span>
+                  {step.title}
+                </span>
               </div>
             ))}
+            
+            {/* Connection line */}
+            <div className="absolute top-1.5 left-0 w-full h-0.5 bg-muted -z-10">
+              <div 
+                className="h-full bg-primary transition-all duration-500 ease-out"
+                style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+              />
+            </div>
           </div>
         </CardHeader>
         
