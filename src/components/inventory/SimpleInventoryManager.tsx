@@ -1,100 +1,198 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, AlertTriangle, Plus, Eye, FileText } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, ArrowLeft, Truck } from "lucide-react";
 import { ReceivingModule } from "./ReceivingModule";
 import { StockOverview } from "./StockOverview";
 import PageHeader from "@/components/layout/PageHeader";
 
+type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
+
 export const SimpleInventoryManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedAction, setSelectedAction] = useState<InventoryAction>(null);
   const facilityId = 1; // Would come from user context/auth
 
+  const handleActionSelect = (action: InventoryAction) => {
+    setSelectedAction(action);
+  };
+
+  const handleBackToActions = () => {
+    setSelectedAction(null);
+  };
+
+  // Action Selection Screen
+  if (!selectedAction) {
+    return (
+      <div className="container py-6 space-y-6">
+        <PageHeader 
+          title="Inventory Management"
+          description="Choose an action to get started"
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          {/* Stock Review Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("overview")}>
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                <Eye className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Stock Review</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Check current stock levels, critical items, and inventory status
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                4 Critical Items
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Receive Stock Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("receive")}>
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                <Truck className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Receive Stock</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Record incoming deliveries from suppliers, donations, or transfers
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <Plus className="h-3 w-3 mr-1" />
+                Multiple Sources
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Issue Stock Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("issue")}>
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                <TrendingDown className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Issue Stock</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Dispense stock to wards, departments, or other facilities
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <TrendingDown className="h-3 w-3 mr-1" />
+                Ward Requests
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Stock Adjustments Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("adjust")}>
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                <Package className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Adjustments</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Record losses, damages, corrections, or stock count updates
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Stock Corrections
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Stats */}
+        <Card className="max-w-4xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center">Today's Quick Stats</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold text-green-600">23</div>
+                <div className="text-sm text-muted-foreground">Items in Stock</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-orange-600">4</div>
+                <div className="text-sm text-muted-foreground">Low Stock Items</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-red-600">2</div>
+                <div className="text-sm text-muted-foreground">Stock Outs</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-blue-600">15</div>
+                <div className="text-sm text-muted-foreground">Recent Transactions</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Action-specific screens
   return (
     <div className="container py-6 space-y-6">
       <PageHeader 
-        title="Inventory Management"
-        description="Simple, efficient inventory management for rural health centers"
+        title={
+          selectedAction === "overview" ? "Stock Review" :
+          selectedAction === "receive" ? "Receive Stock" :
+          selectedAction === "issue" ? "Issue Stock" :
+          "Stock Adjustments"
+        }
+        description={
+          selectedAction === "overview" ? "Review current stock levels and inventory status" :
+          selectedAction === "receive" ? "Record incoming stock deliveries" :
+          selectedAction === "issue" ? "Issue stock to departments and wards" :
+          "Record stock adjustments and corrections"
+        }
         actions={
-          <div className="flex gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              4 Items Need Attention
-            </Badge>
-            <Button variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-2" />
-              Quick Report
-            </Button>
-          </div>
+          <Button variant="outline" onClick={handleBackToActions} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Actions
+          </Button>
         }
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Stock Overview
-          </TabsTrigger>
-          <TabsTrigger value="receive" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Receive Stock
-          </TabsTrigger>
-          <TabsTrigger value="issue" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Issue Stock
-          </TabsTrigger>
-          <TabsTrigger value="adjust" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Adjustments
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <StockOverview facilityId={facilityId} />
-        </TabsContent>
-
-        <TabsContent value="receive" className="space-y-6">
-          <ReceivingModule />
-        </TabsContent>
-
-        <TabsContent value="issue" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Issue Stock to Departments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4" />
-                <p className="text-lg font-medium">Stock Issuing Module</p>
-                <p className="text-sm">Coming soon - Issue stock to wards and departments</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="adjust" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Stock Adjustments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-                <p className="text-lg font-medium">Adjustment Module</p>
-                <p className="text-sm">Coming soon - Record stock adjustments, losses, and corrections</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {selectedAction === "overview" && <StockOverview facilityId={facilityId} />}
+      
+      {selectedAction === "receive" && <ReceivingModule />}
+      
+      {selectedAction === "issue" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5" />
+              Issue Stock to Departments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12 text-muted-foreground">
+              <TrendingDown className="h-12 w-12 mx-auto mb-4" />
+              <p className="text-lg font-medium">Stock Issuing Module</p>
+              <p className="text-sm">Coming soon - Issue stock to wards and departments</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {selectedAction === "adjust" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Stock Adjustments
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12 text-muted-foreground">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+              <p className="text-lg font-medium">Adjustment Module</p>
+              <p className="text-sm">Coming soon - Record stock adjustments, losses, and corrections</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
