@@ -6,6 +6,7 @@ import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, 
 import { ReceivingModule } from "./ReceivingModule";
 import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
+import { AdjustmentModule } from "./AdjustmentModule";
 import PageHeader from "@/components/layout/PageHeader";
 
 type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
@@ -161,23 +162,7 @@ export const SimpleInventoryManager: React.FC = () => {
       
       {selectedAction === "issue" && <IssuingModule />}
       
-      {selectedAction === "adjust" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Stock Adjustments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-              <p className="text-lg font-medium">Adjustment Module</p>
-              <p className="text-sm">Coming soon - Record stock adjustments, losses, and corrections</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {selectedAction === "adjust" && <AdjustmentModule />}
     </div>
   );
 };
