@@ -501,9 +501,9 @@ export const ReceivingModule: React.FC = () => {
               </div>
             </div>
 
-            <div className="border rounded-lg p-4 space-y-4">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium">Add New Item</h4>
+                <h4 className="font-medium">Items to Receive</h4>
                 <div className="flex items-center gap-2">
                   <Label htmlFor="program-filter" className="text-sm">Program:</Label>
                   <Select value={programFilter} onValueChange={setProgramFilter}>
@@ -520,139 +520,179 @@ export const ReceivingModule: React.FC = () => {
                   </Select>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <Label>Search Product</Label>
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="w-full justify-between"
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[300px]">Product</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit Cost</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Expiry</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {receivedItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.productName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                      <TableCell>{item.batchNumber || "-"}</TableCell>
+                      <TableCell>{item.expiryDate || "-"}</TableCell>
+                      <TableCell>{item.supplier || "-"}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-full justify-between"
+                          >
+                            {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Search products..." 
+                              value={searchQuery}
+                              onValueChange={setSearchQuery}
+                            />
+                            <CommandList>
+                              <CommandEmpty>No product found.</CommandEmpty>
+                              <CommandGroup>
+                                {filteredProducts.map((product) => (
+                                  <CommandItem
+                                    key={product.id}
+                                    value={product.canonical_name}
+                                    onSelect={() => {
+                                      setSelectedProduct(product);
+                                      setNewItem({
+                                        ...newItem,
+                                        unitCost: product.price_benchmark_low || undefined
+                                      });
+                                      setOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex-1">
+                                      <div className="font-medium">{product.canonical_name}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {product.program} • {product.default_unit}
+                                        {product.recommended_formulation && ` • ${product.recommended_formulation}`}
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {selectedProduct && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {selectedProduct.default_unit}
+                          {selectedProduct.pack_size && ` • Pack: ${selectedProduct.pack_size}`}
+                          {selectedProduct.price_benchmark_low && ` • Est: $${selectedProduct.price_benchmark_low}-${selectedProduct.price_benchmark_high}`}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={newItem.quantity || ""}
+                        onChange={(e) => setNewItem({...newItem, quantity: Number(e.target.value)})}
+                        placeholder="Quantity"
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={newItem.unitCost || ""}
+                        onChange={(e) => setNewItem({...newItem, unitCost: Number(e.target.value)})}
+                        placeholder="Cost"
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={newItem.batchNumber || ""}
+                        onChange={(e) => setNewItem({...newItem, batchNumber: e.target.value})}
+                        placeholder="Batch"
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="date"
+                        value={newItem.expiryDate || ""}
+                        onChange={(e) => setNewItem({...newItem, expiryDate: e.target.value})}
+                        className="w-32"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={newItem.supplier || ""}
+                        onChange={(e) => setNewItem({...newItem, supplier: e.target.value})}
+                        placeholder="Supplier"
+                        className="w-32"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        onClick={addItemToList} 
+                        size="sm"
+                        disabled={!selectedProduct || !newItem.quantity}
                       >
-                        {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <Plus className="h-4 w-4" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Search products..." 
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          <CommandEmpty>No product found.</CommandEmpty>
-                          <CommandGroup>
-                            {filteredProducts.map((product) => (
-                              <CommandItem
-                                key={product.id}
-                                value={product.canonical_name}
-                                onSelect={() => {
-                                  setSelectedProduct(product);
-                                  setNewItem({
-                                    ...newItem,
-                                    unitCost: product.price_benchmark_low || undefined
-                                  });
-                                  setOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex-1">
-                                  <div className="font-medium">{product.canonical_name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {product.program} • {product.default_unit}
-                                    {product.recommended_formulation && ` • ${product.recommended_formulation}`}
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  
-                  {selectedProduct && (
-                    <div className="mt-2 p-3 bg-muted rounded-lg">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div><strong>Unit:</strong> {selectedProduct.default_unit}</div>
-                        <div><strong>Program:</strong> {selectedProduct.program}</div>
-                        {selectedProduct.pack_size && (
-                          <div><strong>Pack Size:</strong> {selectedProduct.pack_size}</div>
-                        )}
-                        {selectedProduct.price_benchmark_low && (
-                          <div><strong>Est. Price:</strong> ${selectedProduct.price_benchmark_low} - ${selectedProduct.price_benchmark_high}</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+
+              {receivedItems.length > 0 && (
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <Badge variant="outline">
+                    Total Items: {receivedItems.length}
+                  </Badge>
+                  <Button 
+                    onClick={processReceiving}
+                    disabled={receivedItems.length === 0 || isProcessing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isProcessing ? "Processing..." : "Complete Receiving"}
+                  </Button>
                 </div>
-                
-                <div>
-                  <Label>Quantity *</Label>
-                  <Input
-                    type="number"
-                    value={newItem.quantity || ""}
-                    onChange={(e) => setNewItem({...newItem, quantity: Number(e.target.value)})}
-                    placeholder="Enter quantity"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Unit Cost</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={newItem.unitCost || ""}
-                    onChange={(e) => setNewItem({...newItem, unitCost: Number(e.target.value)})}
-                    placeholder="Enter unit cost"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Batch Number</Label>
-                  <Input
-                    value={newItem.batchNumber || ""}
-                    onChange={(e) => setNewItem({...newItem, batchNumber: e.target.value})}
-                    placeholder="Enter batch number"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Expiry Date</Label>
-                  <Input
-                    type="date"
-                    value={newItem.expiryDate || ""}
-                    onChange={(e) => setNewItem({...newItem, expiryDate: e.target.value})}
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Label>Supplier</Label>
-                  <Input
-                    value={newItem.supplier || ""}
-                    onChange={(e) => setNewItem({...newItem, supplier: e.target.value})}
-                    placeholder="Enter supplier name"
-                  />
-                </div>
-              </div>
-              
-              <Button 
-                onClick={addItemToList} 
-                className="w-full"
-                disabled={!selectedProduct || !newItem.quantity}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
+              )}
             </div>
           </CardContent>
         </Card>
