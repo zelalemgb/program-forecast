@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Upload, 
   Database, 
@@ -16,18 +17,22 @@ import {
   CheckCircle, 
   AlertTriangle 
 } from "lucide-react";
+import { useInventoryData } from "@/hooks/useInventoryData";
 
 interface DataCollectionStepProps {
   forecastMethod: string;
   onDataCollected: (data: any) => void;
   onBack: () => void;
+  facilityId?: number;
 }
 
 export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
   forecastMethod,
   onDataCollected,
-  onBack
+  onBack,
+  facilityId = 1
 }) => {
+  const { balances, consumption, loading, error } = useInventoryData(facilityId);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [manualData, setManualData] = useState<any>({});
   const [populationData, setPopulationData] = useState({
@@ -48,10 +53,17 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
       files: uploadedFiles,
       manualData,
       populationData: forecastMethod.includes('demographic') ? populationData : null,
+      inventoryData: {
+        balances,
+        consumption,
+        facilityId
+      },
       timestamp: new Date().toISOString()
     };
     onDataCollected(collectedData);
   };
+
+  const hasInventoryData = balances.length > 0 || consumption.length > 0;
 
   const getMethodTitle = () => {
     switch (forecastMethod) {
@@ -91,9 +103,10 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="upload">Upload Data Files</TabsTrigger>
               <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+              <TabsTrigger value="inventory">Use Inventory Data</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload" className="space-y-4">
@@ -266,6 +279,79 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="inventory" className="space-y-4">
+              {hasInventoryData && (
+                <Alert>
+                  <Database className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="flex items-center justify-between">
+                      <span>
+                        Inventory data available: {balances.length} products with stock levels, 
+                        {consumption.length} consumption records
+                      </span>
+                      <Badge variant="secondary">Auto-detected</Badge>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <p>Loading inventory data...</p>
+                  </div>
+                ) : error ? (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Error loading inventory data: {error}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm">Current Stock Items</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">{balances.length}</p>
+                          <p className="text-sm text-muted-foreground">Products with stock data</p>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm">Consumption Records</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">{consumption.length}</p>
+                          <p className="text-sm text-muted-foreground">Historical consumption periods</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {hasInventoryData ? (
+                      <Alert>
+                        <CheckCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Inventory data is available and will be automatically used for forecasting. 
+                          This includes stock levels, consumption patterns, and transaction history.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          No inventory data found for this facility. Consider using manual entry or file upload methods.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
 
           <div className="flex justify-between mt-6">
@@ -274,7 +360,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
             </Button>
             <Button 
               onClick={handleContinue}
-              disabled={uploadedFiles.length === 0 && !Object.values(populationData).some(val => val)}
+              disabled={!hasInventoryData && uploadedFiles.length === 0 && !Object.values(populationData).some(val => val)}
             >
               Continue to Calculation
             </Button>

@@ -164,6 +164,66 @@ export type Database = {
         }
         Relationships: []
       }
+      consumption_analytics: {
+        Row: {
+          adjustments: number
+          amc: number | null
+          consumption_quantity: number
+          created_at: string
+          facility_id: number | null
+          id: string
+          period_end: string
+          period_start: string
+          product_id: string | null
+          stockout_days: number
+          updated_at: string
+          wastage: number
+        }
+        Insert: {
+          adjustments?: number
+          amc?: number | null
+          consumption_quantity?: number
+          created_at?: string
+          facility_id?: number | null
+          id?: string
+          period_end: string
+          period_start: string
+          product_id?: string | null
+          stockout_days?: number
+          updated_at?: string
+          wastage?: number
+        }
+        Update: {
+          adjustments?: number
+          amc?: number | null
+          consumption_quantity?: number
+          created_at?: string
+          facility_id?: number | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          product_id?: string | null
+          stockout_days?: number
+          updated_at?: string
+          wastage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumption_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "consumption_analytics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_rules: {
         Row: {
           base_unit: string
@@ -400,6 +460,44 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: true
             referencedRelation: "procurement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_data_sources: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          data_quality_flags: Json | null
+          forecast_row_id: string | null
+          id: string
+          source_reference_id: string | null
+          source_type: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          data_quality_flags?: Json | null
+          forecast_row_id?: string | null
+          id?: string
+          source_reference_id?: string | null
+          source_type: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          data_quality_flags?: Json | null
+          forecast_row_id?: string | null
+          id?: string
+          source_reference_id?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_data_sources_forecast_row_id_fkey"
+            columns: ["forecast_row_id"]
+            isOneToOne: false
+            referencedRelation: "forecast_rows"
             referencedColumns: ["id"]
           },
         ]
@@ -659,6 +757,120 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      inventory_balances: {
+        Row: {
+          current_stock: number
+          facility_id: number | null
+          id: string
+          last_transaction_date: string | null
+          last_updated: string
+          max_level: number
+          product_id: string | null
+          reorder_level: number
+        }
+        Insert: {
+          current_stock?: number
+          facility_id?: number | null
+          id?: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          max_level?: number
+          product_id?: string | null
+          reorder_level?: number
+        }
+        Update: {
+          current_stock?: number
+          facility_id?: number | null
+          id?: string
+          last_transaction_date?: string | null
+          last_updated?: string
+          max_level?: number
+          product_id?: string | null
+          reorder_level?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_balances_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "inventory_balances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          expiry_date: string | null
+          facility_id: number | null
+          id: string
+          notes: string | null
+          product_id: string | null
+          quantity: number
+          reference_number: string | null
+          transaction_date: string
+          transaction_type: string
+          unit_cost: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          facility_id?: number | null
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity: number
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          facility_id?: number | null
+          id?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       outbound_events: {
         Row: {
@@ -2062,6 +2274,14 @@ export type Database = {
       }
       approve_rrf: {
         Args: { p_comment?: string; p_decision?: string; p_rrf_id: string }
+        Returns: undefined
+      }
+      calculate_consumption_analytics: {
+        Args: {
+          p_end_date: string
+          p_facility_id: number
+          p_start_date: string
+        }
         Returns: undefined
       }
       can_update_registration_request: {

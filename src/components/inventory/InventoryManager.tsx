@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useInventoryData } from "@/hooks/useInventoryData";
+import { useForecastIntegration } from "@/hooks/useForecastIntegration";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Package, TrendingUp, TrendingDown, CheckCircle, Calculator, Save } from "lucide-react";
+import { AlertTriangle, Package, TrendingUp, TrendingDown, CheckCircle, Calculator, Save, Database } from "lucide-react";
+import { InventoryForecastModal } from "@/components/forecast/InventoryForecastModal";
 
 interface StockItem {
   id: string;
@@ -129,6 +132,29 @@ export const InventoryManager: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingValues, setEditingValues] = useState<{ [key: string]: number }>({});
+  const [showForecastModal, setShowForecastModal] = useState(false);
+  
+  // Using mock facility ID - in real app, this would come from user context
+  const facilityId = 1; // Replace with actual facility ID from user context
+  const { balances, transactions, consumption, loading, error, addTransaction } = useInventoryData(facilityId);
+  const { generateForecastFromInventory, loading: forecastLoading } = useForecastIntegration();
+  
+  // Use real data when available, fallback to mock data
+  const inventoryData = balances.length > 0 ? balances.map(balance => ({
+    id: balance.id,
+    productName: balance.products?.name || 'Unknown Product',
+    currentStock: balance.current_stock,
+    unit: balance.products?.unit || 'units',
+    reorderLevel: balance.reorder_level,
+    maxLevel: balance.max_level,
+    lastIssued: balance.last_transaction_date || '2024-02-15',
+    expiryDate: undefined,
+    batchNumber: undefined,
+    unitCost: 2.50,
+    consumption30Days: consumption.find(c => c.product_id === balance.product_id)?.amc || 0,
+    status: balance.current_stock <= 0 ? "out" as const :
+           balance.current_stock <= balance.reorder_level ? "low" as const : "good" as const
+  })) : mockInventoryData;
 
   const handleStockUpdate = (itemId: string, newStock: number) => {
     setEditingValues(prev => ({
@@ -148,7 +174,19 @@ export const InventoryManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Inventory Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Inventory Management</h2>
+          <Button 
+            onClick={() => setShowForecastModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Database className="h-4 w-4" />
+            Generate Forecast from Inventory
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -192,6 +230,7 @@ export const InventoryManager: React.FC = () => {
             <p className="text-xs text-muted-foreground">Next 30 days</p>
           </CardContent>
         </Card>
+        </div>
       </div>
 
       {/* Inventory Management Tabs */}
@@ -242,7 +281,7 @@ export const InventoryManager: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockInventoryData.map((item) => (
+                  {inventoryData.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.productName}</TableCell>
                       <TableCell>
@@ -314,7 +353,7 @@ export const InventoryManager: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockInventoryData.map((item) => (
+                  {inventoryData.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.productName}</TableCell>
                       <TableCell>{item.consumption30Days} {item.unit}</TableCell>
@@ -358,7 +397,7 @@ export const InventoryManager: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockInventoryData.map((item) => {
+                  {inventoryData.map((item) => {
                     const reorderQty = calculateReorderQuantity(item);
                     const daysUntilStockout = item.consumption30Days > 0 
                       ? Math.floor((item.currentStock / item.consumption30Days) * 30)
@@ -386,8 +425,21 @@ export const InventoryManager: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           {reorderQty > 0 && (
-                            <Button size="sm" variant="outline">
-                              Add to Forecast
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  const forecasts = await generateForecastFromInventory(facilityId, 6, 12);
+                                  console.log('Generated forecasts from inventory:', forecasts);
+                                  // TODO: Navigate to forecast page or show modal with results
+                                } catch (error) {
+                                  console.error('Failed to generate forecast:', error);
+                                }
+                              }}
+                              disabled={forecastLoading}
+                            >
+                              {forecastLoading ? 'Generating...' : 'Add to Forecast'}
                             </Button>
                           )}
                         </TableCell>
@@ -415,7 +467,7 @@ export const InventoryManager: React.FC = () => {
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockInventoryData.map((item) => (
+                      {inventoryData.map((item) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.productName}
                         </SelectItem>
@@ -452,6 +504,13 @@ export const InventoryManager: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <InventoryForecastModal
+        open={showForecastModal}
+        onOpenChange={setShowForecastModal}
+        facilityId={facilityId}
+        facilityName="Demo Health Center"
+      />
     </div>
   );
 };
