@@ -28,8 +28,6 @@ interface WizardData {
   duration: string;
   commodityTypes: string[];
   customCommodity: string;
-  forecastMonths: string;
-  customMonths: string;
   healthProgram: string;
   customProgram: string;
   serviceData: string;
@@ -58,8 +56,6 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     duration: "",
     commodityTypes: [],
     customCommodity: "",
-    forecastMonths: "",
-    customMonths: "",
     healthProgram: "",
     customProgram: "",
     serviceData: "",
@@ -107,8 +103,6 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       duration: "",
       commodityTypes: [],
       customCommodity: "",
-      forecastMonths: "",
-      customMonths: "",
       healthProgram: "",
       customProgram: "",
       serviceData: "",
@@ -136,8 +130,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       case 1:
         return wizardData.forecastName !== "" && wizardData.startDate !== "" && wizardData.duration !== "";
       case 2:
-        return wizardData.commodityTypes.length > 0 && 
-               (wizardData.forecastMonths !== "" || wizardData.customMonths !== "");
+        return wizardData.commodityTypes.length > 0;
       case 3:
         return wizardData.healthProgram !== "" || wizardData.customProgram !== "";
       case 4:
@@ -255,13 +248,13 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Target className="h-6 w-6 text-brand" />
-              <h2 className="text-xl font-semibold">Define Your Forecasting Goal</h2>
+              <h2 className="text-xl font-semibold">What do you want to forecast?</h2>
             </div>
             
             <div className="space-y-4">
               <div>
-                <Label className="text-base font-medium">📌 What do you want to forecast?</Label>
-                <p className="text-sm text-muted-foreground mb-3">Select one or more</p>
+                <Label className="text-base font-medium">📌 Select commodity types</Label>
+                <p className="text-sm text-muted-foreground mb-3">Choose one or more types to forecast</p>
                 <div className="space-y-3">
                   {["Medicines", "Test kits", "Medical supplies"].map((type) => (
                     <div key={type} className="flex items-center space-x-2">
@@ -288,33 +281,6 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
                     />
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <Label className="text-base font-medium">📅 For how many months do you want to forecast?</Label>
-                <RadioGroup 
-                  value={wizardData.forecastMonths} 
-                  onValueChange={(value) => updateData("forecastMonths", value)}
-                  className="mt-3"
-                >
-                  {["6", "12", "24"].map((months) => (
-                    <div key={months} className="flex items-center space-x-2">
-                      <RadioGroupItem value={months} id={`months-${months}`} />
-                      <Label htmlFor={`months-${months}`}>{months} months</Label>
-                    </div>
-                  ))}
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="custom" id="months-custom" />
-                    <Label htmlFor="months-custom">Custom:</Label>
-                    <Input
-                      placeholder="Number of months"
-                      value={wizardData.customMonths}
-                      onChange={(e) => updateData("customMonths", e.target.value)}
-                      className="max-w-xs"
-                      type="number"
-                    />
-                  </div>
-                </RadioGroup>
               </div>
             </div>
           </div>
