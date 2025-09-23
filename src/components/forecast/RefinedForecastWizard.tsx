@@ -135,8 +135,6 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
             </Badge>
           </div>
           
-          <Progress value={progressPercentage} className="w-full" />
-          
           {/* Integrated step navigation */}
           <div className="relative">
             {/* Progress line background */}
