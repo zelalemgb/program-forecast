@@ -42,6 +42,21 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
     treatmentSeekingRate: ''
   });
 
+  // Normalize the forecast method
+  const normalizeMethod = (method: string) => {
+    const methodLower = method.toLowerCase();
+    if (methodLower.includes('consumption')) return 'consumption-based';
+    if (methodLower.includes('service') || methodLower.includes('trend')) return 'trend-analysis';
+    if (methodLower.includes('demographic') || methodLower.includes('hybrid') || methodLower.includes('morbidity')) return 'hybrid';
+    return method;
+  };
+
+  const normalizedMethod = normalizeMethod(forecastMethod);
+
+  // Debug log to understand what method is being used
+  console.log('Forecast method received:', forecastMethod);
+  console.log('Normalized method:', normalizedMethod);
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setUploadedFiles(prev => [...prev, ...files]);
@@ -52,7 +67,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
       method: forecastMethod,
       files: uploadedFiles,
       manualData,
-      populationData: forecastMethod === 'hybrid' ? populationData : null,
+      populationData: normalizedMethod === 'hybrid' ? populationData : null,
       inventoryData: {
         balances,
         consumption,
@@ -66,11 +81,11 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
   const hasInventoryData = balances.length > 0 || consumption.length > 0;
 
   const getMethodTitle = () => {
-    switch (forecastMethod) {
+    switch (normalizedMethod) {
       case 'consumption-based':
         return 'Historical Consumption Data';
       case 'trend-analysis':
-        return 'Trend Analysis Data';
+        return 'Service Statistics Data';
       case 'hybrid':
         return 'Multiple Data Sources';
       default:
@@ -79,7 +94,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
   };
 
   const getMethodDescription = () => {
-    switch (forecastMethod) {
+    switch (normalizedMethod) {
       case 'consumption-based':
         return 'Upload historical consumption data or enter monthly consumption figures for accurate forecasting';
       case 'trend-analysis':
@@ -110,7 +125,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
             </TabsList>
 
             <TabsContent value="upload" className="space-y-4">
-              {forecastMethod === 'consumption-based' && (
+              {normalizedMethod === 'consumption-based' && (
                 <div className="space-y-4">
                   <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
@@ -151,7 +166,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
 
-              {forecastMethod === 'trend-analysis' && (
+              {normalizedMethod === 'trend-analysis' && (
                 <div className="space-y-4">
                   <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                     <Activity className="h-6 w-6 mx-auto mb-2 text-primary" />
@@ -159,12 +174,28 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                     <p className="text-xs text-muted-foreground mb-2">Patient visits, treatments given</p>
                     <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
                   </div>
+                  
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Expected Data Format:</h4>
+                    <div className="text-sm space-y-1">
+                      <p>• Month | Patient Visits | Treatments | Services Provided</p>
+                      <p>• At least 12 months of service data recommended</p>
+                      <p>• Include seasonal variations and trends</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {forecastMethod === 'hybrid' && (
+              {normalizedMethod === 'hybrid' && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                      <Upload className="h-6 w-6 mx-auto mb-2 text-primary" />
+                      <h4 className="font-medium">Consumption Data</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Historical consumption by product</p>
+                      <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+                    </div>
+                    
                     <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                       <Activity className="h-6 w-6 mx-auto mb-2 text-primary" />
                       <h4 className="font-medium">Service Statistics</h4>
@@ -184,7 +215,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
             </TabsContent>
 
             <TabsContent value="manual" className="space-y-4">
-              {forecastMethod === 'consumption-based' && (
+              {normalizedMethod === 'consumption-based' && (
                 <div className="space-y-4">
                   <h4 className="font-medium">Manual Consumption Entry</h4>
                   <div className="border rounded-lg p-4">
@@ -227,7 +258,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
 
-              {forecastMethod === 'trend-analysis' && (
+              {normalizedMethod === 'trend-analysis' && (
                 <div className="space-y-4">
                   <div>
                     <Label>Monthly Service Statistics</Label>
@@ -239,7 +270,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
 
-              {forecastMethod === 'hybrid' && (
+              {normalizedMethod === 'hybrid' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -383,7 +414,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
             </Button>
             <Button 
               onClick={handleContinue}
-              disabled={!hasInventoryData && uploadedFiles.length === 0 && (forecastMethod === 'hybrid' ? !Object.values(populationData).some(val => val) : false)}
+              disabled={!hasInventoryData && uploadedFiles.length === 0 && (normalizedMethod === 'hybrid' ? !Object.values(populationData).some(val => val) : false)}
             >
               Continue to Calculation
             </Button>
