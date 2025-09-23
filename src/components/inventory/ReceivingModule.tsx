@@ -68,13 +68,16 @@ export const ReceivingModule: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [programFilter, setProgramFilter] = useState<string>("all");
   
+  // Stock balance tracking
+  const [stockBalances, setStockBalances] = useState<Record<string, number>>({});
+  
   const facilityId = 1; // Would come from user context
   const { addTransaction } = useInventoryData(facilityId);
   const { toast } = useToast();
 
-  // Fetch products from database
+  // Fetch products and stock balances from database
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProductsAndStock = async () => {
       try {
         let query = supabase
           .from('product_reference')
@@ -85,25 +88,41 @@ export const ReceivingModule: React.FC = () => {
           query = query.eq('program', programFilter);
         }
         
-        const { data, error } = await query
+        const { data: productsData, error: productsError } = await query
           .order('canonical_name')
           .limit(100);
         
-        if (error) throw error;
+        if (productsError) throw productsError;
         
-        setProducts(data || []);
+        setProducts(productsData || []);
+
+        // Fetch current stock balances
+        const { data: balancesData, error: balancesError } = await supabase
+          .from('inventory_balances')
+          .select('product_id, current_stock')
+          .eq('facility_id', facilityId);
+
+        if (balancesError) throw balancesError;
+
+        const balancesMap = (balancesData || []).reduce((acc, balance) => {
+          acc[balance.product_id] = balance.current_stock || 0;
+          return acc;
+        }, {} as Record<string, number>);
+
+        setStockBalances(balancesMap);
+        
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
         toast({
           title: "Error",
-          description: "Failed to load products",
+          description: "Failed to load data",
           variant: "destructive",
         });
       }
     };
 
-    fetchProducts();
-  }, [programFilter, toast]);
+    fetchProductsAndStock();
+  }, [programFilter, toast, facilityId]);
 
   // Filter products based on search query
   const filteredProducts = products.filter(product =>
@@ -369,32 +388,48 @@ export const ReceivingModule: React.FC = () => {
                     <TableHead>Unit Cost</TableHead>
                     <TableHead>Batch</TableHead>
                     <TableHead>Expiry</TableHead>
+                    <TableHead>Updated Balance</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {receivedItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.productName}</div>
-                        {item.packSize && <div className="text-sm text-muted-foreground">Pack: {item.packSize}</div>}
-                      </TableCell>
-                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
-                      <TableCell>{item.batchNumber || "-"}</TableCell>
-                      <TableCell>{item.expiryDate || "-"}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {receivedItems.map((item) => {
+                    const currentStock = stockBalances[item.productId] || 0;
+                    const updatedBalance = currentStock + item.quantity;
+                    
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-medium">{item.productName}</div>
+                          {item.packSize && <div className="text-sm text-muted-foreground">Pack: {item.packSize}</div>}
+                        </TableCell>
+                        <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                        <TableCell>{item.unit}</TableCell>
+                        <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                        <TableCell>{item.batchNumber || "-"}</TableCell>
+                        <TableCell>{item.expiryDate || "-"}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium text-green-600">
+                              {updatedBalance.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Current: {currentStock.toLocaleString()}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -475,6 +510,7 @@ export const ReceivingModule: React.FC = () => {
                   <TableHead>Batch</TableHead>
                   <TableHead>Expiry</TableHead>
                   <TableHead>Supplier</TableHead>
+                  <TableHead>Updated Balance</TableHead>
                   <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -589,6 +625,20 @@ export const ReceivingModule: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>
+                    {selectedProduct && newItem.quantity ? (
+                      <div className="text-sm">
+                        <div className="font-medium text-green-600">
+                          {((stockBalances[selectedProduct.id] || 0) + newItem.quantity).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Current: {(stockBalances[selectedProduct.id] || 0).toLocaleString()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">-</div>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Button 
                       onClick={addItemToList} 
                       size="sm"
@@ -600,30 +650,45 @@ export const ReceivingModule: React.FC = () => {
                 </TableRow>
                 
                 {/* Added items displayed below */}
-                {receivedItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="font-medium">{item.productName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.quantity.toLocaleString()}</TableCell>
-                    <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
-                    <TableCell>{item.batchNumber || "-"}</TableCell>
-                    <TableCell>{item.expiryDate || "-"}</TableCell>
-                    <TableCell>{item.supplier || "-"}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {receivedItems.map((item) => {
+                  const currentStock = stockBalances[item.productId] || 0;
+                  const updatedBalance = currentStock + item.quantity;
+                  
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.productName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                      <TableCell>{item.batchNumber || "-"}</TableCell>
+                      <TableCell>{item.expiryDate || "-"}</TableCell>
+                      <TableCell>{item.supplier || "-"}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium text-green-600">
+                            {updatedBalance.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Current: {currentStock.toLocaleString()}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
