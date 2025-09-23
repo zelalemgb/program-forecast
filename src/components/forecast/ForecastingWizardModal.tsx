@@ -23,6 +23,9 @@ import {
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 interface WizardData {
+  forecastName: string;
+  startDate: string;
+  duration: string;
   commodityTypes: string[];
   customCommodity: string;
   forecastMonths: string;
@@ -34,6 +37,7 @@ interface WizardData {
   stockouts: string;
   catchmentPopulation: string;
   diseaseIncidence: string;
+  skipRealityCheck: boolean;
 }
 
 interface ForecastingWizardModalProps {
@@ -49,6 +53,9 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [wizardData, setWizardData] = useState<WizardData>({
+    forecastName: "",
+    startDate: "",
+    duration: "",
     commodityTypes: [],
     customCommodity: "",
     forecastMonths: "",
@@ -60,30 +67,44 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     stockouts: "",
     catchmentPopulation: "",
     diseaseIncidence: "",
+    skipRealityCheck: false,
   });
 
   const totalSteps = 7;
   const progress = (currentStep / totalSteps) * 100;
 
-  const updateData = (field: keyof WizardData, value: string | string[]) => {
+  const updateData = (field: keyof WizardData, value: string | string[] | boolean) => {
     setWizardData(prev => ({ ...prev, [field]: value }));
   };
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep((prev) => (prev + 1) as Step);
+      // Skip reality check if user chose to skip
+      if (currentStep === 4 && wizardData.skipRealityCheck) {
+        setCurrentStep(6); // Jump to analysis step
+      } else {
+        setCurrentStep((prev) => (prev + 1) as Step);
+      }
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => (prev - 1) as Step);
+      // Handle skip logic in reverse
+      if (currentStep === 6 && wizardData.skipRealityCheck) {
+        setCurrentStep(4); // Jump back to skip selection
+      } else {
+        setCurrentStep((prev) => (prev - 1) as Step);
+      }
     }
   };
 
   const resetWizard = () => {
     setCurrentStep(1);
     setWizardData({
+      forecastName: "",
+      startDate: "",
+      duration: "",
       commodityTypes: [],
       customCommodity: "",
       forecastMonths: "",
@@ -95,6 +116,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       stockouts: "",
       catchmentPopulation: "",
       diseaseIncidence: "",
+      skipRealityCheck: false,
     });
   };
 
@@ -112,20 +134,20 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
   const canProceed = (): boolean => {
     switch (currentStep) {
       case 1:
-        return true; // Welcome step
+        return wizardData.forecastName !== "" && wizardData.startDate !== "" && wizardData.duration !== "";
       case 2:
         return wizardData.commodityTypes.length > 0 && 
                (wizardData.forecastMonths !== "" || wizardData.customMonths !== "");
       case 3:
         return wizardData.healthProgram !== "" || wizardData.customProgram !== "";
       case 4:
-        return true; // Introduction step
+        return true; // Skip option step
       case 5:
-        return wizardData.serviceData !== "" && 
+        return wizardData.skipRealityCheck || (wizardData.serviceData !== "" && 
                wizardData.consumptionData !== "" && 
                wizardData.stockouts !== "" && 
                wizardData.catchmentPopulation !== "" && 
-               wizardData.diseaseIncidence !== "";
+               wizardData.diseaseIncidence !== "");
       case 6:
         return true; // Analysis step
       case 7:
@@ -176,20 +198,53 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6 text-center">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 hero-gradient rounded-2xl flex items-center justify-center">
-                <Heart className="h-8 w-8 text-white" />
-              </div>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-6 w-6 text-brand" />
+              <h2 className="text-xl font-semibold">Define Your Forecast</h2>
             </div>
+            
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Welcome to the Health Forecasting Assistant!</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                This tool will help you estimate how many medicines, test kits, and supplies your facility will need.
-              </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 max-w-md mx-auto">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>You don't need to be an expert—we'll guide you step by step.</span>
+              <div>
+                <Label className="text-base font-medium">Forecast Name</Label>
+                <p className="text-sm text-muted-foreground mb-2">Give your forecast a descriptive name</p>
+                <Input
+                  placeholder="e.g., Q1 2024 Malaria Commodities"
+                  value={wizardData.forecastName}
+                  onChange={(e) => updateData("forecastName", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label className="text-base font-medium">Forecast Starting Date</Label>
+                <p className="text-sm text-muted-foreground mb-2">When should this forecast period begin?</p>
+                <Input
+                  type="date"
+                  value={wizardData.startDate}
+                  onChange={(e) => updateData("startDate", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label className="text-base font-medium">Duration</Label>
+                <p className="text-sm text-muted-foreground mb-2">How long should this forecast cover?</p>
+                <RadioGroup 
+                  value={wizardData.duration} 
+                  onValueChange={(value) => updateData("duration", value)}
+                  className="mt-3"
+                >
+                  {[
+                    { value: "3", label: "3 months" },
+                    { value: "6", label: "6 months" },
+                    { value: "12", label: "12 months" },
+                    { value: "24", label: "24 months" }
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`duration-${option.value}`} />
+                      <Label htmlFor={`duration-${option.value}`}>{option.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
           </div>
@@ -308,17 +363,37 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
 
       case 4:
         return (
-          <div className="space-y-6 text-center">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 hero-gradient rounded-2xl flex items-center justify-center">
-                <Database className="h-8 w-8 text-white" />
-              </div>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Lightbulb className="h-6 w-6 text-brand" />
+              <h2 className="text-xl font-semibold">Reality Check (Optional)</h2>
             </div>
+            
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Smart Method Recommendation</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                🔍 Let's find the best forecasting method based on the information you have at your facility.
+              <p className="text-muted-foreground">
+                We can help recommend the best forecasting method based on your facility's data availability. 
+                This is optional but recommended for new users.
               </p>
+              
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={() => updateData("skipRealityCheck", false)}
+                  variant={!wizardData.skipRealityCheck ? "default" : "outline"}
+                  className="justify-start"
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  Help me choose the best method (Recommended)
+                </Button>
+                
+                <Button 
+                  onClick={() => updateData("skipRealityCheck", true)}
+                  variant={wizardData.skipRealityCheck ? "default" : "outline"}
+                  className="justify-start"
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Skip to forecast creation
+                </Button>
+              </div>
             </div>
           </div>
         );
