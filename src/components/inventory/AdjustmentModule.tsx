@@ -92,7 +92,6 @@ export const AdjustmentModule: React.FC = () => {
   const [formData, setFormData] = useState({
     adjustmentType: "" as 'increase' | 'decrease' | "",
     adjustmentQuantity: "",
-    reason: "",
     category: "",
     notes: "",
     priority: "" as 'low' | 'medium' | 'high' | ""
@@ -148,7 +147,7 @@ export const AdjustmentModule: React.FC = () => {
   const adjustmentCategories = [
     { value: "damage", label: "Damage/Breakage" },
     { value: "expiry", label: "Expired Products" },
-    { value: "loss", label: "Loss/Theft" },
+    { value: "loss", label: "Loss" },
     { value: "correction", label: "Stock Count Correction" },
     { value: "transfer", label: "Inter-department Transfer" },
     { value: "disposal", label: "Disposal" },
@@ -170,7 +169,7 @@ export const AdjustmentModule: React.FC = () => {
   const handleSubmitAdjustment = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType || !formData.reason || !formData.category) {
+    if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType || !formData.category) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields and select a product",
@@ -193,7 +192,7 @@ export const AdjustmentModule: React.FC = () => {
       adjustmentType: formData.adjustmentType,
       adjustmentQuantity: adjustmentQty,
       newBalance,
-      reason: formData.reason,
+      reason: adjustmentCategories.find(cat => cat.value === formData.category)?.label || formData.category,
       category: formData.category,
       notes: formData.notes,
       requestedBy: "Current User",
@@ -206,7 +205,6 @@ export const AdjustmentModule: React.FC = () => {
     setFormData({
       adjustmentType: "",
       adjustmentQuantity: "",
-      reason: "",
       category: "",
       notes: "",
       priority: ""
@@ -356,10 +354,10 @@ export const AdjustmentModule: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
+                    <Label htmlFor="category">Reason for Adjustment *</Label>
                     <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select reason" />
                       </SelectTrigger>
                       <SelectContent>
                         {adjustmentCategories.map(cat => (
@@ -382,16 +380,6 @@ export const AdjustmentModule: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="reason">Reason for Adjustment *</Label>
-                  <Input
-                    id="reason"
-                    value={formData.reason}
-                    onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                    placeholder="Brief reason for adjustment"
-                  />
                 </div>
 
                 <div className="space-y-2">
