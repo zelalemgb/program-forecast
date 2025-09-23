@@ -120,6 +120,16 @@ const ForecastingWizard: React.FC<ForecastingWizardProps> = ({ onClose, onComple
     }
   };
 
+  const handleStartForecasting = () => {
+    const methodKey = getRecommendedMethod(); // 'consumption' | 'service' | 'demographic' | 'hybrid'
+    const program = (wizardData as any).healthProgram || (wizardData as any).customProgram;
+    const commodities = wizardData.commodityTypes?.join(',') || '';
+
+    // Notify parent and navigate to the guided wizard data collection
+    onComplete({ ...wizardData, recommendedMethod: getMethodDetails(methodKey).name });
+    window.location.href = `/forecast?method=${encodeURIComponent(methodKey)}&program=${encodeURIComponent(program || '')}&commodities=${encodeURIComponent(commodities)}`;
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
