@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Download, ChevronDown, ChevronRight, HelpCircle } from "lucide-react";
-import ForecastingWizard from "@/components/forecast/ForecastingWizard";
+import { RefinedForecastWizard } from "@/components/forecast/RefinedForecastWizard";
 
 const SupplyPlanning: React.FC = () => {
   const location = useLocation();
@@ -838,7 +838,7 @@ const SupplyPlanning: React.FC = () => {
 
       {/* Forecasting Wizard */}
       {showWizard && (
-        <ForecastingWizard
+        <RefinedForecastWizard
           onClose={() => setShowWizard(false)}
           onComplete={(data) => {
             console.log("Forecasting wizard completed with data:", data);
