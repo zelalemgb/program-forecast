@@ -26,10 +26,10 @@ interface WizardData {
   forecastName: string;
   startDate: string;
   duration: string;
+  forecastScope: string; // "RDF" or "Health Program"
+  healthProgram: string;
   commodityTypes: string[];
   customCommodity: string;
-  healthProgram: string;
-  customProgram: string;
   serviceData: string;
   consumptionData: string;
   stockouts: string;
@@ -54,10 +54,10 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     forecastName: "",
     startDate: "",
     duration: "",
+    forecastScope: "",
+    healthProgram: "",
     commodityTypes: [],
     customCommodity: "",
-    healthProgram: "",
-    customProgram: "",
     serviceData: "",
     consumptionData: "",
     stockouts: "",
@@ -101,10 +101,10 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       forecastName: "",
       startDate: "",
       duration: "",
+      forecastScope: "",
+      healthProgram: "",
       commodityTypes: [],
       customCommodity: "",
-      healthProgram: "",
-      customProgram: "",
       serviceData: "",
       consumptionData: "",
       stockouts: "",
@@ -130,9 +130,11 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       case 1:
         return wizardData.forecastName !== "" && wizardData.startDate !== "" && wizardData.duration !== "";
       case 2:
-        return wizardData.commodityTypes.length > 0;
+        return wizardData.forecastScope !== "" && 
+               (wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "") &&
+               wizardData.commodityTypes.length > 0;
       case 3:
-        return wizardData.healthProgram !== "" || wizardData.customProgram !== "";
+        return wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "";
       case 4:
         return true; // Skip option step
       case 5:
@@ -248,80 +250,94 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Target className="h-6 w-6 text-brand" />
-              <h2 className="text-xl font-semibold">What do you want to forecast?</h2>
+              <h2 className="text-xl font-semibold">Define Forecast Scope</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <Label className="text-base font-medium">📌 Select commodity types</Label>
-                <p className="text-sm text-muted-foreground mb-3">Choose one or more types to forecast</p>
-                <div className="space-y-3">
-                  {["Medicines", "Test kits", "Medical supplies"].map((type) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={type}
-                        checked={wizardData.commodityTypes.includes(type)}
-                        onCheckedChange={(checked) => handleCommodityChange(type, checked as boolean)}
-                      />
-                      <Label htmlFor={type}>{type}</Label>
-                    </div>
-                  ))}
+                <Label className="text-base font-medium">What is the scope of the forecast?</Label>
+                <RadioGroup 
+                  value={wizardData.forecastScope} 
+                  onValueChange={(value) => {
+                    updateData("forecastScope", value);
+                    // Reset health program when scope changes
+                    if (value === "RDF") {
+                      updateData("healthProgram", "");
+                    }
+                  }}
+                  className="mt-3"
+                >
                   <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="other"
-                      checked={wizardData.commodityTypes.includes("other")}
-                      onCheckedChange={(checked) => handleCommodityChange("other", checked as boolean)}
-                    />
-                    <Label htmlFor="other">Other:</Label>
-                    <Input
-                      placeholder="Specify..."
-                      value={wizardData.customCommodity}
-                      onChange={(e) => updateData("customCommodity", e.target.value)}
-                      className="max-w-xs"
-                    />
+                    <RadioGroupItem value="RDF" id="scope-rdf" />
+                    <Label htmlFor="scope-rdf">RDF (National Essential Medicines List)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Health Program" id="scope-program" />
+                    <Label htmlFor="scope-program">Health Program</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {wizardData.forecastScope === "Health Program" && (
+                <div>
+                  <Label className="text-base font-medium">Select Health Program</Label>
+                  <RadioGroup 
+                    value={wizardData.healthProgram} 
+                    onValueChange={(value) => updateData("healthProgram", value)}
+                    className="mt-3"
+                  >
+                    {["RMNCH", "TB", "HIV", "Malaria", "Vaccine"].map((program) => (
+                      <div key={program} className="flex items-center space-x-2">
+                        <RadioGroupItem value={program} id={`program-${program}`} />
+                        <Label htmlFor={`program-${program}`}>{program}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+
+              {(wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "") && (
+                <div>
+                  <Label className="text-base font-medium">📌 What commodities to include in the forecast?</Label>
+                  <p className="text-sm text-muted-foreground mb-3">Choose one or more types to forecast</p>
+                  <div className="space-y-3">
+                    {["Medicines", "Test Kits", "Consumables"].map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={type}
+                          checked={wizardData.commodityTypes.includes(type)}
+                          onCheckedChange={(checked) => handleCommodityChange(type, checked as boolean)}
+                        />
+                        <Label htmlFor={type}>{type}</Label>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-6 w-6 text-brand" />
-              <h2 className="text-xl font-semibold">Select Health Program Area</h2>
+          <div className="space-y-6 text-center">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 hero-gradient rounded-2xl flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
             </div>
-            
             <div className="space-y-4">
-              <Label className="text-base font-medium">💊 Which health area is this forecast for?</Label>
-              <RadioGroup 
-                value={wizardData.healthProgram} 
-                onValueChange={(value) => updateData("healthProgram", value)}
-                className="space-y-3"
-              >
-                {["Malaria", "HIV", "Tuberculosis (TB)", "Reproductive, Maternal, Newborn, Child Health (RMNCH)"].map((program) => (
-                  <div key={program} className="flex items-center space-x-2">
-                    <RadioGroupItem value={program} id={`program-${program}`} />
-                    <Label htmlFor={`program-${program}`}>{program}</Label>
-                  </div>
-                ))}
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="other" id="program-other" />
-                  <Label htmlFor="program-other">Other:</Label>
-                  <Input
-                    placeholder="Specify..."
-                    value={wizardData.customProgram}
-                    onChange={(e) => updateData("customProgram", e.target.value)}
-                    className="max-w-xs"
-                  />
-                </div>
-              </RadioGroup>
-              
-              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                <Lightbulb className="h-4 w-4" />
-                <span><strong>Why this matters:</strong> Forecasting logic and commodities are different for each program.</span>
+              <h2 className="text-2xl font-semibold">Forecast Configuration Complete!</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Great! You've defined your forecast scope and commodity types. 
+                Next, we can help you choose the best forecasting method.
+              </p>
+              <div className="bg-muted/50 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm">
+                  <strong>Scope:</strong> {wizardData.forecastScope === "RDF" ? "RDF" : wizardData.healthProgram}<br/>
+                  <strong>Commodities:</strong> {wizardData.commodityTypes.join(", ")}<br/>
+                  <strong>Duration:</strong> {wizardData.duration} months
+                </p>
               </div>
             </div>
           </div>
