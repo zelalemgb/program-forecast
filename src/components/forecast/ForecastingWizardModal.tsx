@@ -675,49 +675,113 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
         );
 
       case 7:
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-              <h2 className="text-xl font-semibold">Recommendation</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="text-center space-y-4">
-                <p className="text-base">🧠 Based on your answers, we recommend the:</p>
-                <div className="inline-flex items-center gap-2 bg-brand/10 text-brand px-4 py-2 rounded-lg font-semibold text-lg">
-                  <Target className="h-5 w-5" />
-                  {getRecommendedMethod()}
-                </div>
+        if (wizardData.skipRealityCheck) {
+          // Data Import Step (for manual methodology selection)
+          const scopes = wizardData.forecastScope === "RDF" 
+            ? ["RDF"]
+            : Object.keys(wizardData.healthPrograms);
+          
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Database className="h-6 w-6 text-brand" />
+                <h2 className="text-xl font-semibold">Import Data for Forecasting</h2>
               </div>
               
-              <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-                {getMethodDetails()}
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <Button size="lg" className="flex items-center gap-2" onClick={handleComplete}>
-                  <CheckCircle className="h-4 w-4" />
-                  Use Recommended Method
-                </Button>
-                <Button variant="outline" size="lg">
-                  🔁 Choose a Different Method Manually
-                </Button>
-                <Button variant="ghost" size="lg">
-                  ℹ️ Why this method?
-                </Button>
+              <div className="space-y-6">
+                <p className="text-muted-foreground">
+                  Based on your selected methodology, please prepare the following data for import:
+                </p>
+                
+                {scopes.map((scope) => {
+                  const methodology = wizardData.selectedMethods[scope];
+                  const dataOptions = getDataImportOptions(methodology);
+                  
+                  return (
+                    <div key={scope} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{scope}</h3>
+                        <Badge variant="secondary">{methodology?.charAt(0).toUpperCase() + methodology?.slice(1)} Method</Badge>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Required data types:</Label>
+                        <div className="grid grid-cols-1 gap-2">
+                          {dataOptions.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <span className="text-sm">{option}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Database className="h-4 w-4 mr-2" />
+                          Upload Data
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          Use Sample Data
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900">Pro Tip</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        You can upload multiple files or use our sample data to get started quickly. 
+                        Data should be in Excel (.xlsx) or CSV format with proper column headers.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        );
+          );
+        } else {
+          // Recommendation (only for users who completed reality check)
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <h2 className="text-xl font-semibold">Recommendation</h2>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="text-center space-y-4">
+                  <p className="text-base">🧠 Based on your answers, we recommend the:</p>
+                  <div className="inline-flex items-center gap-2 bg-brand/10 text-brand px-4 py-2 rounded-lg font-semibold text-lg">
+                    <Target className="h-5 w-5" />
+                    {getRecommendedMethod()}
+                  </div>
+                </div>
+                
+                <p className="text-muted-foreground text-center max-w-2xl mx-auto">
+                  {getMethodDetails()}
+                </p>
 
-      case 7:
-        // Data Import Step (for manual methodology selection)
-        const scopes = wizardData.forecastScope === "RDF" 
-          ? ["RDF"]
-          : Object.keys(wizardData.healthPrograms);
-        
-        return (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                  <Button size="lg" className="flex items-center gap-2" onClick={handleComplete}>
+                    <CheckCircle className="h-4 w-4" />
+                    Use Recommended Method
+                  </Button>
+                  <Button variant="outline" size="lg">
+                    🔁 Choose a Different Method Manually
+                  </Button>
+                  <Button variant="ghost" size="lg">
+                    ℹ️ Why this method?
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        }
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <Database className="h-6 w-6 text-brand" />
