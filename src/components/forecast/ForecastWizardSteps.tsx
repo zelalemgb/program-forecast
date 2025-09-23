@@ -87,14 +87,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
       case 1: // Define Forecast
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Target className="h-12 w-12 mx-auto text-primary" />
-              <h2 className="text-2xl font-semibold">Define Your Forecast</h2>
-              <p className="text-muted-foreground">
-                Start by defining what you want to forecast and why
-              </p>
-            </div>
-
             <div className="space-y-4 max-w-md mx-auto">
               <div>
                 <Label htmlFor="forecast-name">Forecast Name</Label>
@@ -130,14 +122,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
       case 2: // Define Scope
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Calendar className="h-12 w-12 mx-auto text-primary" />
-              <h2 className="text-2xl font-semibold">Define Forecast Scope</h2>
-              <p className="text-muted-foreground">
-                Specify what products and timeframe to forecast
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
@@ -220,14 +204,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
       case 3: // Data Assessment
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Database className="h-12 w-12 mx-auto text-primary" />
-              <h2 className="text-2xl font-semibold">Assess Available Data</h2>
-              <p className="text-muted-foreground">
-                Tell us what data sources you have available
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 { key: 'consumption', label: 'Historical Consumption Data', description: 'Past usage records and consumption patterns' },
@@ -277,14 +253,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
         
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <TrendingUp className="h-12 w-12 mx-auto text-primary" />
-              <h2 className="text-2xl font-semibold">Select Forecasting Method</h2>
-              <p className="text-muted-foreground">
-                Choose the best method based on your available data
-              </p>
-            </div>
-
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
@@ -338,14 +306,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
       case 5: // Data Collection
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <Upload className="h-12 w-12 mx-auto text-primary" />
-              <h2 className="text-2xl font-semibold">Data Collection</h2>
-              <p className="text-muted-foreground">
-                Provide the required data for {FORECAST_METHODS.find(m => m.id === forecastData.selectedMethod)?.name} method
-              </p>
-            </div>
-
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Data Requirements</CardTitle>
@@ -440,14 +400,6 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
       case 6: // Analysis & Output
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
-              <h2 className="text-2xl font-semibold">Analysis Complete</h2>
-              <p className="text-muted-foreground">
-                Your forecast has been generated successfully
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
