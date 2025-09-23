@@ -119,7 +119,7 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="space-y-4">
+        <CardHeader className="space-y-4 border-b bg-muted/20">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
           </div>
           
           {/* Integrated step navigation */}
-          <div className="relative">
+          <div className="relative pb-4">
             {/* Progress line background */}
             <div className="absolute top-4 left-0 w-full h-0.5 bg-muted">
               <div 
@@ -179,7 +179,7 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-8">
           <ForecastWizardSteps
             currentStep={currentStep}
             forecastData={forecastData}
