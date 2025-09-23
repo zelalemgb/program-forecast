@@ -94,13 +94,9 @@ const RunForecast: React.FC = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
   const handleForecastComplete = (wizardData: any) => {
-    // Navigate to forecast wizard with the collected data
-    const method = getRecommendedMethod(wizardData);
-    const program = wizardData.healthProgram || wizardData.customProgram;
-    const commodities = wizardData.commodityTypes.join(',');
-    
+    // Close the wizard and show completion message
     setIsWizardOpen(false);
-    window.location.href = `/forecast/wizard?method=${method}&program=${program}&commodities=${commodities}`;
+    console.log("Forecast configuration completed:", wizardData);
   };
 
   const getRecommendedMethod = (wizardData: any): string => {
