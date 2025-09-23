@@ -27,8 +27,8 @@ interface WizardData {
   startDate: string;
   duration: string;
   forecastScope: string; // "RDF" or "Health Program"
-  healthProgram: string;
-  commodityTypes: string[];
+  healthPrograms: { [programName: string]: string[] }; // program -> commodity types
+  commodityTypes: string[]; // For RDF scope
   customCommodity: string;
   serviceData: string;
   consumptionData: string;
@@ -55,7 +55,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     startDate: "",
     duration: "",
     forecastScope: "",
-    healthProgram: "",
+    healthPrograms: {},
     commodityTypes: [],
     customCommodity: "",
     serviceData: "",
@@ -69,7 +69,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
   const totalSteps = 7;
   const progress = (currentStep / totalSteps) * 100;
 
-  const updateData = (field: keyof WizardData, value: string | string[] | boolean) => {
+  const updateData = (field: keyof WizardData, value: string | string[] | boolean | { [key: string]: string[] }) => {
     setWizardData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -102,7 +102,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       startDate: "",
       duration: "",
       forecastScope: "",
-      healthProgram: "",
+      healthPrograms: {},
       commodityTypes: [],
       customCommodity: "",
       serviceData: "",
@@ -130,11 +130,14 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       case 1:
         return wizardData.forecastName !== "" && wizardData.startDate !== "" && wizardData.duration !== "";
       case 2:
-        return wizardData.forecastScope !== "" && 
-               (wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "") &&
-               wizardData.commodityTypes.length > 0;
+        const hasValidSelection = wizardData.forecastScope !== "" && 
+          ((wizardData.forecastScope === "RDF" && wizardData.commodityTypes.length > 0) ||
+           (wizardData.forecastScope === "Health Program" && 
+            Object.keys(wizardData.healthPrograms).length > 0 &&
+            Object.values(wizardData.healthPrograms).every(commodities => commodities.length > 0)));
+        return hasValidSelection;
       case 3:
-        return wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "";
+        return wizardData.forecastScope === "RDF" || Object.keys(wizardData.healthPrograms).length > 0;
       case 4:
         return true; // Skip option step
       case 5:
@@ -187,6 +190,26 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     } else {
       updateData("commodityTypes", wizardData.commodityTypes.filter(c => c !== commodity));
     }
+  };
+
+  const handleHealthProgramChange = (program: string, checked: boolean) => {
+    const newHealthPrograms = { ...wizardData.healthPrograms };
+    if (checked) {
+      newHealthPrograms[program] = [];
+    } else {
+      delete newHealthPrograms[program];
+    }
+    updateData("healthPrograms", newHealthPrograms);
+  };
+
+  const handleProgramCommodityChange = (program: string, commodity: string, checked: boolean) => {
+    const newHealthPrograms = { ...wizardData.healthPrograms };
+    if (checked) {
+      newHealthPrograms[program] = [...(newHealthPrograms[program] || []), commodity];
+    } else {
+      newHealthPrograms[program] = (newHealthPrograms[program] || []).filter(c => c !== commodity);
+    }
+    updateData("healthPrograms", newHealthPrograms);
   };
 
   const renderStep = () => {
@@ -260,9 +283,11 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
                   value={wizardData.forecastScope} 
                   onValueChange={(value) => {
                     updateData("forecastScope", value);
-                    // Reset health program when scope changes
+                    // Reset selections when scope changes
                     if (value === "RDF") {
-                      updateData("healthProgram", "");
+                      updateData("healthPrograms", {});
+                    } else {
+                      updateData("commodityTypes", []);
                     }
                   }}
                   className="mt-3"
@@ -280,23 +305,44 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
 
               {wizardData.forecastScope === "Health Program" && (
                 <div>
-                  <Label className="text-base font-medium">Select Health Program</Label>
-                  <RadioGroup 
-                    value={wizardData.healthProgram} 
-                    onValueChange={(value) => updateData("healthProgram", value)}
-                    className="mt-3"
-                  >
+                  <Label className="text-base font-medium">Select Health Programs</Label>
+                  <p className="text-sm text-muted-foreground mb-3">Choose one or more programs</p>
+                  <div className="space-y-4">
                     {["RMNCH", "TB", "HIV", "Malaria", "Vaccine"].map((program) => (
-                      <div key={program} className="flex items-center space-x-2">
-                        <RadioGroupItem value={program} id={`program-${program}`} />
-                        <Label htmlFor={`program-${program}`}>{program}</Label>
+                      <div key={program} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`program-${program}`}
+                            checked={Object.keys(wizardData.healthPrograms).includes(program)}
+                            onCheckedChange={(checked) => handleHealthProgramChange(program, checked as boolean)}
+                          />
+                          <Label htmlFor={`program-${program}`} className="font-medium">{program}</Label>
+                        </div>
+                        
+                        {Object.keys(wizardData.healthPrograms).includes(program) && (
+                          <div className="ml-6 space-y-2">
+                            <Label className="text-sm font-medium">Commodities for {program}:</Label>
+                            <div className="space-y-2">
+                              {["Medicines", "Test Kits", "Consumables"].map((commodity) => (
+                                <div key={commodity} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`${program}-${commodity}`}
+                                    checked={(wizardData.healthPrograms[program] || []).includes(commodity)}
+                                    onCheckedChange={(checked) => handleProgramCommodityChange(program, commodity, checked as boolean)}
+                                  />
+                                  <Label htmlFor={`${program}-${commodity}`} className="text-sm">{commodity}</Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
-                  </RadioGroup>
+                  </div>
                 </div>
               )}
 
-              {(wizardData.forecastScope === "RDF" || wizardData.healthProgram !== "") && (
+              {wizardData.forecastScope === "RDF" && (
                 <div>
                   <Label className="text-base font-medium">📌 What commodities to include in the forecast?</Label>
                   <p className="text-sm text-muted-foreground mb-3">Choose one or more types to forecast</p>
@@ -334,8 +380,11 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
               </p>
               <div className="bg-muted/50 rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-sm">
-                  <strong>Scope:</strong> {wizardData.forecastScope === "RDF" ? "RDF" : wizardData.healthProgram}<br/>
-                  <strong>Commodities:</strong> {wizardData.commodityTypes.join(", ")}<br/>
+                  <strong>Scope:</strong> {wizardData.forecastScope === "RDF" ? "RDF" : `Health Programs: ${Object.keys(wizardData.healthPrograms).join(", ")}`}<br/>
+                  <strong>Commodities:</strong> {wizardData.forecastScope === "RDF" 
+                    ? wizardData.commodityTypes.join(", ")
+                    : Object.entries(wizardData.healthPrograms).map(([prog, commodities]) => 
+                        `${prog}: ${commodities.join(", ")}`).join("; ")}<br/>
                   <strong>Duration:</strong> {wizardData.duration} months
                 </p>
               </div>
