@@ -246,17 +246,8 @@ export const ReceivingModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Main Title */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Truck className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Receive Stock</h2>
-          </div>
-          <p className="text-muted-foreground mt-1">
-            {!receivingMethod ? "Record incoming stock deliveries" : "Select your preferred receiving method"}
-          </p>
-        </div>
+      {/* Module Controls (no title to avoid duplication) */}
+      <div className="flex items-center justify-end">
         {receivingMethod && (
           <Button variant="outline" onClick={handleBackToMethods} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
