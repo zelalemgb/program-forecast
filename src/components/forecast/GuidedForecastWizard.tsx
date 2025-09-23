@@ -22,6 +22,7 @@ import {
   Download,
   Upload
 } from "lucide-react";
+import { ForecastCalculationStep } from "./ForecastCalculationStep";
 
 interface ForecastItem {
   id: string;
@@ -75,14 +76,14 @@ const wizardSteps = [
     description: "Configure forecast parameters and period"
   },
   {
-    id: "data-source",
-    title: "Data Source",
-    description: "Choose inventory and consumption data source"
+    id: "method-selection",
+    title: "Method Selection",
+    description: "Select forecasting methodology and parameters"
   },
   {
-    id: "method",
-    title: "Forecast Method",
-    description: "Select forecasting methodology"
+    id: "calculation",
+    title: "Calculation",
+    description: "Running forecast calculations"
   },
   {
     id: "review",
@@ -102,6 +103,7 @@ export const GuidedForecastWizard: React.FC = () => {
   const [dataSource, setDataSource] = useState("dagu-mini");
   const [forecastMethod, setForecastMethod] = useState("consumption-based");
   const [forecastData, setForecastData] = useState(mockForecastData);
+  const [calculationResults, setCalculationResults] = useState<any>(null);
 
   const handleNext = () => {
     if (currentStep < wizardSteps.length - 1) {
@@ -113,6 +115,26 @@ export const GuidedForecastWizard: React.FC = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleCalculationComplete = (results: any) => {
+    setCalculationResults(results);
+    // Update forecast data with calculated results
+    if (results.products) {
+      const updatedForecastData = results.products.map((product: any) => ({
+        id: product.id,
+        productName: product.name,
+        currentStock: Math.floor(Math.random() * 1000), // Mock current stock
+        amc: (product.forecastQuantity / 12).toFixed(2), // Calculate AMC
+        forecastMethod: results.method.toLowerCase().includes('consumption') ? 'consumption' : 
+                       results.method.toLowerCase().includes('service') ? 'service' : 'demographic',
+        forecastQuantity: product.forecastQuantity,
+        unit: product.unit,
+        confidence: product.confidence >= 85 ? 'high' : product.confidence >= 70 ? 'medium' : 'low'
+      }));
+      setForecastData(updatedForecastData);
+    }
+    setCurrentStep(3); // Move to review step
   };
 
   const updateForecastQuantity = (id: string, quantity: number) => {
@@ -231,69 +253,8 @@ export const GuidedForecastWizard: React.FC = () => {
             </div>
           )}
 
-          {/* Step 2: Data Source */}
+          {/* Step 2: Method Selection */}
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className={`cursor-pointer border-2 ${dataSource === 'dagu-mini' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                      onClick={() => setDataSource('dagu-mini')}>
-                  <CardContent className="p-4 text-center">
-                    <Database className="h-8 w-8 mx-auto mb-2 text-primary" />
-                    <h3 className="font-medium">Dagu Mini Data</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Use current inventory and consumption data from Dagu Mini
-                    </p>
-                    <Badge variant="secondary" className="mt-2">Recommended</Badge>
-                  </CardContent>
-                </Card>
-
-                <Card className={`cursor-pointer border-2 ${dataSource === 'manual' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                      onClick={() => setDataSource('manual')}>
-                  <CardContent className="p-4 text-center">
-                    <FileText className="h-8 w-8 mx-auto mb-2 text-primary" />
-                    <h3 className="font-medium">Manual Entry</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Manually enter consumption data and stock levels
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {dataSource === 'dagu-mini' && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Connected to Dagu Mini inventory system</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Last data update: 2 hours ago</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Available products: 67 items with consumption data</span>
-                  </div>
-                </div>
-              )}
-
-              {dataSource === 'manual' && (
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Upload consumption data file (CSV/Excel) or enter data manually in the next step
-                    </p>
-                    <Button variant="outline" className="mt-2">
-                      Upload File
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Forecast Method */}
-          {currentStep === 2 && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className={`cursor-pointer border-2 ${forecastMethod === 'consumption-based' ? 'border-primary bg-primary/5' : 'border-border'}`}
@@ -351,6 +312,25 @@ export const GuidedForecastWizard: React.FC = () => {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Step 3: Calculation */}
+          {currentStep === 2 && (
+            <ForecastCalculationStep
+              wizardData={{
+                forecastPeriod,
+                dataSource,
+                forecastMethod,
+                commodityTypes: ["Medicines", "Test kits"],
+                healthProgram: "Malaria", // This would come from method selection
+                consumptionData: dataSource === 'dagu-mini' ? 'yes' : 'no',
+                serviceData: 'yes',
+                catchmentPopulation: 'yes',
+                diseaseIncidence: 'yes'
+              }}
+              onCalculationComplete={handleCalculationComplete}
+              onBack={handleBack}
+            />
           )}
 
           {/* Step 4: Review & Adjust */}
@@ -429,26 +409,30 @@ export const GuidedForecastWizard: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-primary">67</div>
-                    <p className="text-sm text-muted-foreground">Products Forecasted</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">89%</div>
-                    <p className="text-sm text-muted-foreground">Avg Confidence</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">Q2 2024</div>
-                    <p className="text-sm text-muted-foreground">Forecast Period</p>
-                  </CardContent>
-                </Card>
-              </div>
+              {calculationResults && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-primary">{calculationResults.totalProducts}</div>
+                      <p className="text-sm text-muted-foreground">Products Forecasted</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-green-600">{calculationResults.averageConfidence}%</div>
+                      <p className="text-sm text-muted-foreground">Avg Confidence</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        ${calculationResults.totalValue.toLocaleString()}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Total Value</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
