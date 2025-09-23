@@ -244,227 +244,177 @@ export const ReceivingModule: React.FC = () => {
     }
   };
 
-  // Items List Component
-  const ItemsList = () => {
-    if (receivedItems.length === 0) return null;
-
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Items to Receive ({receivedItems.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>Expiry</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {receivedItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="font-medium">{item.productName}</div>
-                    {item.packSize && <div className="text-sm text-muted-foreground">Pack: {item.packSize}</div>}
-                  </TableCell>
-                  <TableCell>{item.quantity.toLocaleString()}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
-                  <TableCell>{item.batchNumber || "-"}</TableCell>
-                  <TableCell>{item.expiryDate || "-"}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          <div className="flex justify-between items-center mt-4 pt-4 border-t">
-            <Badge variant="outline">
-              Total Items: {receivedItems.length}
-            </Badge>
-            <Button 
-              onClick={processReceiving}
-              disabled={receivedItems.length === 0 || isProcessing}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isProcessing ? "Processing..." : "Complete Receiving"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Method Selection Screen
-  if (!receivingMethod) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Truck className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">How would you like to receive stock?</h3>
+  return (
+    <div className="space-y-6">
+      {/* Main Title */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Truck className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Receive Stock</h2>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
-          {/* Document Scanning Method */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleMethodSelect("document")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                <Camera className="h-8 w-8 text-blue-600" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2">Scan Document</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload delivery document for AI extraction of items and details
-              </p>
-              <Badge variant="outline" className="mb-2">
-                <Smartphone className="h-3 w-3 mr-1" />
-                AI Powered
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Manual Entry Method */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleMethodSelect("manual")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                <FileText className="h-8 w-8 text-green-600" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2">Manual Entry</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Manually enter delivery details and items from the hard copy
-              </p>
-              <Badge variant="outline" className="mb-2">
-                <Plus className="h-3 w-3 mr-1" />
-                Traditional
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Barcode Scanning Method */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 opacity-60" onClick={() => handleMethodSelect("barcode")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                <ScanLine className="h-8 w-8 text-purple-600" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2">Barcode Scan</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Scan product barcodes for quick item entry
-              </p>
-              <Badge variant="secondary" className="mb-2">
-                Coming Soon
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Document Scanning Interface
-  if (receivingMethod === "document") {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Camera className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Scan Delivery Document</h3>
-          </div>
+        {receivingMethod && (
           <Button variant="outline" onClick={handleBackToMethods} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back
+            Back to Methods
           </Button>
-        </div>
+        )}
+      </div>
 
+      {/* Method Selection */}
+      {!receivingMethod && (
         <Card>
           <CardHeader>
-            <CardTitle>Upload Delivery Document</CardTitle>
+            <CardTitle className="text-lg">Select Receiving Method</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="document-upload"
-              />
-              <label htmlFor="document-upload" className="cursor-pointer">
-                {documentImage ? (
-                  <div className="space-y-2">
-                    <Camera className="h-12 w-12 text-green-600 mx-auto" />
-                    <p className="text-sm font-medium text-green-600">Document uploaded</p>
-                    <p className="text-xs text-muted-foreground">{documentImage.name}</p>
-                    {isProcessing && (
-                      <p className="text-xs text-blue-600 animate-pulse">Processing with AI...</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
-                    <p className="text-sm font-medium">Take photo or upload delivery document</p>
-                    <p className="text-xs text-muted-foreground">AI will extract delivery details and items automatically</p>
-                  </div>
-                )}
-              </label>
-            </div>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Document Scanning Method */}
+              <div 
+                className="p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
+                onClick={() => handleMethodSelect("document")}
+              >
+                <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Camera className="h-6 w-6 text-blue-600" />
+                </div>
+                <h4 className="font-medium mb-1">Scan Document</h4>
+                <p className="text-sm text-muted-foreground mb-2">AI extraction from delivery document</p>
+                <Badge variant="outline" className="text-xs">
+                  <Smartphone className="h-3 w-3 mr-1" />
+                  AI Powered
+                </Badge>
+              </div>
 
-            {/* Show extracted delivery info */}
-            {deliveryInfo.source && (
-              <Card className="bg-green-50 border-green-200">
-                <CardHeader>
-                  <CardTitle className="text-sm text-green-800">Extracted Delivery Information</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-2">
-                  <div><strong>Source:</strong> {deliveryInfo.source === "central-store" ? "Central Medical Store" : deliveryInfo.source}</div>
-                  <div><strong>Driver:</strong> {deliveryInfo.driverName}</div>
-                  <div><strong>Delivery Note:</strong> {deliveryInfo.deliveryNote}</div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Manual Entry Method */}
+              <div 
+                className="p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
+                onClick={() => handleMethodSelect("manual")}
+              >
+                <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-green-600" />
+                </div>
+                <h4 className="font-medium mb-1">Manual Entry</h4>
+                <p className="text-sm text-muted-foreground mb-2">Enter details manually</p>
+                <Badge variant="outline" className="text-xs">
+                  <Plus className="h-3 w-3 mr-1" />
+                  Traditional
+                </Badge>
+              </div>
+
+              {/* Barcode Scanning Method */}
+              <div 
+                className="p-4 border-2 rounded-lg opacity-60 text-center"
+              >
+                <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                  <ScanLine className="h-6 w-6 text-purple-600" />
+                </div>
+                <h4 className="font-medium mb-1">Barcode Scan</h4>
+                <p className="text-sm text-muted-foreground mb-2">Scan product barcodes</p>
+                <Badge variant="secondary" className="text-xs">
+                  Coming Soon
+                </Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        <ItemsList />
-      </div>
-    );
-  }
-
-  // Manual Entry Interface  
-  if (receivingMethod === "manual") {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Manual Stock Entry</h3>
+      {/* Document Scanning Interface */}
+      {receivingMethod === "document" && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold">Document Upload</h3>
+          
+          <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="document-upload"
+            />
+            <label htmlFor="document-upload" className="cursor-pointer">
+              {documentImage ? (
+                <div className="space-y-2">
+                  <Camera className="h-12 w-12 text-green-600 mx-auto" />
+                  <p className="text-sm font-medium text-green-600">Document uploaded</p>
+                  <p className="text-xs text-muted-foreground">{documentImage.name}</p>
+                  {isProcessing && (
+                    <p className="text-xs text-blue-600 animate-pulse">Processing with AI...</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Camera className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <p className="text-sm font-medium">Take photo or upload delivery document</p>
+                  <p className="text-xs text-muted-foreground">AI will extract delivery details and items automatically</p>
+                </div>
+              )}
+            </label>
           </div>
-          <Button variant="outline" onClick={handleBackToMethods} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Delivery Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          {/* Extracted delivery info */}
+          {deliveryInfo.source && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-green-800 mb-2">Extracted Delivery Information</h4>
+              <div className="text-sm space-y-1">
+                <div><strong>Source:</strong> {deliveryInfo.source === "central-store" ? "Central Medical Store" : deliveryInfo.source}</div>
+                <div><strong>Driver:</strong> {deliveryInfo.driverName}</div>
+                <div><strong>Delivery Note:</strong> {deliveryInfo.deliveryNote}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Items table for document method */}
+          {receivedItems.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-3">Extracted Items ({receivedItems.length})</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Unit Cost</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Expiry</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {receivedItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.productName}</div>
+                        {item.packSize && <div className="text-sm text-muted-foreground">Pack: {item.packSize}</div>}
+                      </TableCell>
+                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                      <TableCell>{item.batchNumber || "-"}</TableCell>
+                      <TableCell>{item.expiryDate || "-"}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Manual Entry Interface */}
+      {receivingMethod === "manual" && (
+        <div className="space-y-6">
+          {/* Delivery Information Section */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Delivery Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="source">Supply Source</Label>
@@ -500,234 +450,208 @@ export const ReceivingModule: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Items to Receive</h4>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="program-filter" className="text-sm">Program:</Label>
-                  <Select value={programFilter} onValueChange={setProgramFilter}>
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="CH">CH</SelectItem>
-                      <SelectItem value="HIV">HIV</SelectItem>
-                      <SelectItem value="TB">TB</SelectItem>
-                      <SelectItem value="MAL">MAL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Items Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Items to Receive</h3>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="program-filter" className="text-sm">Program:</Label>
+                <Select value={programFilter} onValueChange={setProgramFilter}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="CH">CH</SelectItem>
+                    <SelectItem value="HIV">HIV</SelectItem>
+                    <SelectItem value="TB">TB</SelectItem>
+                    <SelectItem value="MAL">MAL</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[300px]">Product</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit Cost</TableHead>
-                    <TableHead>Batch</TableHead>
-                    <TableHead>Expiry</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Entry form row */}
-                  <TableRow className="border-b-2 border-primary/20">
-                    <TableCell>
-                      <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={open}
-                            className="w-full justify-between"
-                          >
-                            {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
-                          <Command>
-                            <CommandInput 
-                              placeholder="Search products..." 
-                              value={searchQuery}
-                              onValueChange={setSearchQuery}
-                            />
-                            <CommandList>
-                              <CommandEmpty>No product found.</CommandEmpty>
-                              <CommandGroup>
-                                {filteredProducts.map((product) => (
-                                  <CommandItem
-                                    key={product.id}
-                                    value={product.canonical_name}
-                                    onSelect={() => {
-                                      setSelectedProduct(product);
-                                      setNewItem({
-                                        ...newItem,
-                                        unitCost: product.price_benchmark_low || undefined
-                                      });
-                                      setOpen(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex-1">
-                                      <div className="font-medium">{product.canonical_name}</div>
-                                      <div className="text-sm text-muted-foreground">
-                                        {product.program} • {product.default_unit}
-                                        {product.recommended_formulation && ` • ${product.recommended_formulation}`}
-                                      </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[300px]">Product</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Unit Cost</TableHead>
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Expiry</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Entry form row */}
+                <TableRow className="border-b-2 border-primary/20">
+                  <TableCell>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
+                        >
+                          {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search products..." 
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No product found.</CommandEmpty>
+                            <CommandGroup>
+                              {filteredProducts.map((product) => (
+                                <CommandItem
+                                  key={product.id}
+                                  value={product.canonical_name}
+                                  onSelect={() => {
+                                    setSelectedProduct(product);
+                                    setNewItem({
+                                      ...newItem,
+                                      unitCost: product.price_benchmark_low || undefined
+                                    });
+                                    setOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{product.canonical_name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {product.program} • {product.default_unit}
+                                      {product.recommended_formulation && ` • ${product.recommended_formulation}`}
                                     </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      {selectedProduct && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {selectedProduct.default_unit}
-                          {selectedProduct.pack_size && ` • Pack: ${selectedProduct.pack_size}`}
-                          {selectedProduct.price_benchmark_low && ` • Est: $${selectedProduct.price_benchmark_low}-${selectedProduct.price_benchmark_high}`}
-                        </div>
-                      )}
-                    </TableCell>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {selectedProduct && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {selectedProduct.default_unit}
+                        {selectedProduct.pack_size && ` • Pack: ${selectedProduct.pack_size}`}
+                        {selectedProduct.price_benchmark_low && ` • Est: $${selectedProduct.price_benchmark_low}-${selectedProduct.price_benchmark_high}`}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={newItem.quantity || ""}
+                      onChange={(e) => setNewItem({...newItem, quantity: Number(e.target.value)})}
+                      placeholder="Quantity"
+                      className="w-20"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={newItem.unitCost || ""}
+                      onChange={(e) => setNewItem({...newItem, unitCost: Number(e.target.value)})}
+                      placeholder="Cost"
+                      className="w-20"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={newItem.batchNumber || ""}
+                      onChange={(e) => setNewItem({...newItem, batchNumber: e.target.value})}
+                      placeholder="Batch"
+                      className="w-24"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="date"
+                      value={newItem.expiryDate || ""}
+                      onChange={(e) => setNewItem({...newItem, expiryDate: e.target.value})}
+                      className="w-32"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={newItem.supplier || ""}
+                      onChange={(e) => setNewItem({...newItem, supplier: e.target.value})}
+                      placeholder="Supplier"
+                      className="w-32"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      onClick={addItemToList} 
+                      size="sm"
+                      disabled={!selectedProduct || !newItem.quantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                
+                {/* Added items displayed below */}
+                {receivedItems.map((item) => (
+                  <TableRow key={item.id}>
                     <TableCell>
-                      <Input
-                        type="number"
-                        value={newItem.quantity || ""}
-                        onChange={(e) => setNewItem({...newItem, quantity: Number(e.target.value)})}
-                        placeholder="Quantity"
-                        className="w-20"
-                      />
+                      <div className="font-medium">{item.productName}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
+                      </div>
                     </TableCell>
+                    <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                    <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                    <TableCell>{item.batchNumber || "-"}</TableCell>
+                    <TableCell>{item.expiryDate || "-"}</TableCell>
+                    <TableCell>{item.supplier || "-"}</TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={newItem.unitCost || ""}
-                        onChange={(e) => setNewItem({...newItem, unitCost: Number(e.target.value)})}
-                        placeholder="Cost"
-                        className="w-20"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={newItem.batchNumber || ""}
-                        onChange={(e) => setNewItem({...newItem, batchNumber: e.target.value})}
-                        placeholder="Batch"
-                        className="w-24"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="date"
-                        value={newItem.expiryDate || ""}
-                        onChange={(e) => setNewItem({...newItem, expiryDate: e.target.value})}
-                        className="w-32"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={newItem.supplier || ""}
-                        onChange={(e) => setNewItem({...newItem, supplier: e.target.value})}
-                        placeholder="Supplier"
-                        className="w-32"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        onClick={addItemToList} 
+                      <Button
+                        variant="ghost"
                         size="sm"
-                        disabled={!selectedProduct || !newItem.quantity}
+                        onClick={() => removeItem(item.id)}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                  
-                  {/* Added items displayed below */}
-                  {receivedItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.productName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
-                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
-                      <TableCell>{item.batchNumber || "-"}</TableCell>
-                      <TableCell>{item.expiryDate || "-"}</TableCell>
-                      <TableCell>{item.supplier || "-"}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {receivedItems.length > 0 && (
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <Badge variant="outline">
-                    Total Items: {receivedItems.length}
-                  </Badge>
-                  <Button 
-                    onClick={processReceiving}
-                    disabled={receivedItems.length === 0 || isProcessing}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isProcessing ? "Processing..." : "Complete Receiving"}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Barcode Interface (placeholder)
-  if (receivingMethod === "barcode") {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ScanLine className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Barcode Scanning</h3>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-          <Button variant="outline" onClick={handleBackToMethods} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
+        </div>
+      )}
+
+      {/* Complete Receiving Section */}
+      {receivedItems.length > 0 && (
+        <div className="flex justify-between items-center pt-4 border-t">
+          <Badge variant="outline" className="text-sm">
+            Total Items: {receivedItems.length}
+          </Badge>
+          <Button 
+            onClick={processReceiving}
+            disabled={receivedItems.length === 0 || isProcessing}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isProcessing ? "Processing..." : "Complete Receiving"}
           </Button>
         </div>
-
-        <Card>
-          <CardContent className="p-12 text-center">
-            <ScanLine className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h4 className="text-lg font-medium mb-2">Barcode Scanning</h4>
-            <p className="text-muted-foreground">This feature will be available soon</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return null;
+      )}
+    </div>
+  );
 };
