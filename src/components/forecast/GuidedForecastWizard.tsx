@@ -104,10 +104,10 @@ const wizardSteps = [
 ];
 
 export const GuidedForecastWizard: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(2); // Start at data collection step
   const [forecastPeriod, setForecastPeriod] = useState("quarterly");
   const [dataSource, setDataSource] = useState("dagu-mini");
-  const [forecastMethod, setForecastMethod] = useState("consumption-based");
+  const [forecastMethod, setForecastMethod] = useState("consumption-based"); // Default method
   const [forecastData, setForecastData] = useState(mockForecastData);
   const [calculationResults, setCalculationResults] = useState<any>(null);
   const [collectedData, setCollectedData] = useState<any>(null);
@@ -489,7 +489,7 @@ export const GuidedForecastWizard: React.FC = () => {
         <Button 
           variant="outline" 
           onClick={handleBack}
-          disabled={currentStep === 0}
+          disabled={currentStep === 2} // Disable back on data collection step
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
