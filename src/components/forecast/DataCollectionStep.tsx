@@ -52,7 +52,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
       method: forecastMethod,
       files: uploadedFiles,
       manualData,
-      populationData: forecastMethod.includes('demographic') ? populationData : null,
+      populationData: forecastMethod === 'hybrid' ? populationData : null,
       inventoryData: {
         balances,
         consumption,
@@ -85,7 +85,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
       case 'trend-analysis':
         return 'Provide service statistics and consumption trends to identify patterns';
       case 'hybrid':
-        return 'Combine consumption data, service statistics, and demographic information';
+        return 'Combine consumption data, service statistics, and demographic information including population, disease incidence, and treatment seeking rates';
       default:
         return 'Provide the necessary data for forecasting calculations';
     }
@@ -151,7 +151,18 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
 
-              {(forecastMethod === 'trend-analysis' || forecastMethod === 'hybrid') && (
+              {forecastMethod === 'trend-analysis' && (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                    <Activity className="h-6 w-6 mx-auto mb-2 text-primary" />
+                    <h4 className="font-medium">Service Statistics</h4>
+                    <p className="text-xs text-muted-foreground mb-2">Patient visits, treatments given</p>
+                    <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+                  </div>
+                </div>
+              )}
+
+              {forecastMethod === 'hybrid' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
@@ -216,7 +227,19 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
                 </div>
               )}
 
-              {(forecastMethod === 'trend-analysis' || forecastMethod === 'hybrid') && (
+              {forecastMethod === 'trend-analysis' && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Monthly Service Statistics</Label>
+                    <Textarea 
+                      placeholder="Enter average monthly patient visits, treatments provided, etc."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {forecastMethod === 'hybrid' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -360,7 +383,7 @@ export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
             </Button>
             <Button 
               onClick={handleContinue}
-              disabled={!hasInventoryData && uploadedFiles.length === 0 && !Object.values(populationData).some(val => val)}
+              disabled={!hasInventoryData && uploadedFiles.length === 0 && (forecastMethod === 'hybrid' ? !Object.values(populationData).some(val => val) : false)}
             >
               Continue to Calculation
             </Button>
