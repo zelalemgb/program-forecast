@@ -1,0 +1,286 @@
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Upload, 
+  Database, 
+  Users, 
+  Activity, 
+  FileText, 
+  CheckCircle, 
+  AlertTriangle 
+} from "lucide-react";
+
+interface DataCollectionStepProps {
+  forecastMethod: string;
+  onDataCollected: (data: any) => void;
+  onBack: () => void;
+}
+
+export const DataCollectionStep: React.FC<DataCollectionStepProps> = ({
+  forecastMethod,
+  onDataCollected,
+  onBack
+}) => {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [manualData, setManualData] = useState<any>({});
+  const [populationData, setPopulationData] = useState({
+    totalPopulation: '',
+    targetPopulation: '',
+    incidenceRate: '',
+    treatmentSeekingRate: ''
+  });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleContinue = () => {
+    const collectedData = {
+      method: forecastMethod,
+      files: uploadedFiles,
+      manualData,
+      populationData: forecastMethod.includes('demographic') ? populationData : null,
+      timestamp: new Date().toISOString()
+    };
+    onDataCollected(collectedData);
+  };
+
+  const getMethodTitle = () => {
+    switch (forecastMethod) {
+      case 'consumption-based':
+        return 'Historical Consumption Data';
+      case 'trend-analysis':
+        return 'Trend Analysis Data';
+      case 'hybrid':
+        return 'Multiple Data Sources';
+      default:
+        return 'Data Collection';
+    }
+  };
+
+  const getMethodDescription = () => {
+    switch (forecastMethod) {
+      case 'consumption-based':
+        return 'Upload historical consumption data or enter monthly consumption figures for accurate forecasting';
+      case 'trend-analysis':
+        return 'Provide service statistics and consumption trends to identify patterns';
+      case 'hybrid':
+        return 'Combine consumption data, service statistics, and demographic information';
+      default:
+        return 'Provide the necessary data for forecasting calculations';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-primary" />
+            {getMethodTitle()}
+          </CardTitle>
+          <CardDescription>{getMethodDescription()}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload Data Files</TabsTrigger>
+              <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upload" className="space-y-4">
+              {forecastMethod === 'consumption-based' && (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <h3 className="font-medium mb-2">Upload Consumption Data</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Excel or CSV files with historical consumption by product and month
+                    </p>
+                    <Input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="max-w-xs mx-auto"
+                    />
+                  </div>
+                  
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Uploaded Files:</h4>
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                          <FileText className="h-4 w-4" />
+                          <span className="text-sm">{file.name}</span>
+                          <Badge variant="secondary">{(file.size / 1024).toFixed(1)} KB</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Expected Data Format:</h4>
+                    <div className="text-sm space-y-1">
+                      <p>• Product Name | Month | Consumption Quantity | Unit</p>
+                      <p>• At least 6 months of historical data recommended</p>
+                      <p>• Include stock-out periods as zero consumption</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(forecastMethod === 'trend-analysis' || forecastMethod === 'hybrid') && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                      <Activity className="h-6 w-6 mx-auto mb-2 text-primary" />
+                      <h4 className="font-medium">Service Statistics</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Patient visits, treatments given</p>
+                      <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+                    </div>
+                    
+                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                      <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
+                      <h4 className="font-medium">Population Data</h4>
+                      <p className="text-xs text-muted-foreground mb-2">Demographic and morbidity data</p>
+                      <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="manual" className="space-y-4">
+              {forecastMethod === 'consumption-based' && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Manual Consumption Entry</h4>
+                  <div className="border rounded-lg p-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Last 3 Months Avg</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Stock-outs (days)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Artemether 20mg</TableCell>
+                          <TableCell>
+                            <Input type="number" placeholder="85" className="w-20" />
+                          </TableCell>
+                          <TableCell>tablets</TableCell>
+                          <TableCell>
+                            <Input type="number" placeholder="0" className="w-16" />
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Paracetamol 500mg</TableCell>
+                          <TableCell>
+                            <Input type="number" placeholder="150" className="w-20" />
+                          </TableCell>
+                          <TableCell>tablets</TableCell>
+                          <TableCell>
+                            <Input type="number" placeholder="5" className="w-16" />
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                    <Button variant="outline" size="sm" className="mt-2">
+                      Add Product
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {(forecastMethod === 'trend-analysis' || forecastMethod === 'hybrid') && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Total Population</Label>
+                      <Input 
+                        type="number" 
+                        value={populationData.totalPopulation}
+                        onChange={(e) => setPopulationData(prev => ({
+                          ...prev, 
+                          totalPopulation: e.target.value
+                        }))}
+                        placeholder="5000"
+                      />
+                    </div>
+                    <div>
+                      <Label>Target Population (%)</Label>
+                      <Input 
+                        type="number" 
+                        value={populationData.targetPopulation}
+                        onChange={(e) => setPopulationData(prev => ({
+                          ...prev, 
+                          targetPopulation: e.target.value
+                        }))}
+                        placeholder="15"
+                      />
+                    </div>
+                    <div>
+                      <Label>Disease Incidence Rate (%)</Label>
+                      <Input 
+                        type="number" 
+                        value={populationData.incidenceRate}
+                        onChange={(e) => setPopulationData(prev => ({
+                          ...prev, 
+                          incidenceRate: e.target.value
+                        }))}
+                        placeholder="12"
+                      />
+                    </div>
+                    <div>
+                      <Label>Treatment Seeking Rate (%)</Label>
+                      <Input 
+                        type="number" 
+                        value={populationData.treatmentSeekingRate}
+                        onChange={(e) => setPopulationData(prev => ({
+                          ...prev, 
+                          treatmentSeekingRate: e.target.value
+                        }))}
+                        placeholder="70"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label>Monthly Service Statistics</Label>
+                    <Textarea 
+                      placeholder="Enter average monthly patient visits, treatments provided, etc."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={onBack}>
+              Back to Method Selection
+            </Button>
+            <Button 
+              onClick={handleContinue}
+              disabled={uploadedFiles.length === 0 && !Object.values(populationData).some(val => val)}
+            >
+              Continue to Calculation
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

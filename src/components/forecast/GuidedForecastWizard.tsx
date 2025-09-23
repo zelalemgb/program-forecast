@@ -23,6 +23,7 @@ import {
   Upload
 } from "lucide-react";
 import { ForecastCalculationStep } from "./ForecastCalculationStep";
+import { DataCollectionStep } from "./DataCollectionStep";
 
 interface ForecastItem {
   id: string;
@@ -81,6 +82,11 @@ const wizardSteps = [
     description: "Select forecasting methodology and parameters"
   },
   {
+    id: "data-collection",
+    title: "Data Collection",
+    description: "Provide required data for your selected method"
+  },
+  {
     id: "calculation",
     title: "Calculation",
     description: "Running forecast calculations"
@@ -104,6 +110,7 @@ export const GuidedForecastWizard: React.FC = () => {
   const [forecastMethod, setForecastMethod] = useState("consumption-based");
   const [forecastData, setForecastData] = useState(mockForecastData);
   const [calculationResults, setCalculationResults] = useState<any>(null);
+  const [collectedData, setCollectedData] = useState<any>(null);
 
   const handleNext = () => {
     if (currentStep < wizardSteps.length - 1) {
@@ -115,6 +122,11 @@ export const GuidedForecastWizard: React.FC = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleDataCollected = (data: any) => {
+    setCollectedData(data);
+    setCurrentStep(currentStep + 1); // Move to calculation step
   };
 
   const handleCalculationComplete = (results: any) => {
@@ -134,7 +146,7 @@ export const GuidedForecastWizard: React.FC = () => {
       }));
       setForecastData(updatedForecastData);
     }
-    setCurrentStep(3); // Move to review step
+    setCurrentStep(currentStep + 1); // Move to review step
   };
 
   const updateForecastQuantity = (id: string, quantity: number) => {
@@ -314,16 +326,26 @@ export const GuidedForecastWizard: React.FC = () => {
             </div>
           )}
 
-          {/* Step 3: Calculation */}
+          {/* Step 3: Data Collection */}
           {currentStep === 2 && (
+            <DataCollectionStep
+              forecastMethod={forecastMethod}
+              onDataCollected={handleDataCollected}
+              onBack={handleBack}
+            />
+          )}
+
+          {/* Step 4: Calculation */}
+          {currentStep === 3 && (
             <ForecastCalculationStep
               wizardData={{
                 forecastPeriod,
                 dataSource,
                 forecastMethod,
+                collectedData,
                 commodityTypes: ["Medicines", "Test kits"],
-                healthProgram: "Malaria", // This would come from method selection
-                consumptionData: dataSource === 'dagu-mini' ? 'yes' : 'no',
+                healthProgram: "Malaria",
+                consumptionData: collectedData?.files?.length > 0 ? 'yes' : 'no',
                 serviceData: 'yes',
                 catchmentPopulation: 'yes',
                 diseaseIncidence: 'yes'
@@ -333,8 +355,8 @@ export const GuidedForecastWizard: React.FC = () => {
             />
           )}
 
-          {/* Step 4: Review & Adjust */}
-          {currentStep === 3 && (
+          {/* Step 5: Review & Adjust */}
+          {currentStep === 4 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Forecast Results</h4>
@@ -398,8 +420,8 @@ export const GuidedForecastWizard: React.FC = () => {
             </div>
           )}
 
-          {/* Step 5: Finalize */}
-          {currentStep === 4 && (
+          {/* Step 6: Finalize */}
+          {currentStep === 5 && (
             <div className="space-y-6">
               <div className="text-center space-y-4">
                 <CheckCircle className="h-16 w-16 mx-auto text-green-600" />
