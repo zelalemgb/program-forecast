@@ -696,8 +696,6 @@ export const ReceivingModule: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        <ItemsList />
       </div>
     );
   }
