@@ -29,6 +29,7 @@ interface WizardData {
   forecastScope: string; // "RDF" or "Health Program"
   healthPrograms: { [programName: string]: string[] }; // program -> commodity types
   commodityTypes: string[]; // For RDF scope
+  selectedMethods: { [scopeName: string]: string }; // scope -> methodology
   customCommodity: string;
   serviceData: string;
   consumptionData: string;
@@ -57,6 +58,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     forecastScope: "",
     healthPrograms: {},
     commodityTypes: [],
+    selectedMethods: {},
     customCommodity: "",
     serviceData: "",
     consumptionData: "",
@@ -69,15 +71,17 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
   const totalSteps = 7;
   const progress = (currentStep / totalSteps) * 100;
 
-  const updateData = (field: keyof WizardData, value: string | string[] | boolean | { [key: string]: string[] }) => {
+  const updateData = (field: keyof WizardData, value: string | string[] | boolean | { [key: string]: string[] } | { [key: string]: string }) => {
     setWizardData(prev => ({ ...prev, [field]: value }));
   };
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
-      // Skip reality check if user chose to skip
+      // Skip reality check if user chose to skip - go to methodology selection
       if (currentStep === 4 && wizardData.skipRealityCheck) {
-        setCurrentStep(6); // Jump to analysis step
+        setCurrentStep(5); // Go to methodology selection
+      } else if (currentStep === 5 && wizardData.skipRealityCheck) {
+        setCurrentStep(6); // Skip reality check step, go to analysis
       } else {
         setCurrentStep((prev) => (prev + 1) as Step);
       }
@@ -88,7 +92,9 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     if (currentStep > 1) {
       // Handle skip logic in reverse
       if (currentStep === 6 && wizardData.skipRealityCheck) {
-        setCurrentStep(4); // Jump back to skip selection
+        setCurrentStep(5); // Go back to methodology selection
+      } else if (currentStep === 5 && wizardData.skipRealityCheck) {
+        setCurrentStep(4); // Go back to skip selection
       } else {
         setCurrentStep((prev) => (prev - 1) as Step);
       }
@@ -104,6 +110,7 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       forecastScope: "",
       healthPrograms: {},
       commodityTypes: [],
+      selectedMethods: {},
       customCommodity: "",
       serviceData: "",
       consumptionData: "",
@@ -141,11 +148,20 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
       case 4:
         return true; // Skip option step
       case 5:
-        return wizardData.skipRealityCheck || (wizardData.serviceData !== "" && 
-               wizardData.consumptionData !== "" && 
-               wizardData.stockouts !== "" && 
-               wizardData.catchmentPopulation !== "" && 
-               wizardData.diseaseIncidence !== "");
+        if (wizardData.skipRealityCheck) {
+          // Methodology selection step
+          const scopes = wizardData.forecastScope === "RDF" 
+            ? ["RDF"]
+            : Object.keys(wizardData.healthPrograms);
+          return scopes.every(scope => wizardData.selectedMethods[scope]);
+        } else {
+          // Reality check step
+          return wizardData.skipRealityCheck || (wizardData.serviceData !== "" && 
+                 wizardData.consumptionData !== "" && 
+                 wizardData.stockouts !== "" && 
+                 wizardData.catchmentPopulation !== "" && 
+                 wizardData.diseaseIncidence !== "");
+        }
       case 6:
         return true; // Analysis step
       case 7:
@@ -211,6 +227,19 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
     }
     updateData("healthPrograms", newHealthPrograms);
   };
+
+  const handleMethodChange = (scope: string, method: string) => {
+    const newSelectedMethods = { ...wizardData.selectedMethods };
+    newSelectedMethods[scope] = method;
+    updateData("selectedMethods", newSelectedMethods);
+  };
+
+  const getAvailableMethods = () => [
+    { value: "consumption", label: "Consumption Method", description: "Based on historical usage data" },
+    { value: "service", label: "Service Statistics Method", description: "Based on patient visits and services" },
+    { value: "demographic", label: "Demographic Morbidity Method", description: "Based on population and disease incidence" },
+    { value: "hybrid", label: "Hybrid Method", description: "Combines multiple data sources" }
+  ];
 
   const renderStep = () => {
     switch (currentStep) {
@@ -430,12 +459,60 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
         );
 
       case 5:
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Users className="h-6 w-6 text-brand" />
-              <h2 className="text-xl font-semibold">Facility Reality Check</h2>
+        if (wizardData.skipRealityCheck) {
+          // Methodology Selection Step
+          const scopes = wizardData.forecastScope === "RDF" 
+            ? ["RDF"]
+            : Object.keys(wizardData.healthPrograms);
+          
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Target className="h-6 w-6 text-brand" />
+                <h2 className="text-xl font-semibold">Select Forecasting Methodology</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <p className="text-muted-foreground">
+                  Choose the forecasting method for each scope area:
+                </p>
+                
+                {scopes.map((scope) => (
+                  <div key={scope} className="border rounded-lg p-4 space-y-3">
+                    <h3 className="font-medium">{scope}</h3>
+                    <div className="space-y-3">
+                      {getAvailableMethods().map((method) => (
+                        <div key={method.value} className="flex items-start space-x-2">
+                          <RadioGroup 
+                            value={wizardData.selectedMethods[scope] || ""} 
+                            onValueChange={(value) => handleMethodChange(scope, value)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value={method.value} id={`${scope}-${method.value}`} />
+                              <div>
+                                <Label htmlFor={`${scope}-${method.value}`} className="font-medium">
+                                  {method.label}
+                                </Label>
+                                <p className="text-sm text-muted-foreground">{method.description}</p>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+          );
+        } else {
+          // Reality Check Step (existing content)
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Users className="h-6 w-6 text-brand" />
+                <h2 className="text-xl font-semibold">Facility Reality Check</h2>
+              </div>
             
             <div className="space-y-6">
               <div>
@@ -539,7 +616,8 @@ const ForecastingWizardModal: React.FC<ForecastingWizardModalProps> = ({
               </div>
             </div>
           </div>
-        );
+          );
+        }
 
       case 6:
         return (
