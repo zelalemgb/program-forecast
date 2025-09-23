@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, TrendingUp, Database, CheckCircle, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, TrendingUp, Database, CheckCircle, AlertTriangle, Calendar } from "lucide-react";
 import { useForecastIntegration, ForecastFromInventory } from "@/hooks/useForecastIntegration";
 import { useToast } from "@/hooks/use-toast";
+import { HistoricalConsumptionTable } from "./HistoricalConsumptionTable";
 
 interface InventoryForecastModalProps {
   open: boolean;
@@ -23,7 +25,8 @@ export const InventoryForecastModal: React.FC<InventoryForecastModalProps> = ({
   facilityName = "Current Facility"
 }) => {
   const [forecasts, setForecasts] = useState<ForecastFromInventory[]>([]);
-  const [step, setStep] = useState<'generate' | 'review' | 'save'>('generate');
+  const [step, setStep] = useState<'historical' | 'generate' | 'review' | 'save'>('historical');
+  const [hasHistoricalData, setHasHistoricalData] = useState(false);
   const { generateForecastFromInventory, saveForecastWithSource, loading } = useForecastIntegration();
   const { toast } = useToast();
 
@@ -58,7 +61,7 @@ export const InventoryForecastModal: React.FC<InventoryForecastModalProps> = ({
       setStep('save');
       setTimeout(() => {
         onOpenChange(false);
-        setStep('generate');
+        setStep('historical');
         setForecasts([]);
       }, 2000);
     } catch (error) {
@@ -90,6 +93,33 @@ export const InventoryForecastModal: React.FC<InventoryForecastModalProps> = ({
             Create forecasts based on consumption patterns from {facilityName}
           </DialogDescription>
         </DialogHeader>
+
+        {step === 'historical' && (
+          <div className="space-y-6">
+            <Alert>
+              <Calendar className="h-4 w-4" />
+              <AlertDescription>
+                Review historical consumption patterns before generating forecasts. This data will be used to calculate trend analysis and confidence scores.
+              </AlertDescription>
+            </Alert>
+
+            <HistoricalConsumptionTable 
+              facilityId={facilityId}
+              facilityName={facilityName}
+              onDataReady={setHasHistoricalData}
+            />
+
+            <div className="flex justify-between">
+              <div />
+              <Button 
+                onClick={() => setStep('generate')} 
+                disabled={!hasHistoricalData}
+              >
+                Continue to Forecast Generation
+              </Button>
+            </div>
+          </div>
+        )}
 
         {step === 'generate' && (
           <div className="space-y-6">
@@ -133,12 +163,14 @@ export const InventoryForecastModal: React.FC<InventoryForecastModalProps> = ({
               </Card>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setStep('historical')}>
+                Back to Historical Data
+              </Button>
               <Button 
                 onClick={handleGenerateForecast} 
                 disabled={loading}
                 size="lg"
-                className="w-full max-w-md"
               >
                 {loading ? (
                   <>
@@ -241,6 +273,16 @@ export const InventoryForecastModal: React.FC<InventoryForecastModalProps> = ({
                 Your inventory-based forecast has been saved with full traceability to source data.
               </p>
             </div>
+            <Button 
+              onClick={() => {
+                onOpenChange(false);
+                setStep('historical');
+                setForecasts([]);
+              }}
+              variant="outline"
+            >
+              Close
+            </Button>
           </div>
         )}
       </DialogContent>
