@@ -275,6 +275,50 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          active_status: boolean | null
+          created_at: string | null
+          department_code: string | null
+          department_name: string
+          department_type: string | null
+          facility_id: number
+          head_of_department: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          active_status?: boolean | null
+          created_at?: string | null
+          department_code?: string | null
+          department_name: string
+          department_type?: string | null
+          facility_id: number
+          head_of_department?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          active_status?: boolean | null
+          created_at?: string | null
+          department_code?: string | null
+          department_name?: string
+          department_type?: string | null
+          facility_id?: number
+          head_of_department?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+        ]
+      }
       epi_assumptions: {
         Row: {
           created_at: string
@@ -784,34 +828,55 @@ export type Database = {
       }
       inventory_balances: {
         Row: {
+          average_monthly_consumption: number | null
           current_stock: number
           facility_id: number | null
           id: string
+          last_consumption_date: string | null
+          last_receipt_date: string | null
           last_transaction_date: string | null
           last_updated: string
           max_level: number
+          maximum_stock_level: number | null
+          minimum_stock_level: number | null
           product_id: string | null
           reorder_level: number
+          reserved_stock: number | null
+          safety_stock_level: number | null
         }
         Insert: {
+          average_monthly_consumption?: number | null
           current_stock?: number
           facility_id?: number | null
           id?: string
+          last_consumption_date?: string | null
+          last_receipt_date?: string | null
           last_transaction_date?: string | null
           last_updated?: string
           max_level?: number
+          maximum_stock_level?: number | null
+          minimum_stock_level?: number | null
           product_id?: string | null
           reorder_level?: number
+          reserved_stock?: number | null
+          safety_stock_level?: number | null
         }
         Update: {
+          average_monthly_consumption?: number | null
           current_stock?: number
           facility_id?: number | null
           id?: string
+          last_consumption_date?: string | null
+          last_receipt_date?: string | null
           last_transaction_date?: string | null
           last_updated?: string
           max_level?: number
+          maximum_stock_level?: number | null
+          minimum_stock_level?: number | null
           product_id?: string | null
           reorder_level?: number
+          reserved_stock?: number | null
+          safety_stock_level?: number | null
         }
         Relationships: [
           {
@@ -832,15 +897,31 @@ export type Database = {
       }
       inventory_transactions: {
         Row: {
+          approved_by: string | null
           batch_number: string | null
+          condition_at_receipt: string | null
           created_at: string
+          department: string | null
+          destination_facility_id: number | null
+          donation_source: string | null
           expiry_date: string | null
           facility_id: number | null
+          funding_source: string | null
+          grn_number: string | null
           id: string
+          invoice_number: string | null
+          manufacturer_batch_number: string | null
           notes: string | null
           product_id: string | null
           quantity: number
+          received_by: string | null
           reference_number: string | null
+          serial_number: string | null
+          source_facility_id: number | null
+          storage_location: string | null
+          supplier_batch_number: string | null
+          supplier_name: string | null
+          temperature_at_receipt: number | null
           transaction_date: string
           transaction_type: string
           unit_cost: number | null
@@ -848,15 +929,31 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          approved_by?: string | null
           batch_number?: string | null
+          condition_at_receipt?: string | null
           created_at?: string
+          department?: string | null
+          destination_facility_id?: number | null
+          donation_source?: string | null
           expiry_date?: string | null
           facility_id?: number | null
+          funding_source?: string | null
+          grn_number?: string | null
           id?: string
+          invoice_number?: string | null
+          manufacturer_batch_number?: string | null
           notes?: string | null
           product_id?: string | null
           quantity: number
+          received_by?: string | null
           reference_number?: string | null
+          serial_number?: string | null
+          source_facility_id?: number | null
+          storage_location?: string | null
+          supplier_batch_number?: string | null
+          supplier_name?: string | null
+          temperature_at_receipt?: number | null
           transaction_date?: string
           transaction_type: string
           unit_cost?: number | null
@@ -864,15 +961,31 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          approved_by?: string | null
           batch_number?: string | null
+          condition_at_receipt?: string | null
           created_at?: string
+          department?: string | null
+          destination_facility_id?: number | null
+          donation_source?: string | null
           expiry_date?: string | null
           facility_id?: number | null
+          funding_source?: string | null
+          grn_number?: string | null
           id?: string
+          invoice_number?: string | null
+          manufacturer_batch_number?: string | null
           notes?: string | null
           product_id?: string | null
           quantity?: number
+          received_by?: string | null
           reference_number?: string | null
+          serial_number?: string | null
+          source_facility_id?: number | null
+          storage_location?: string | null
+          supplier_batch_number?: string | null
+          supplier_name?: string | null
+          temperature_at_receipt?: number | null
           transaction_date?: string
           transaction_type?: string
           unit_cost?: number | null
@@ -880,6 +993,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_destination_facility_id_fkey"
+            columns: ["destination_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
           {
             foreignKeyName: "inventory_transactions_facility_id_fkey"
             columns: ["facility_id"]
@@ -893,6 +1013,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_source_facility_id_fkey"
+            columns: ["source_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
           },
         ]
       }
@@ -1556,31 +1683,127 @@ export type Database = {
       }
       products: {
         Row: {
+          active_status: boolean | null
+          batch_tracking_required: boolean | null
+          brand_name: string | null
           category: string | null
           code: string | null
+          cold_chain_required: boolean | null
+          contraindications: string | null
+          controlled_substance: boolean | null
+          conversion_factor: number | null
           created_at: string | null
+          description: string | null
+          dispensing_unit: string | null
+          dosage_form: string | null
+          essential_medicine: boolean | null
+          expiry_tracking_required: boolean | null
+          generic_name: string | null
           id: string
+          instructions_for_use: string | null
+          manufacturer: string | null
+          manufacturer_code: string | null
+          minimum_shelf_life_days: number | null
           name: string
+          pack_size: number | null
+          pediatric_formulation: boolean | null
+          prescription_required: boolean | null
+          procurement_unit: string | null
+          product_type: string | null
+          registration_number: string | null
+          regulatory_status: string | null
+          serial_tracking_required: boolean | null
+          side_effects: string | null
+          standard_cost: number | null
+          storage_conditions: string | null
+          strength: string | null
+          therapeutic_category: string | null
           unit: string | null
           updated_at: string | null
+          vat_rate: number | null
+          who_prequalified: boolean | null
         }
         Insert: {
+          active_status?: boolean | null
+          batch_tracking_required?: boolean | null
+          brand_name?: string | null
           category?: string | null
           code?: string | null
+          cold_chain_required?: boolean | null
+          contraindications?: string | null
+          controlled_substance?: boolean | null
+          conversion_factor?: number | null
           created_at?: string | null
+          description?: string | null
+          dispensing_unit?: string | null
+          dosage_form?: string | null
+          essential_medicine?: boolean | null
+          expiry_tracking_required?: boolean | null
+          generic_name?: string | null
           id?: string
+          instructions_for_use?: string | null
+          manufacturer?: string | null
+          manufacturer_code?: string | null
+          minimum_shelf_life_days?: number | null
           name: string
+          pack_size?: number | null
+          pediatric_formulation?: boolean | null
+          prescription_required?: boolean | null
+          procurement_unit?: string | null
+          product_type?: string | null
+          registration_number?: string | null
+          regulatory_status?: string | null
+          serial_tracking_required?: boolean | null
+          side_effects?: string | null
+          standard_cost?: number | null
+          storage_conditions?: string | null
+          strength?: string | null
+          therapeutic_category?: string | null
           unit?: string | null
           updated_at?: string | null
+          vat_rate?: number | null
+          who_prequalified?: boolean | null
         }
         Update: {
+          active_status?: boolean | null
+          batch_tracking_required?: boolean | null
+          brand_name?: string | null
           category?: string | null
           code?: string | null
+          cold_chain_required?: boolean | null
+          contraindications?: string | null
+          controlled_substance?: boolean | null
+          conversion_factor?: number | null
           created_at?: string | null
+          description?: string | null
+          dispensing_unit?: string | null
+          dosage_form?: string | null
+          essential_medicine?: boolean | null
+          expiry_tracking_required?: boolean | null
+          generic_name?: string | null
           id?: string
+          instructions_for_use?: string | null
+          manufacturer?: string | null
+          manufacturer_code?: string | null
+          minimum_shelf_life_days?: number | null
           name?: string
+          pack_size?: number | null
+          pediatric_formulation?: boolean | null
+          prescription_required?: boolean | null
+          procurement_unit?: string | null
+          product_type?: string | null
+          registration_number?: string | null
+          regulatory_status?: string | null
+          serial_tracking_required?: boolean | null
+          side_effects?: string | null
+          standard_cost?: number | null
+          storage_conditions?: string | null
+          strength?: string | null
+          therapeutic_category?: string | null
           unit?: string | null
           updated_at?: string | null
+          vat_rate?: number | null
+          who_prequalified?: boolean | null
         }
         Relationships: []
       }
@@ -2057,6 +2280,71 @@ export type Database = {
           stage?: string
         }
         Relationships: []
+      }
+      storage_locations: {
+        Row: {
+          active_status: boolean | null
+          capacity_cubic_meters: number | null
+          created_at: string | null
+          facility_id: number
+          humidity_controlled: boolean | null
+          id: string
+          location_code: string | null
+          location_name: string
+          location_type: string | null
+          max_humidity: number | null
+          max_temperature: number | null
+          min_humidity: number | null
+          min_temperature: number | null
+          security_level: string | null
+          temperature_controlled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_status?: boolean | null
+          capacity_cubic_meters?: number | null
+          created_at?: string | null
+          facility_id: number
+          humidity_controlled?: boolean | null
+          id?: string
+          location_code?: string | null
+          location_name: string
+          location_type?: string | null
+          max_humidity?: number | null
+          max_temperature?: number | null
+          min_humidity?: number | null
+          min_temperature?: number | null
+          security_level?: string | null
+          temperature_controlled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_status?: boolean | null
+          capacity_cubic_meters?: number | null
+          created_at?: string | null
+          facility_id?: number
+          humidity_controlled?: boolean | null
+          id?: string
+          location_code?: string | null
+          location_name?: string
+          location_type?: string | null
+          max_humidity?: number | null
+          max_temperature?: number | null
+          min_humidity?: number | null
+          min_temperature?: number | null
+          security_level?: string | null
+          temperature_controlled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_locations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+        ]
       }
       suppliers: {
         Row: {
