@@ -534,31 +534,8 @@ export const ReceivingModule: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {receivedItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.productName}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
-                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
-                      <TableCell>{item.batchNumber || "-"}</TableCell>
-                      <TableCell>{item.expiryDate || "-"}</TableCell>
-                      <TableCell>{item.supplier || "-"}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
+                  {/* Entry form row */}
+                  <TableRow className="border-b-2 border-primary/20">
                     <TableCell>
                       <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
@@ -676,6 +653,32 @@ export const ReceivingModule: React.FC = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
+                  
+                  {/* Added items displayed below */}
+                  {receivedItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.productName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {item.unit}{item.packSize && ` • Pack: ${item.packSize}`}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.quantity.toLocaleString()}</TableCell>
+                      <TableCell>{item.unitCost ? `$${item.unitCost.toFixed(2)}` : "-"}</TableCell>
+                      <TableCell>{item.batchNumber || "-"}</TableCell>
+                      <TableCell>{item.expiryDate || "-"}</TableCell>
+                      <TableCell>{item.supplier || "-"}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
 
