@@ -250,7 +250,10 @@ export const ReceivingModule: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Truck className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Receive Stock</h2>
+          <h2 className="text-2xl font-bold">
+            Receive Stock
+            {!receivingMethod && <span className="text-lg text-muted-foreground font-normal ml-2">- Select Method</span>}
+          </h2>
         </div>
         {receivingMethod && (
           <Button variant="outline" onClick={handleBackToMethods} className="flex items-center gap-2">
@@ -263,10 +266,7 @@ export const ReceivingModule: React.FC = () => {
       {/* Method Selection */}
       {!receivingMethod && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Select Receiving Method</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Document Scanning Method */}
               <div 
