@@ -120,19 +120,14 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="space-y-4 border-b bg-muted/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {currentStepInfo?.icon && <currentStepInfo.icon className="h-5 w-5 text-primary" />}
-                Health Forecasting Assistant - {currentStepInfo?.title}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {currentStepInfo?.title} - Step {currentStep} of {totalSteps}
-              </p>
-            </div>
-            <Badge variant="outline">
-              {forecastData.selectedMethod ? `${forecastData.selectedMethod} method` : 'Setup'}
-            </Badge>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              {currentStepInfo?.icon && <currentStepInfo.icon className="h-5 w-5 text-primary" />}
+              Health Forecasting Assistant - {currentStepInfo?.title}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {currentStepInfo?.title} - Step {currentStep} of {totalSteps}
+            </p>
           </div>
           
           {/* Integrated step navigation */}
