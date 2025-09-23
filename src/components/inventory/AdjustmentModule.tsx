@@ -41,7 +41,6 @@ interface AdjustmentRequest {
   requestedBy: string;
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
-  priority: 'low' | 'medium' | 'high';
   documentPath?: string;
 }
 
@@ -68,8 +67,7 @@ export const AdjustmentModule: React.FC = () => {
       notes: "Batch expired on 15/01/2024, physically verified and removed",
       requestedBy: "Dr. Sarah Johnson",
       requestedAt: "2024-01-16 09:30",
-      status: "pending",
-      priority: "medium"
+      status: "pending"
     },
     {
       id: "ADJ002",
@@ -84,8 +82,7 @@ export const AdjustmentModule: React.FC = () => {
       notes: "Physical count showed 25 units more than system records",
       requestedBy: "John Smith",
       requestedAt: "2024-01-16 08:15",
-      status: "pending",
-      priority: "low"
+      status: "pending"
     }
   ]);
 
@@ -93,8 +90,7 @@ export const AdjustmentModule: React.FC = () => {
     adjustmentType: "" as 'increase' | 'decrease' | "",
     adjustmentQuantity: "",
     category: "",
-    notes: "",
-    priority: "" as 'low' | 'medium' | 'high' | ""
+    notes: ""
   });
 
   // Fetch products on component mount
@@ -154,11 +150,7 @@ export const AdjustmentModule: React.FC = () => {
     { value: "other", label: "Other" }
   ];
 
-  const priorityColors = {
-    low: "bg-blue-100 text-blue-800",
-    medium: "bg-orange-100 text-orange-800", 
-    high: "bg-red-100 text-red-800"
-  };
+  const priorityColors = {};
 
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -197,8 +189,7 @@ export const AdjustmentModule: React.FC = () => {
       notes: formData.notes,
       requestedBy: "Current User",
       requestedAt: new Date().toLocaleString(),
-      status: "pending",
-      priority: formData.priority || "medium"
+      status: "pending"
     };
 
     setAdjustmentRequests([newRequest, ...adjustmentRequests]);
@@ -206,8 +197,7 @@ export const AdjustmentModule: React.FC = () => {
       adjustmentType: "",
       adjustmentQuantity: "",
       category: "",
-      notes: "",
-      priority: ""
+      notes: ""
     });
     setSelectedProduct(null);
     setSearchQuery("");
@@ -367,19 +357,6 @@ export const AdjustmentModule: React.FC = () => {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select value={formData.priority} onValueChange={(value: 'low' | 'medium' | 'high') => setFormData({...formData, priority: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -438,7 +415,6 @@ export const AdjustmentModule: React.FC = () => {
                       <TableHead>New Balance</TableHead>
                       <TableHead>Category</TableHead>
                       <TableHead>Reason</TableHead>
-                      <TableHead>Priority</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -466,11 +442,6 @@ export const AdjustmentModule: React.FC = () => {
                         </TableCell>
                         <TableCell className="max-w-xs truncate" title={request.reason}>
                           {request.reason}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={priorityColors[request.priority]}>
-                            {request.priority.toUpperCase()}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className={statusColors[request.status]}>
