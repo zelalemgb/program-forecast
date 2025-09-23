@@ -12,6 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertTriangle, Package, Plus, Check, X, FileText, Calculator, ChevronsUpDown, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useInventoryData } from "@/hooks/useInventoryData";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -53,84 +54,113 @@ export const AdjustmentModule: React.FC = () => {
   const [stockBalances, setStockBalances] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [adjustmentRequests, setAdjustmentRequests] = useState<AdjustmentRequest[]>([
-    {
-      id: "ADJ001",
-      productId: "prod-1",
-      productName: "Amoxicillin 250mg Capsules",
-      currentStock: 450,
-      adjustmentType: 'decrease',
-      adjustmentQuantity: 50,
-      newBalance: 400,
-      reason: "Expired stock removal",
-      category: "expiry",
-      notes: "Batch expired on 15/01/2024, physically verified and removed",
-      requestedBy: "Dr. Sarah Johnson",
-      requestedAt: "2024-01-16 09:30",
-      status: "pending"
-    },
-    {
-      id: "ADJ002",
-      productId: "prod-2", 
-      productName: "Paracetamol 500mg Tablets",
-      currentStock: 1200,
-      adjustmentType: 'increase',
-      adjustmentQuantity: 25,
-      newBalance: 1225,
-      reason: "Stock count correction",
-      category: "correction",
-      notes: "Physical count showed 25 units more than system records",
-      requestedBy: "John Smith",
-      requestedAt: "2024-01-16 08:15",
-      status: "pending"
-    }
-  ]);
-
+  const [adjustmentRequests, setAdjustmentRequests] = useState<AdjustmentRequest[]>([]);
   const [formData, setFormData] = useState({
     adjustmentType: "" as 'increase' | 'decrease' | "",
     adjustmentQuantity: "",
     category: "",
     notes: ""
   });
+  const [loading, setLoading] = useState(true);
+  const { addTransaction } = useInventoryData(facilityId);
 
-  // Fetch products on component mount
+  // Fetch products and adjustment requests on component mount
   useEffect(() => {
-    fetchProducts();
-    fetchStockBalances();
+    fetchData();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // Fetch products
+      const { data: productsData, error: productsError } = await supabase
         .from('product_reference')
         .select('id, canonical_name, program, default_unit, price_benchmark_low, price_benchmark_high, recommended_formulation, strength, form')
         .eq('active', true)
         .order('canonical_name');
 
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
+      if (productsError) throw productsError;
+      setProducts(productsData || []);
 
-  const fetchStockBalances = async () => {
-    try {
-      const { data, error } = await supabase
+      // Fetch current stock balances
+      const { data: balancesData, error: balancesError } = await supabase
         .from('inventory_balances')
         .select('product_id, current_stock')
         .eq('facility_id', facilityId);
 
-      if (error) throw error;
+      if (balancesError) throw balancesError;
 
-      const balancesMap = (data || []).reduce((acc, balance) => {
+      const balancesMap = (balancesData || []).reduce((acc, balance) => {
         acc[balance.product_id] = balance.current_stock || 0;
         return acc;
       }, {} as Record<string, number>);
 
       setStockBalances(balancesMap);
+
+      // Fetch recent adjustment transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('inventory_transactions')
+        .select('*')
+        .eq('facility_id', facilityId)
+        .in('transaction_type', ['adjustment', 'loss', 'expired'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (transactionsError) throw transactionsError;
+
+      // Get product names for transactions
+      if (transactionsData && transactionsData.length > 0) {
+        const productIds = [...new Set(transactionsData.map(t => t.product_id))];
+        const { data: productDetails, error: productError } = await supabase
+          .from('product_reference')
+          .select('id, canonical_name, default_unit')
+          .in('id', productIds);
+
+        if (productError) throw productError;
+
+        const productMap = (productDetails || []).reduce((acc, product) => {
+          acc[product.id] = product;
+          return acc;
+        }, {} as Record<string, any>);
+
+        // Transform transactions to adjustment requests format
+        const adjustments: AdjustmentRequest[] = transactionsData.map(transaction => {
+          const currentStock = balancesMap[transaction.product_id] || 0;
+          const adjustmentQuantity = Math.abs(transaction.quantity);
+          const isIncrease = transaction.quantity > 0;
+          const newBalance = currentStock; // Current balance already reflects the adjustment
+          
+          return {
+            id: transaction.id,
+            productId: transaction.product_id,
+            productName: productMap[transaction.product_id]?.canonical_name || 'Unknown Product',
+            currentStock: currentStock,
+            adjustmentType: isIncrease ? 'increase' : 'decrease',
+            adjustmentQuantity: adjustmentQuantity,
+            newBalance: newBalance,
+            reason: transaction.notes || '',
+            category: transaction.transaction_type === 'adjustment' ? 'count-correction' : 
+                     transaction.transaction_type === 'expired' ? 'expired' : 'loss',
+            notes: transaction.notes || '',
+            requestedBy: "System User",
+            requestedAt: new Date(transaction.created_at).toLocaleString(),
+            status: "pending" as const
+          };
+        });
+
+        setAdjustmentRequests(adjustments);
+      }
+      
     } catch (error) {
-      console.error('Error fetching stock balances:', error);
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -158,7 +188,7 @@ export const AdjustmentModule: React.FC = () => {
     rejected: "bg-red-100 text-red-800"
   };
 
-  const handleSubmitAdjustment = (e: React.FormEvent) => {
+  const handleSubmitAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType || !formData.category) {
@@ -170,42 +200,89 @@ export const AdjustmentModule: React.FC = () => {
       return;
     }
 
-    const currentStock = stockBalances[selectedProduct.id] || 0;
-    const adjustmentQty = parseInt(formData.adjustmentQuantity);
-    const newBalance = formData.adjustmentType === 'increase' 
-      ? currentStock + adjustmentQty
-      : currentStock - adjustmentQty;
+    try {
+      setLoading(true);
 
-    const newRequest: AdjustmentRequest = {
-      id: `ADJ${String(adjustmentRequests.length + 3).padStart(3, '0')}`,
-      productId: selectedProduct.id,
-      productName: selectedProduct.canonical_name,
-      currentStock,
-      adjustmentType: formData.adjustmentType,
-      adjustmentQuantity: adjustmentQty,
-      newBalance,
-      reason: adjustmentCategories.find(cat => cat.value === formData.category)?.label || formData.category,
-      category: formData.category,
-      notes: formData.notes,
-      requestedBy: "Current User",
-      requestedAt: new Date().toLocaleString(),
-      status: "pending"
-    };
+      const currentStock = stockBalances[selectedProduct.id] || 0;
+      const adjustmentQty = parseInt(formData.adjustmentQuantity);
+      const newBalance = formData.adjustmentType === 'increase' 
+        ? currentStock + adjustmentQty
+        : currentStock - adjustmentQty;
 
-    setAdjustmentRequests([newRequest, ...adjustmentRequests]);
-    setFormData({
-      adjustmentType: "",
-      adjustmentQuantity: "",
-      category: "",
-      notes: ""
-    });
-    setSelectedProduct(null);
-    setSearchQuery("");
+      // Determine transaction type and quantity based on adjustment type and category
+      let transactionType: string;
+      let quantity: number = adjustmentQty;
+      
+      if (formData.category === 'expired') {
+        transactionType = 'expired';
+        quantity = -Math.abs(quantity);
+      } else if (formData.category === 'loss') {
+        transactionType = 'loss';
+        quantity = -Math.abs(quantity);
+      } else {
+        transactionType = 'adjustment';
+        quantity = formData.adjustmentType === 'increase' ? Math.abs(quantity) : -Math.abs(quantity);
+      }
 
-    toast({
-      title: "Adjustment Request Submitted",
-      description: `Request ${newRequest.id} has been submitted for review`
-    });
+      // Create the inventory transaction
+      await addTransaction({
+        facility_id: facilityId,
+        product_id: selectedProduct.id,
+        transaction_type: transactionType as any,
+        quantity: quantity,
+        transaction_date: new Date().toISOString().split('T')[0],
+        notes: `${formData.category}: ${formData.notes}`,
+        reference_number: `ADJ-${Date.now()}`
+      });
+
+      // Create local request record
+      const newRequest: AdjustmentRequest = {
+        id: `ADJ${String(adjustmentRequests.length + 3).padStart(3, '0')}`,
+        productId: selectedProduct.id,
+        productName: selectedProduct.canonical_name,
+        currentStock,
+        adjustmentType: formData.adjustmentType,
+        adjustmentQuantity: adjustmentQty,
+        newBalance,
+        reason: adjustmentCategories.find(cat => cat.value === formData.category)?.label || formData.category,
+        category: formData.category,
+        notes: formData.notes,
+        requestedBy: "Current User",
+        requestedAt: new Date().toLocaleString(),
+        status: "pending"
+      };
+
+      setAdjustmentRequests([newRequest, ...adjustmentRequests]);
+      
+      // Update stock balance locally
+      setStockBalances(prev => ({
+        ...prev,
+        [selectedProduct.id]: newBalance
+      }));
+
+      // Reset form
+      setFormData({
+        adjustmentType: "",
+        adjustmentQuantity: "",
+        category: "",
+        notes: ""
+      });
+      setSelectedProduct(null);
+      setSearchQuery("");
+
+      toast({
+        title: "Adjustment processed successfully",
+        description: `${formData.adjustmentType === 'increase' ? 'Increased' : 'Decreased'} ${selectedProduct.canonical_name} by ${adjustmentQty}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process adjustment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
 
     setActiveTab("review");
   };

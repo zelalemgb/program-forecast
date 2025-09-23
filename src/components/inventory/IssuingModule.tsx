@@ -74,55 +74,53 @@ export const IssuingModule: React.FC = () => {
 
   const fetchRequests = async () => {
     try {
-      // Mock data for now - would come from database
-      const mockRequests: StockRequest[] = [
-        {
-          id: "1",
-          department_id: "dept-1",
-          department_name: "Emergency Ward",
-          product_id: "prod-1",
-          product_name: "Paracetamol 500mg",
-          requested_quantity: 100,
-          urgency_level: "high",
-          justification: "Running low on pain medication for emergency patients",
-          status: "pending",
-          requested_date: "2025-01-23",
-          requested_by: "Dr. Sarah Ahmed",
-          current_stock: 250,
-          unit: "tablet"
-        },
-        {
-          id: "2",
-          department_id: "dept-2",
-          department_name: "Pediatric Ward",
-          product_id: "prod-2",
-          product_name: "Amoxicillin 250mg",
-          requested_quantity: 50,
-          urgency_level: "medium",
-          justification: "Weekly stock replenishment for pediatric infections",
-          status: "pending",
-          requested_date: "2025-01-22",
-          requested_by: "Nurse Mary Tadesse",
-          current_stock: 180,
-          unit: "tablet"
-        },
-        {
-          id: "3",
-          department_id: "dept-3",
-          department_name: "Surgical Department",
-          product_id: "prod-3",
-          product_name: "Surgical Gloves",
-          requested_quantity: 200,
-          urgency_level: "emergency",
-          justification: "Emergency surgery scheduled - urgent need",
-          status: "pending",
-          requested_date: "2025-01-23",
-          requested_by: "Dr. Michael Bekele",
-          current_stock: 300,
-          unit: "pair"
-        }
-      ];
-      setRequests(mockRequests);
+      // Fetch recent issue transactions from the database
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('inventory_transactions')
+        .select('*')
+        .eq('facility_id', facilityId)
+        .eq('transaction_type', 'issue')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (transactionsError) throw transactionsError;
+
+      // Get product details for the transactions
+      let requestsFromTransactions: StockRequest[] = [];
+      if (transactionsData && transactionsData.length > 0) {
+        const productIds = [...new Set(transactionsData.map(t => t.product_id))];
+        const { data: productDetails, error: productError } = await supabase
+          .from('product_reference')
+          .select('id, canonical_name, default_unit')
+          .in('id', productIds);
+
+        if (productError) throw productError;
+
+        const productMap = (productDetails || []).reduce((acc, product) => {
+          acc[product.id] = product;
+          return acc;
+        }, {} as Record<string, any>);
+
+        // Transform transactions to request format for display
+        requestsFromTransactions = transactionsData.map(transaction => ({
+          id: transaction.id,
+          department_id: transaction.department || 'unknown',
+          department_name: transaction.department || 'Unknown Department',
+          product_id: transaction.product_id,
+          product_name: productMap[transaction.product_id]?.canonical_name || 'Unknown Product',
+          requested_quantity: Math.abs(transaction.quantity),
+          approved_quantity: Math.abs(transaction.quantity),
+          urgency_level: 'medium' as const,
+          justification: transaction.notes || 'Stock issue',
+          status: 'issued' as const,
+          requested_date: transaction.transaction_date,
+          requested_by: "System User",
+          current_stock: stockBalances[transaction.product_id] || 0,
+          unit: productMap[transaction.product_id]?.default_unit || 'unit'
+        }));
+      }
+
+      setRequests(requestsFromTransactions);
     } catch (error) {
       console.error('Error fetching requests:', error);
     }
@@ -182,22 +180,49 @@ export const IssuingModule: React.FC = () => {
     try {
       setIsProcessing(true);
       
-      // Update request status
+      const request = requests.find(r => r.id === requestId);
+      if (!request) return;
+
+      // Create an issue transaction in the database
+      const { error } = await supabase
+        .from('inventory_transactions')
+        .insert({
+          facility_id: facilityId,
+          product_id: request.product_id,
+          transaction_type: 'issue',
+          quantity: -approvedQuantity, // Negative for issues
+          transaction_date: new Date().toISOString().split('T')[0],
+          department: request.department_name,
+          notes: `Approved request: ${request.justification}`,
+          reference_number: `ISS-${Date.now()}`
+        });
+
+      if (error) throw error;
+
+      // Update request status locally
       const updatedRequests = requests.map(req => 
         req.id === requestId 
           ? { ...req, status: 'approved' as const, approved_quantity: approvedQuantity }
           : req
       );
       setRequests(updatedRequests);
+
+      // Update stock balance locally
+      const newBalance = (stockBalances[request.product_id] || 0) - approvedQuantity;
+      setStockBalances(prev => ({
+        ...prev,
+        [request.product_id]: newBalance
+      }));
       
       toast({
-        title: "Request approved",
-        description: `Request approved with quantity: ${approvedQuantity}`,
+        title: "Request approved and issued",
+        description: `${approvedQuantity} ${request.unit} of ${request.product_name} issued to ${request.department_name}`,
       });
     } catch (error) {
+      console.error('Error approving request:', error);
       toast({
         title: "Error",
-        description: "Failed to approve request",
+        description: "Failed to approve and issue stock",
         variant: "destructive",
       });
     } finally {
@@ -217,22 +242,51 @@ export const IssuingModule: React.FC = () => {
 
     try {
       setIsProcessing(true);
+
+      const departmentName = departments.find(d => d.id === newRequest.department_id)?.department_name;
+      const product = products.find(p => p.id === newRequest.product_id);
       
-      // Add to requests list (would normally save to database)
+      // For now, we'll auto-approve and issue the request
+      // In a real system, this might go through an approval workflow
+      const { error } = await supabase
+        .from('inventory_transactions')
+        .insert({
+          facility_id: facilityId,
+          product_id: newRequest.product_id,
+          transaction_type: 'issue',
+          quantity: -Number(newRequest.requested_quantity), // Negative for issues
+          transaction_date: new Date().toISOString().split('T')[0],
+          department: departmentName,
+          notes: `${newRequest.urgency_level.toUpperCase()} priority: ${newRequest.justification}`,
+          reference_number: `REQ-${Date.now()}`
+        });
+
+      if (error) throw error;
+
+      // Update local stock balance
+      const issuedQuantity = Number(newRequest.requested_quantity);
+      const newBalance = (stockBalances[newRequest.product_id] || 0) - issuedQuantity;
+      setStockBalances(prev => ({
+        ...prev,
+        [newRequest.product_id]: newBalance
+      }));
+
+      // Add to local requests list
       const request: StockRequest = {
         id: Date.now().toString(),
         department_id: newRequest.department_id,
-        department_name: departments.find(d => d.id === newRequest.department_id)?.department_name,
+        department_name: departmentName,
         product_id: newRequest.product_id,
-        product_name: products.find(p => p.id === newRequest.product_id)?.canonical_name,
-        requested_quantity: Number(newRequest.requested_quantity),
+        product_name: product?.canonical_name,
+        requested_quantity: issuedQuantity,
+        approved_quantity: issuedQuantity,
         urgency_level: newRequest.urgency_level,
         justification: newRequest.justification,
-        status: 'pending',
+        status: 'issued',
         requested_date: new Date().toISOString().split('T')[0],
         requested_by: "Current User", // Would come from auth context
-        current_stock: stockBalances[newRequest.product_id] || 0,
-        unit: products.find(p => p.id === newRequest.product_id)?.default_unit
+        current_stock: newBalance,
+        unit: product?.default_unit
       };
 
       setRequests([request, ...requests]);
@@ -246,13 +300,14 @@ export const IssuingModule: React.FC = () => {
       setViewMode("requests");
 
       toast({
-        title: "Request submitted",
-        description: "Stock request submitted successfully",
+        title: "Stock issued successfully",
+        description: `${issuedQuantity} ${product?.default_unit} of ${product?.canonical_name} issued to ${departmentName}`,
       });
     } catch (error) {
+      console.error('Error submitting request:', error);
       toast({
         title: "Error",
-        description: "Failed to submit request",
+        description: "Failed to process stock issue",
         variant: "destructive",
       });
     } finally {
