@@ -127,7 +127,7 @@ const ForecastingWizard: React.FC<ForecastingWizardProps> = ({ onClose, onComple
 
     // Notify parent and navigate to the guided wizard data collection
     onComplete({ ...wizardData, recommendedMethod: getMethodDetails(methodKey).name });
-    window.location.href = `/forecast?method=${encodeURIComponent(methodKey)}&program=${encodeURIComponent(program || '')}&commodities=${encodeURIComponent(commodities)}`;
+    window.location.href = `/forecast/wizard?method=${encodeURIComponent(methodKey)}&program=${encodeURIComponent(program || '')}&commodities=${encodeURIComponent(commodities)}`;
   };
 
   const renderStep = () => {

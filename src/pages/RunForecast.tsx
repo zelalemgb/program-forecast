@@ -100,7 +100,7 @@ const RunForecast: React.FC = () => {
     const commodities = wizardData.commodityTypes.join(',');
     
     setIsWizardOpen(false);
-    window.location.href = `/forecast?method=${method}&program=${program}&commodities=${commodities}`;
+    window.location.href = `/forecast/wizard?method=${method}&program=${program}&commodities=${commodities}`;
   };
 
   const getRecommendedMethod = (wizardData: any): string => {

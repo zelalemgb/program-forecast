@@ -120,18 +120,22 @@ export const GuidedForecastWizard: React.FC = () => {
     const commodities = urlParams.get('commodities');
 
     if (method) {
-      // Map method names to our format
-      const methodMap: { [key: string]: string } = {
-        'Consumption Method': 'consumption-based',
-        'Service Data Method': 'trend-analysis', 
-        'Demographic Method': 'hybrid'
-      };
-      setForecastMethod(methodMap[method] || 'consumption-based');
+      const m = method.toLowerCase().trim();
+
+      // Accept both codes and labels
+      if (["consumption", "consumption method", "consumption-based"].includes(m)) {
+        setForecastMethod("consumption-based");
+      } else if (["service", "service statistics method", "service data method", "trend", "trend analysis", "trend-analysis"].includes(m)) {
+        setForecastMethod("trend-analysis");
+      } else if (["demographic", "demographic morbidity method", "hybrid", "hybrid method", "population", "population-based"].includes(m)) {
+        setForecastMethod("hybrid");
+      } else {
+        setForecastMethod("consumption-based");
+      }
     }
 
-    // If we have URL parameters, show a welcome message
     if (method || program || commodities) {
-      console.log('Forecast parameters received:', { method, program, commodities });
+      console.log("Forecast parameters received:", { method, program, commodities });
     }
   }, []);
 

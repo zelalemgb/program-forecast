@@ -844,7 +844,7 @@ const SupplyPlanning: React.FC = () => {
             console.log("Forecasting wizard completed with data:", data);
             setShowWizard(false);
             // Navigate to forecast wizard with the collected data
-            window.location.href = `/forecast?method=${data.recommendedMethod || 'consumption-based'}&program=${data.healthProgram}&commodities=${data.commodityTypes.join(',')}`;
+            window.location.href = `/forecast/wizard?method=${data.recommendedMethod || 'consumption-based'}&program=${data.healthProgram}&commodities=${data.commodityTypes.join(',')}`;
           }}
         />
       )}

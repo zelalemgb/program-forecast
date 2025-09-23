@@ -21,6 +21,7 @@ import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
 import RunForecast from "./pages/RunForecast";
+import ForecastWizard from "./pages/ForecastWizard";
 import Dagu from "./pages/Dagu";
 import SupplyPlanning from "./pages/SupplyPlanning";
 import BudgetAlignment from "./pages/BudgetAlignment";
@@ -50,6 +51,7 @@ const AppShell: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
               <Route path="/forecast" element={<RunForecast />} />
+              <Route path="/forecast/wizard" element={<ForecastWizard />} />
               <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
               <Route path="/dagu" element={<Dagu />} />
               <Route path="/supply-planning" element={<SupplyPlanning />} />
