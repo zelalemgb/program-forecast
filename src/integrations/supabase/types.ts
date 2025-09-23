@@ -224,6 +224,30 @@ export type Database = {
           },
         ]
       }
+      countries: {
+        Row: {
+          country_code: string | null
+          country_id: number
+          country_name: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          country_id?: number
+          country_name: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          country_id?: number
+          country_name?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       course_rules: {
         Row: {
           base_unit: string
@@ -1699,24 +1723,35 @@ export type Database = {
       }
       region: {
         Row: {
+          country_id: number
           created_at: string | null
           region_id: number
           region_name: string
           updated_at: string | null
         }
         Insert: {
+          country_id: number
           created_at?: string | null
           region_id?: number
           region_name: string
           updated_at?: string | null
         }
         Update: {
+          country_id?: number
           created_at?: string | null
           region_id?: number
           region_name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "region_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["country_id"]
+          },
+        ]
       }
       registration_requests: {
         Row: {
