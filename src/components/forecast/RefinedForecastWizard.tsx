@@ -137,32 +137,46 @@ export const RefinedForecastWizard: React.FC<RefinedForecastWizardProps> = ({
           
           <Progress value={progressPercentage} className="w-full" />
           
-          {/* Sleek step indicators */}
-          <div className="flex items-center justify-between relative">
-            {STEPS.map((step, index) => (
-              <div key={step.id} className="flex flex-col items-center relative z-10">
-                {/* Step indicator dot */}
-                <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index < currentStep ? 'bg-primary scale-110' : 
-                  index === currentStep - 1 ? 'bg-primary' : 'bg-muted border-2 border-muted-foreground/20'
-                }`} />
-                
-                {/* Step label - only show on larger screens */}
-                <span className={`text-xs mt-2 transition-colors duration-200 hidden sm:block ${
-                  index < currentStep ? 'text-primary font-medium' : 
-                  index === currentStep - 1 ? 'text-foreground' : 'text-muted-foreground'
-                }`}>
-                  {step.title}
-                </span>
-              </div>
-            ))}
-            
-            {/* Connection line */}
-            <div className="absolute top-1.5 left-0 w-full h-0.5 bg-muted -z-10">
+          {/* Integrated step navigation */}
+          <div className="relative">
+            {/* Progress line background */}
+            <div className="absolute top-4 left-0 w-full h-0.5 bg-muted">
               <div 
                 className="h-full bg-primary transition-all duration-500 ease-out"
                 style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
               />
+            </div>
+            
+            {/* Step indicators integrated with the line */}
+            <div className="flex justify-between relative">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  {/* Integrated checkmark/circle indicator */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 border-2 ${
+                    index < currentStep 
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm' 
+                      : index === currentStep - 1 
+                      ? 'bg-background border-primary text-primary shadow-sm' 
+                      : 'bg-background border-muted-foreground/30 text-muted-foreground'
+                  }`}>
+                    {index < currentStep ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      step.id
+                    )}
+                  </div>
+                  
+                  {/* Step label */}
+                  <span className={`text-xs mt-2 transition-colors duration-200 hidden sm:block max-w-16 text-center ${
+                    index < currentStep ? 'text-primary font-medium' : 
+                    index === currentStep - 1 ? 'text-foreground font-medium' : 'text-muted-foreground'
+                  }`}>
+                    {step.title}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </CardHeader>
