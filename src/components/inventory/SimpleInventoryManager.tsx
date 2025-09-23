@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, ArrowLeft, Truck } from "lucide-react";
 import { ReceivingModule } from "./ReceivingModule";
+import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import PageHeader from "@/components/layout/PageHeader";
 
@@ -158,23 +159,7 @@ export const SimpleInventoryManager: React.FC = () => {
       
       {selectedAction === "receive" && <ReceivingModule />}
       
-      {selectedAction === "issue" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5" />
-              Issue Stock to Departments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <TrendingDown className="h-12 w-12 mx-auto mb-4" />
-              <p className="text-lg font-medium">Stock Issuing Module</p>
-              <p className="text-sm">Coming soon - Issue stock to wards and departments</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {selectedAction === "issue" && <IssuingModule />}
       
       {selectedAction === "adjust" && (
         <Card>
