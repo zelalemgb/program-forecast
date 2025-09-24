@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertTriangle, Package, Plus, Check, X, FileText, Calculator, ChevronsUpDown, Search } from "lucide-react";
@@ -15,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { CycleCountTab } from "./CycleCountTab";
 
 interface Product {
   id: string;
@@ -48,7 +48,7 @@ interface AdjustmentRequest {
 export const AdjustmentModule: React.FC = () => {
   const { toast } = useToast();
   const facilityId = 1; // Would come from user context/auth
-  const [activeTab, setActiveTab] = useState("submit");
+  const [activeTab, setActiveTab] = useState<"cycle-count" | "submit" | "review">("cycle-count");
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [stockBalances, setStockBalances] = useState<Record<string, number>>({});
@@ -145,7 +145,7 @@ export const AdjustmentModule: React.FC = () => {
             notes: transaction.notes || '',
             requestedBy: "System User",
             requestedAt: new Date(transaction.created_at).toLocaleString(),
-            status: "pending" as const
+            status: "approved" as const
           };
         });
 
@@ -180,8 +180,6 @@ export const AdjustmentModule: React.FC = () => {
     { value: "other", label: "Other" }
   ];
 
-  const priorityColors = {};
-
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
     approved: "bg-green-100 text-green-800",
@@ -200,56 +198,49 @@ export const AdjustmentModule: React.FC = () => {
       return;
     }
 
+    setLoading(true);
+
     try {
-      setLoading(true);
-
-      const currentStock = stockBalances[selectedProduct.id] || 0;
       const adjustmentQty = parseInt(formData.adjustmentQuantity);
-      const newBalance = formData.adjustmentType === 'increase' 
-        ? currentStock + adjustmentQty
-        : currentStock - adjustmentQty;
+      const currentStock = stockBalances[selectedProduct.id] || 0;
+      const newBalance = formData.adjustmentType === 'increase' ? currentStock + adjustmentQty : currentStock - adjustmentQty;
 
-      // Determine transaction type and quantity based on adjustment type and category
-      let transactionType: string;
-      let quantity: number = adjustmentQty;
-      
-      if (formData.category === 'expired') {
-        transactionType = 'expired';
-        quantity = -Math.abs(quantity);
-      } else if (formData.category === 'loss') {
-        transactionType = 'loss';
-        quantity = -Math.abs(quantity);
-      } else {
-        transactionType = 'adjustment';
-        quantity = formData.adjustmentType === 'increase' ? Math.abs(quantity) : -Math.abs(quantity);
+      if (newBalance < 0) {
+        toast({
+          title: "Invalid Adjustment",
+          description: "Cannot decrease stock below zero",
+          variant: "destructive"
+        });
+        return;
       }
 
-      // Create the inventory transaction
+      const quantity = formData.adjustmentType === 'increase' ? adjustmentQty : -adjustmentQty;
+
       await addTransaction({
         facility_id: facilityId,
         product_id: selectedProduct.id,
-        transaction_type: transactionType as any,
+        transaction_type: "adjustment",
         quantity: quantity,
         transaction_date: new Date().toISOString().split('T')[0],
-        notes: `${formData.category}: ${formData.notes}`,
-        reference_number: `ADJ-${Date.now()}`
+        reference_number: `ADJ-${Date.now()}`,
+        notes: `${formData.category}: ${formData.notes}`
       });
 
-      // Create local request record
+      // Create adjustment request for display
       const newRequest: AdjustmentRequest = {
-        id: `ADJ${String(adjustmentRequests.length + 3).padStart(3, '0')}`,
+        id: Date.now().toString(),
         productId: selectedProduct.id,
         productName: selectedProduct.canonical_name,
-        currentStock,
+        currentStock: currentStock,
         adjustmentType: formData.adjustmentType,
         adjustmentQuantity: adjustmentQty,
-        newBalance,
-        reason: adjustmentCategories.find(cat => cat.value === formData.category)?.label || formData.category,
+        newBalance: newBalance,
+        reason: formData.category,
         category: formData.category,
         notes: formData.notes,
         requestedBy: "Current User",
         requestedAt: new Date().toLocaleString(),
-        status: "pending"
+        status: "approved"
       };
 
       setAdjustmentRequests([newRequest, ...adjustmentRequests]);
@@ -287,19 +278,6 @@ export const AdjustmentModule: React.FC = () => {
     setActiveTab("review");
   };
 
-  const handleApproval = (requestId: string, action: 'approved' | 'rejected') => {
-    setAdjustmentRequests(requests =>
-      requests.map(req =>
-        req.id === requestId ? { ...req, status: action } : req
-      )
-    );
-
-    toast({
-      title: `Request ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-      description: `Adjustment request ${requestId} has been ${action}`
-    });
-  };
-
   const calculateNewBalance = () => {
     if (!selectedProduct || !formData.adjustmentQuantity || !formData.adjustmentType) return null;
     
@@ -313,249 +291,295 @@ export const AdjustmentModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="submit">Submit Adjustment</TabsTrigger>
-          <TabsTrigger value="review">Review Requests</TabsTrigger>
-        </TabsList>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Cycle Count & Stock Corrections</h3>
+          <p className="text-sm text-muted-foreground">Periodic inventory reconciliation and systematic stock corrections</p>
+        </div>
+      </div>
 
-        <TabsContent value="submit" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5" />
-                Stock Adjustment Request
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitAdjustment} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="productSearch">Product *</Label>
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={open}
-                          className="w-full justify-between"
-                        >
-                          {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search products..." 
-                            value={searchQuery}
-                            onValueChange={setSearchQuery}
-                          />
-                          <CommandList>
-                            <CommandEmpty>No product found.</CommandEmpty>
-                            <CommandGroup>
-                              {filteredProducts.map((product) => (
-                                <CommandItem
-                                  key={product.id}
-                                  value={product.canonical_name}
-                                  onSelect={() => {
-                                    setSelectedProduct(product);
-                                    setOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex-1">
-                                    <div className="font-medium">{product.canonical_name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {product.program} • {product.default_unit}
-                                      {product.recommended_formulation && ` • ${product.recommended_formulation}`}
-                                    </div>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="currentStock">Current Stock</Label>
-                    <Input
-                      id="currentStock"
-                      type="text"
-                      value={selectedProduct ? (stockBalances[selectedProduct.id] || 0).toLocaleString() : ""}
-                      disabled
-                      placeholder="Select product to see current stock"
-                    />
-                  </div>
+      {/* Tab Navigation */}
+      <div className="border-b">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("cycle-count")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "cycle-count"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
+          >
+            Cycle Count
+          </button>
+          <button
+            onClick={() => setActiveTab("submit")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "submit"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
+          >
+            Manual Corrections
+          </button>
+          <button
+            onClick={() => setActiveTab("review")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "review"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
+          >
+            Review History
+          </button>
+        </nav>
+      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="adjustmentType">Adjustment Type *</Label>
-                    <Select value={formData.adjustmentType} onValueChange={(value: 'increase' | 'decrease') => setFormData({...formData, adjustmentType: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select adjustment type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="increase">Increase Stock</SelectItem>
-                        <SelectItem value="decrease">Decrease Stock</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+      {/* Tab Content */}
+      {activeTab === "cycle-count" && (
+        <CycleCountTab facilityId={facilityId} />
+      )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="adjustmentQuantity">Adjustment Quantity *</Label>
-                    <Input
-                      id="adjustmentQuantity"
-                      type="number"
-                      value={formData.adjustmentQuantity}
-                      onChange={(e) => setFormData({...formData, adjustmentQuantity: e.target.value})}
-                      placeholder="Quantity to adjust"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Reason for Adjustment *</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select reason" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {adjustmentCategories.map(cat => (
-                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                </div>
-
+      {activeTab === "submit" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Manual Stock Correction
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitAdjustment} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    placeholder="Detailed explanation, batch numbers, evidence, etc."
-                    rows={3}
+                  <Label htmlFor="productSearch">Product *</Label>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full justify-between"
+                      >
+                        {selectedProduct ? selectedProduct.canonical_name : "Select product..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Search products..." 
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No product found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredProducts.map((product) => (
+                              <CommandItem
+                                key={product.id}
+                                value={product.canonical_name}
+                                onSelect={() => {
+                                  setSelectedProduct(product);
+                                  setOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedProduct?.id === product.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{product.canonical_name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {product.program} • {product.default_unit}
+                                    {product.recommended_formulation && ` • ${product.recommended_formulation}`}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="currentStock">Current Stock</Label>
+                  <Input
+                    id="currentStock"
+                    type="text"
+                    value={selectedProduct ? (stockBalances[selectedProduct.id] || 0).toLocaleString() : ""}
+                    disabled
+                    placeholder="Select product to see current stock"
                   />
                 </div>
 
-                {newBalance !== null && (
-                  <div className="p-4 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Stock Impact:</span>
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">
-                          Current: {selectedProduct ? (stockBalances[selectedProduct.id] || 0).toLocaleString() : 0} → New: 
-                          <span className={`ml-1 font-medium ${formData.adjustmentType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
-                            {newBalance.toLocaleString()}
-                          </span>
-                        </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adjustmentType">Adjustment Type *</Label>
+                  <Select value={formData.adjustmentType} onValueChange={(value: 'increase' | 'decrease') => setFormData({...formData, adjustmentType: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select adjustment type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="increase">Increase Stock</SelectItem>
+                      <SelectItem value="decrease">Decrease Stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adjustmentQuantity">Adjustment Quantity *</Label>
+                  <Input
+                    id="adjustmentQuantity"
+                    type="number"
+                    value={formData.adjustmentQuantity}
+                    onChange={(e) => setFormData({...formData, adjustmentQuantity: e.target.value})}
+                    placeholder="Enter quantity"
+                    min="1"
+                  />
+                  {selectedProduct && (
+                    <p className="text-xs text-muted-foreground">
+                      Unit: {selectedProduct.default_unit}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="category">Reason Category *</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select reason category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {adjustmentCategories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  placeholder="Explain the reason for this adjustment..."
+                  rows={3}
+                />
+              </div>
+
+              {/* New Balance Preview */}
+              {newBalance !== null && selectedProduct && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Adjustment Preview</h4>
+                  <div className="text-sm space-y-1">
+                    <div>Current Stock: <strong>{(stockBalances[selectedProduct.id] || 0).toLocaleString()} {selectedProduct.default_unit}</strong></div>
+                    <div>Adjustment: <strong className={formData.adjustmentType === 'increase' ? 'text-green-700' : 'text-red-700'}>
+                      {formData.adjustmentType === 'increase' ? '+' : '-'}{formData.adjustmentQuantity} {selectedProduct.default_unit}
+                    </strong></div>
+                    <div>New Balance: <strong className={newBalance >= 0 ? 'text-blue-700' : 'text-red-700'}>
+                      {newBalance.toLocaleString()} {selectedProduct.default_unit}
+                    </strong></div>
+                    {newBalance < 0 && (
+                      <div className="text-red-600 text-xs mt-2 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Warning: This adjustment would result in negative stock
                       </div>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
+              )}
 
-                <Button type="submit" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Submit Adjustment Request
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => {
+                  setFormData({
+                    adjustmentType: "",
+                    adjustmentQuantity: "",
+                    category: "",
+                    notes: ""
+                  });
+                  setSelectedProduct(null);
+                  setSearchQuery("");
+                }}>
+                  Clear Form
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <Button type="submit" disabled={loading || (newBalance !== null && newBalance < 0)}>
+                  {loading ? "Processing..." : "Submit Adjustment"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="review" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Adjustment Requests Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
+      {activeTab === "review" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Adjustment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {adjustmentRequests.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No adjustment requests found</p>
+                </div>
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Request ID</TableHead>
                       <TableHead>Product</TableHead>
-                      <TableHead>Current Stock</TableHead>
-                      <TableHead>Adjustment</TableHead>
-                      <TableHead>New Balance</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Quantity</TableHead>
                       <TableHead>Category</TableHead>
-                      <TableHead>Reason</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Notes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {adjustmentRequests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.id}</TableCell>
-                        <TableCell>{request.productName}</TableCell>
-                        <TableCell>{request.currentStock}</TableCell>
                         <TableCell>
-                          <span className={`flex items-center gap-1 ${
-                            request.adjustmentType === 'increase' ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {request.adjustmentType === 'increase' ? '+' : '-'}{request.adjustmentQuantity}
-                          </span>
+                          <div className="font-medium">{request.productName}</div>
+                          <div className="text-sm text-muted-foreground">Current: {request.currentStock.toLocaleString()}</div>
                         </TableCell>
                         <TableCell>
-                          <span className="font-medium">{request.newBalance}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {adjustmentCategories.find(cat => cat.value === request.category)?.label}
+                          <Badge variant={request.adjustmentType === 'increase' ? 'default' : 'secondary'}>
+                            {request.adjustmentType === 'increase' ? '+' : '-'} {request.adjustmentQuantity.toLocaleString()}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-xs truncate" title={request.reason}>
-                          {request.reason}
+                        <TableCell>
+                          <div className={`font-medium ${request.adjustmentType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
+                            {request.newBalance.toLocaleString()}
+                          </div>
                         </TableCell>
+                        <TableCell>{request.category}</TableCell>
                         <TableCell>
                           <Badge className={statusColors[request.status]}>
-                            {request.status.toUpperCase()}
+                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {request.status === 'pending' && (
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleApproval(request.id, 'approved')}
-                                className="h-8 px-2"
-                              >
-                                <Check className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleApproval(request.id, 'rejected')}
-                                className="h-8 px-2"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
+                        <TableCell className="text-sm">{request.requestedAt}</TableCell>
+                        <TableCell className="text-sm">{request.notes}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

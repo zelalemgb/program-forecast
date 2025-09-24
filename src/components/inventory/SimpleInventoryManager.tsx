@@ -90,13 +90,13 @@ export const SimpleInventoryManager: React.FC = () => {
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-status-critical/10 rounded-full flex items-center justify-center">
                 <Package className="h-6 w-6 sm:h-8 sm:w-8 text-status-critical" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Adjustments</h3>
+              <h3 className="text-lg font-semibold mb-2">Cycle Count</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Record losses, damages, corrections, or stock count updates
+                Systematic inventory counts, corrections, and reconciliation
               </p>
               <Badge variant="outline" className="mb-2">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Stock Corrections
+                <Package className="h-3 w-3 mr-1" />
+                Count & Correct
               </Badge>
             </CardContent>
           </Card>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { TrendingDown, Plus, CheckCircle, Clock, AlertTriangle, Eye, FileText, UserCheck } from "lucide-react";
+import { ApprovalDialog } from "./ApprovalDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,6 +52,8 @@ export const IssuingModule: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [stockBalances, setStockBalances] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<StockRequest | null>(null);
+  const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   
   // New request form state
   const [newRequest, setNewRequest] = useState({
@@ -176,7 +179,7 @@ export const IssuingModule: React.FC = () => {
     }
   };
 
-  const handleApproveRequest = async (requestId: string, approvedQuantity: number) => {
+  const handleApproveRequest = async (requestId: string, approvedQuantity: number, adjustmentReason?: string) => {
     try {
       setIsProcessing(true);
       
@@ -193,11 +196,28 @@ export const IssuingModule: React.FC = () => {
           quantity: -approvedQuantity, // Negative for issues
           transaction_date: new Date().toISOString().split('T')[0],
           department: request.department_name,
-          notes: `Approved request: ${request.justification}`,
+          notes: `Approved request: ${request.justification}${adjustmentReason ? `. Adjustment: ${adjustmentReason}` : ''}`,
           reference_number: `ISS-${Date.now()}`
         });
 
       if (error) throw error;
+
+      // Create adjustment transaction if approved quantity differs from requested
+      if (approvedQuantity !== request.requested_quantity && adjustmentReason) {
+        const adjustmentQuantity = request.requested_quantity - approvedQuantity;
+        await supabase
+          .from('inventory_transactions')
+          .insert({
+            facility_id: facilityId,
+            product_id: request.product_id,
+            transaction_type: 'adjustment',
+            quantity: adjustmentQuantity, // Positive - reducing the issue amount
+            transaction_date: new Date().toISOString().split('T')[0],
+            department: request.department_name,
+            notes: `Issue adjustment: ${adjustmentReason}. Requested: ${request.requested_quantity}, Approved: ${approvedQuantity}`,
+            reference_number: `ADJ-ISS-${Date.now()}`
+          });
+      }
 
       // Update request status locally
       const updatedRequests = requests.map(req => 
@@ -450,6 +470,14 @@ export const IssuingModule: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Approval Dialog */}
+        <ApprovalDialog
+          open={approvalDialogOpen}
+          onOpenChange={setApprovalDialogOpen}
+          request={selectedRequest}
+          onApprove={handleApproveRequest}
+        />
       </div>
     );
   }

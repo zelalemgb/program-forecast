@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Camera, Upload, Plus, Trash2, Package, Truck, FileText, ScanLine, ArrowLeft, Smartphone, Search, Check, ChevronsUpDown } from "lucide-react";
+import { InspectionStep } from "./InspectionStep";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,11 @@ interface ReceivedItem {
   batchNumber?: string;
   expiryDate?: string;
   supplier?: string;
+  // Adjustment fields
+  actualQuantity?: number;
+  adjustmentReason?: string;
+  conditionAtReceipt?: string;
+  hasAdjustment?: boolean;
 }
 
 interface DeliveryInfo {
@@ -48,9 +54,11 @@ interface DeliveryInfo {
 }
 
 type ReceivingMethod = "document" | "manual" | "barcode" | null;
+type ReceivingStep = "method" | "entry" | "inspection" | "complete";
 
 export const ReceivingModule: React.FC = () => {
   const [receivingMethod, setReceivingMethod] = useState<ReceivingMethod>(null);
+  const [currentStep, setCurrentStep] = useState<ReceivingStep>("method");
   const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
     source: "",
     driverName: "",
@@ -133,13 +141,39 @@ export const ReceivingModule: React.FC = () => {
 
   const handleMethodSelect = (method: ReceivingMethod) => {
     setReceivingMethod(method);
+    setCurrentStep("entry");
   };
 
   const handleBackToMethods = () => {
     setReceivingMethod(null);
+    setCurrentStep("method");
     setDocumentImage(null);
     setReceivedItems([]);
     setDeliveryInfo({ source: "", driverName: "", deliveryNote: "" });
+  };
+
+  const proceedToInspection = () => {
+    if (receivedItems.length === 0) {
+      toast({
+        title: "No items to inspect",
+        description: "Please add items before proceeding to inspection",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCurrentStep("inspection");
+  };
+
+  const updateItemAdjustment = (itemId: string, field: string, value: any) => {
+    setReceivedItems(items => items.map(item => 
+      item.id === itemId 
+        ? { 
+            ...item, 
+            [field]: value,
+            hasAdjustment: field === 'actualQuantity' ? value !== item.quantity : item.hasAdjustment
+          }
+        : item
+    ));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,18 +262,36 @@ export const ReceivingModule: React.FC = () => {
     try {
         // Process each item as an inventory transaction
         for (const item of receivedItems) {
+          const actualQuantity = item.actualQuantity ?? item.quantity;
+          
+          // Create receipt transaction
           await addTransaction({
             facility_id: facilityId,
             product_id: item.productId,
             transaction_type: "receipt",
-            quantity: item.quantity,
+            quantity: actualQuantity,
             batch_number: item.batchNumber,
             expiry_date: item.expiryDate,
             unit_cost: item.unitCost,
             transaction_date: new Date().toISOString().split('T')[0],
             reference_number: deliveryInfo.deliveryNote,
-            notes: `Received from ${deliveryInfo.source}. Driver: ${deliveryInfo.driverName}`
+            notes: `Received from ${deliveryInfo.source}. Driver: ${deliveryInfo.driverName}. Condition: ${item.conditionAtReceipt || 'good'}`
           });
+
+          // Create adjustment transaction if there's a discrepancy
+          if (item.hasAdjustment && actualQuantity !== item.quantity) {
+            const adjustmentQuantity = actualQuantity - item.quantity;
+            await addTransaction({
+              facility_id: facilityId,
+              product_id: item.productId,
+              transaction_type: "adjustment",
+              quantity: adjustmentQuantity,
+              batch_number: item.batchNumber,
+              transaction_date: new Date().toISOString().split('T')[0],
+              reference_number: `ADJ-${deliveryInfo.deliveryNote || Date.now()}`,
+              notes: `Receiving adjustment: ${item.adjustmentReason || 'quantity discrepancy'}. Expected: ${item.quantity}, Actual: ${actualQuantity}`
+            });
+          }
         }
       
       // Reset form
@@ -247,10 +299,12 @@ export const ReceivingModule: React.FC = () => {
       setDeliveryInfo({ source: "", driverName: "", deliveryNote: "" });
       setDocumentImage(null);
       setReceivingMethod(null);
+      setCurrentStep("method");
       
+      const adjustmentCount = receivedItems.filter(item => item.hasAdjustment).length;
       toast({
         title: "Stock received successfully",
-        description: `${receivedItems.length} items processed and added to inventory`,
+        description: `${receivedItems.length} items processed${adjustmentCount > 0 ? ` with ${adjustmentCount} adjustments` : ''} and added to inventory`,
       });
     } catch (error) {
       toast({
@@ -276,7 +330,7 @@ export const ReceivingModule: React.FC = () => {
       </div>
 
       {/* Method Selection */}
-      {!receivingMethod && (
+      {currentStep === "method" && (
         <Card className="surface">
           <CardContent className="pt-4 sm:pt-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -330,8 +384,19 @@ export const ReceivingModule: React.FC = () => {
         </Card>
       )}
 
+      {/* Inspection & Adjustment Step */}
+      {currentStep === "inspection" && (
+        <InspectionStep
+          receivedItems={receivedItems}
+          stockBalances={stockBalances}
+          updateItemAdjustment={updateItemAdjustment}
+          onProceedToComplete={processReceiving}
+          onBackToEntry={() => setCurrentStep("entry")}
+        />
+      )}
+
       {/* Document Scanning Interface */}
-      {receivingMethod === "document" && (
+      {currentStep === "entry" && receivingMethod === "document" && (
         <div className="space-y-6">
           <h3 className="text-lg font-semibold">Document Upload</h3>
           
@@ -438,7 +503,7 @@ export const ReceivingModule: React.FC = () => {
       )}
 
       {/* Manual Entry Interface */}
-      {receivingMethod === "manual" && (
+      {currentStep === "entry" && receivingMethod === "manual" && (
         <div className="space-y-6">
           {/* Delivery Information Section */}
           <div>
@@ -695,7 +760,7 @@ export const ReceivingModule: React.FC = () => {
       )}
 
       {/* Complete Receiving Section */}
-      {receivedItems.length > 0 && (
+      {currentStep === "entry" && receivedItems.length > 0 && (
         <div className="flex justify-between items-center pt-4 border-t">
           <Badge variant="outline" className="text-sm">
             Total Items: {receivedItems.length}
