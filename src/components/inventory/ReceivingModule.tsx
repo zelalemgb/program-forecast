@@ -264,7 +264,7 @@ export const ReceivingModule: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Module Controls (no title to avoid duplication) */}
       <div className="flex items-center justify-end">
         {receivingMethod && (
@@ -277,19 +277,19 @@ export const ReceivingModule: React.FC = () => {
 
       {/* Method Selection */}
       {!receivingMethod && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="surface">
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Document Scanning Method */}
               <div 
-                className="p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
+                className="p-3 sm:p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
                 onClick={() => handleMethodSelect("document")}
               >
-                <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Camera className="h-6 w-6 text-blue-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 bg-brand/10 rounded-full flex items-center justify-center">
+                  <Camera className="h-5 w-5 sm:h-6 sm:w-6 text-brand" />
                 </div>
-                <h4 className="font-medium mb-1">Scan Document</h4>
-                <p className="text-sm text-muted-foreground mb-2">AI extraction from delivery document</p>
+                <h4 className="font-medium mb-1 text-sm sm:text-base">Scan Document</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2">AI extraction from delivery document</p>
                 <Badge variant="outline" className="text-xs">
                   <Smartphone className="h-3 w-3 mr-1" />
                   AI Powered
@@ -298,14 +298,14 @@ export const ReceivingModule: React.FC = () => {
 
               {/* Manual Entry Method */}
               <div 
-                className="p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
+                className="p-3 sm:p-4 border-2 rounded-lg cursor-pointer hover:border-primary/50 transition-colors text-center"
                 onClick={() => handleMethodSelect("manual")}
               >
-                <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-green-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 bg-status-ok/10 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-status-ok" />
                 </div>
-                <h4 className="font-medium mb-1">Manual Entry</h4>
-                <p className="text-sm text-muted-foreground mb-2">Enter details manually</p>
+                <h4 className="font-medium mb-1 text-sm sm:text-base">Manual Entry</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2">Enter details manually</p>
                 <Badge variant="outline" className="text-xs">
                   <Plus className="h-3 w-3 mr-1" />
                   Traditional
@@ -314,13 +314,13 @@ export const ReceivingModule: React.FC = () => {
 
               {/* Barcode Scanning Method */}
               <div 
-                className="p-4 border-2 rounded-lg opacity-60 text-center"
+                className="p-3 sm:p-4 border-2 rounded-lg opacity-60 text-center"
               >
-                <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
-                  <ScanLine className="h-6 w-6 text-purple-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 bg-status-neutral/10 rounded-full flex items-center justify-center">
+                  <ScanLine className="h-5 w-5 sm:h-6 sm:w-6 text-status-neutral" />
                 </div>
-                <h4 className="font-medium mb-1">Barcode Scan</h4>
-                <p className="text-sm text-muted-foreground mb-2">Scan product barcodes</p>
+                <h4 className="font-medium mb-1 text-sm sm:text-base">Barcode Scan</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2">Scan product barcodes</p>
                 <Badge variant="secondary" className="text-xs">
                   Coming Soon
                 </Badge>

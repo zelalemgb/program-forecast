@@ -26,18 +26,18 @@ export const SimpleInventoryManager: React.FC = () => {
   // Action Selection Screen
   if (!selectedAction) {
     return (
-      <div className="container py-6 space-y-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
         <PageHeader 
           title="Inventory Management"
           description="Choose an action to get started"
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
           {/* Stock Review Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("overview")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                <Eye className="h-8 w-8 text-blue-600" />
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => handleActionSelect("overview")}>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-status-ok/10 rounded-full flex items-center justify-center">
+                <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-status-ok" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Stock Review</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -51,10 +51,10 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Receive Stock Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("receive")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                <Truck className="h-8 w-8 text-green-600" />
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => handleActionSelect("receive")}>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-brand/10 rounded-full flex items-center justify-center">
+                <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-brand" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Receive Stock</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -68,10 +68,10 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Issue Stock Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("issue")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
-                <TrendingDown className="h-8 w-8 text-orange-600" />
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => handleActionSelect("issue")}>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-status-warning/10 rounded-full flex items-center justify-center">
+                <TrendingDown className="h-6 w-6 sm:h-8 sm:w-8 text-status-warning" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Issue Stock</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -85,10 +85,10 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Stock Adjustments Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20" onClick={() => handleActionSelect("adjust")}>
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                <Package className="h-8 w-8 text-purple-600" />
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => handleActionSelect("adjust")}>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-status-critical/10 rounded-full flex items-center justify-center">
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-status-critical" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Adjustments</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -103,27 +103,27 @@ export const SimpleInventoryManager: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <Card className="max-w-4xl mx-auto">
+        <Card className="surface">
           <CardHeader>
-            <CardTitle className="text-center">Today's Quick Stats</CardTitle>
+            <CardTitle className="text-center text-lg sm:text-xl">Today's Quick Stats</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
-                <div className="text-2xl font-bold text-green-600">23</div>
-                <div className="text-sm text-muted-foreground">Items in Stock</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 text-center">
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-bold text-status-ok">23</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Items in Stock</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-orange-600">4</div>
-                <div className="text-sm text-muted-foreground">Low Stock Items</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-bold text-status-warning">4</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Low Stock Items</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-red-600">2</div>
-                <div className="text-sm text-muted-foreground">Stock Outs</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-bold text-status-critical">2</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Stock Outs</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-600">15</div>
-                <div className="text-sm text-muted-foreground">Recent Transactions</div>
+              <div className="p-2">
+                <div className="text-xl sm:text-2xl font-bold text-brand">15</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Recent Transactions</div>
               </div>
             </div>
           </CardContent>
@@ -134,7 +134,7 @@ export const SimpleInventoryManager: React.FC = () => {
 
   // Action-specific screens
   return (
-    <div className="container py-6 space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
       <PageHeader 
         title={
           selectedAction === "overview" ? "Stock Review" :

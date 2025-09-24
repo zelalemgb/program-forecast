@@ -40,12 +40,12 @@ const AppShell: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-background">
         {user && !isAuth && <AppSidebar />}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {user && !isAuth && <DashboardHeader currentLocation="Boru Meda Hospital – Facility View" />}
           
-          <main className="flex-1">
+          <main className="flex-1 overflow-x-auto">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -73,15 +73,15 @@ const AppShell: React.FC = () => {
           </main>
 
           {user && !isAuth && (
-            <footer className="border-t bg-background mt-auto">
-              <div className="container py-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-4">
-                  <span>v2.1.4</span>
+            <footer className="border-t bg-background mt-auto flex-shrink-0">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="font-medium">v2.1.4</span>
                   <span>Last sync: 2 min ago</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <a href="#" className="hover:text-foreground">Help Desk</a>
-                  <select className="bg-transparent">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <a href="#" className="hover:text-foreground transition-colors">Help Desk</a>
+                  <select className="bg-transparent text-xs sm:text-sm border-0 focus:outline-none">
                     <option>English</option>
                     <option>አማርኛ</option>
                   </select>

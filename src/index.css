@@ -169,4 +169,29 @@ All colors MUST be HSL.
   .micro-message-icon {
     @apply w-5 h-5 text-muted-foreground/70 shrink-0;
   }
+  
+  /* Responsive utility classes */
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+  .text-responsive-lg {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl;
+  }
+  
+  /* Container variants */
+  .container-responsive {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .container-tight {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl;
+  }
+  .container-wide {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+  }
 }
