@@ -3060,6 +3060,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       recompute_request_totals: {
         Args: { p_request_id: string }
         Returns: undefined
