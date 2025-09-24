@@ -361,15 +361,55 @@ const RoleBasedRegistration: React.FC = () => {
     try {
       // Create user account
       const { error: signUpError } = await signUp(email, password);
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        
+        // Handle specific error cases
+        if (signUpError.message?.includes('User already registered') || 
+            signUpError.message?.includes('already exists')) {
+          toast({
+            title: "Registration Failed",
+            description: "An account with this email already exists. Please try signing in instead or use a different email address.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (signUpError.message?.includes('Invalid email')) {
+          toast({
+            title: "Registration Failed", 
+            description: "Please enter a valid email address.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (signUpError.message?.includes('Password')) {
+          toast({
+            title: "Registration Failed",
+            description: "Password must be at least 6 characters long.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw signUpError;
+      }
 
-      // Get the user ID
+      // Get the user ID after successful signup
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        throw new Error('Failed to get user after signup');
+        console.error('Error getting user after signup:', userError);
+        toast({
+          title: "Registration Partially Failed",
+          description: "Account created but there was an issue retrieving user information. Please try signing in.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Create profile
+      console.log('Creating profile for user:', user.id);
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -381,10 +421,15 @@ const RoleBasedRegistration: React.FC = () => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        // Don't fail the registration if profile creation fails
+        toast({
+          title: "Warning",
+          description: "Account created but profile setup had issues. You can complete your profile later.",
+          variant: "default",
+        });
       }
 
       // Create role request
+      console.log('Creating role request for user:', user.id, 'role:', selectedRole);
       const roleRequestData = {
         user_id: user.id,
         requested_role: selectedRole as any,
@@ -399,7 +444,15 @@ const RoleBasedRegistration: React.FC = () => {
         .from('user_role_requests')
         .insert(roleRequestData);
 
-      if (requestError) throw requestError;
+      if (requestError) {
+        console.error('Role request creation error:', requestError);
+        toast({
+          title: "Registration Partially Failed",
+          description: "Account created but role request failed. Please contact an administrator or try requesting a role from your profile.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Registration Successful",
