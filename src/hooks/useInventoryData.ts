@@ -73,13 +73,10 @@ export const useInventoryData = (facilityId?: number) => {
       setLoading(true);
       setError(null);
 
-      // Fetch inventory balances
+      // Fetch inventory balances (no embeds to avoid join/RLS issues)
       const { data: balanceData, error: balanceError } = await supabase
         .from('inventory_balances')
-        .select(`
-          *,
-          products(name, unit)
-        `)
+        .select('*')
         .eq('facility_id', facilityId)
         .order('last_updated', { ascending: false });
 
