@@ -265,17 +265,40 @@ const Profile: React.FC = () => {
 
     setFacilityUpdateLoading(true);
     try {
-      // Update user role with new facility
-      const { error } = await supabase
+      // Check if user already has a role record, if not create one
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .update({
-          facility_id: parseInt(selectedFacility)
-        })
-        .eq('user_id', user!.id);
+        .select('id')
+        .eq('user_id', user!.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingRole) {
+        // Update existing role with new facility
+        const { error } = await supabase
+          .from('user_roles')
+          .update({
+            facility_id: parseInt(selectedFacility)
+          })
+          .eq('user_id', user!.id);
+        
+        if (error) throw error;
+      } else {
+        // Create new role record with facility assignment
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user!.id,
+            role: 'viewer',
+            facility_id: parseInt(selectedFacility)
+          });
+        
+        if (error) throw error;
+      }
 
-      toast({ title: "Facility assignment updated successfully" });
+      toast({ 
+        title: "Facility assignment updated successfully",
+        description: "Your facility access has been updated. The page will refresh to show your new assignment."
+      });
       
       // Reset selections
       setSelectedRegion("");
@@ -283,12 +306,15 @@ const Profile: React.FC = () => {
       setSelectedWoreda("");
       setSelectedFacility("");
       
-      // Refresh page to show updated facility info
-      window.location.reload();
+      // Refresh page after a short delay to show updated facility info
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err: any) {
+      console.error('Facility update error:', err);
       toast({
         title: "Facility update failed",
-        description: err.message,
+        description: err.message || "Please try again or contact your administrator",
         variant: "destructive"
       });
     } finally {
