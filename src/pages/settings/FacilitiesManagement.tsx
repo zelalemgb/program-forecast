@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
+import { Building2, Plus, Edit, Trash2, Upload, Download, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/layout/PageHeader";
+import PageLayout from "@/components/layout/PageLayout";
 
 interface Facility {
   facility_id: number;
@@ -204,37 +204,15 @@ const FacilitiesManagement: React.FC = () => {
   const facilityLevels = ['Primary', 'Secondary', 'Tertiary', 'Specialized'];
   const ownershipTypes = ['Public', 'Private', 'NGO', 'Faith-based'];
 
-  return (
-    <>
-      <Helmet>
-        <title>Facilities Management | Metadata Organization</title>
-        <meta name="description" content="Manage health facilities including hospitals, clinics, and health centers." />
-        <link rel="canonical" href="/settings/metadata/facilities" />
-      </Helmet>
-
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/settings/metadata')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Metadata
-        </Button>
-      </div>
-
-      <PageHeader
-        title="Health Facilities"
-        description="Manage health facilities in the system"
-        actions={
-          <div className="flex gap-2">
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingFacility(null)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Facility
-                </Button>
-              </DialogTrigger>
+  const actions = (
+    <div className="flex gap-2">
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setEditingFacility(null)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Facility
+          </Button>
+        </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
@@ -373,8 +351,15 @@ const FacilitiesManagement: React.FC = () => {
               Export
             </Button>
           </div>
-        }
-      />
+        );
+
+  return (
+    <PageLayout actions={actions}>
+      <Helmet>
+        <title>Facilities Management | Metadata Organization</title>
+        <meta name="description" content="Manage health facilities including hospitals, clinics, and health centers." />
+        <link rel="canonical" href="/settings/metadata/facilities" />
+      </Helmet>
 
       {/* Facilities List */}
       <Card>
@@ -495,7 +480,7 @@ const FacilitiesManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageLayout>
   );
 };
 

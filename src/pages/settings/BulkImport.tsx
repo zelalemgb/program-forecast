@@ -14,7 +14,6 @@ import {
   CheckCircle, 
   AlertCircle, 
   XCircle,
-  ArrowLeft,
   FileSpreadsheet,
   Database,
   ArrowRight,
@@ -22,7 +21,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/layout/PageHeader";
+import PageLayout from "@/components/layout/PageLayout";
 import Papa from "papaparse";
 
 interface ImportJob {
@@ -286,28 +285,12 @@ const BulkImport: React.FC = () => {
   };
 
   return (
-    <>
+    <PageLayout>
       <Helmet>
         <title>Bulk Import | Metadata Organization</title>
         <meta name="description" content="Import data in bulk from Excel or CSV files for facilities, products, users, and more." />
         <link rel="canonical" href="/settings/metadata/bulk-import" />
       </Helmet>
-
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/settings/metadata')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Metadata
-        </Button>
-      </div>
-
-      <PageHeader
-        title="Bulk Data Import"
-        description="Import large datasets from Excel or CSV files"
-      />
 
       <Tabs defaultValue="import" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
@@ -531,7 +514,6 @@ const BulkImport: React.FC = () => {
 
                 <div className="flex gap-2 pt-4">
                   <Button variant="outline" onClick={handleBackToUpload}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
                     Back
                   </Button>
                   <Button onClick={handleImport}>
@@ -676,7 +658,7 @@ const BulkImport: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </>
+    </PageLayout>
   );
 };
 

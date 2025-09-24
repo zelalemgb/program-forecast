@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Package, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
+import { Package, Plus, Edit, Trash2, Upload, Download, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/layout/PageHeader";
+import PageLayout from "@/components/layout/PageLayout";
 
 interface Product {
   id: string;
@@ -204,37 +204,15 @@ const ProductsManagement: React.FC = () => {
   const dosageForms = ['Tablet', 'Capsule', 'Injection', 'Syrup', 'Ointment', 'Drops', 'Powder'];
   const units = ['Tablet', 'Capsule', 'Vial', 'Bottle', 'Tube', 'Pack', 'Box', 'ml', 'mg', 'g'];
 
-  return (
-    <>
-      <Helmet>
-        <title>Products Management | Metadata Organization</title>
-        <meta name="description" content="Manage pharmaceutical products, medical supplies, and equipment in the system." />
-        <link rel="canonical" href="/settings/metadata/products" />
-      </Helmet>
-
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/settings/metadata')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Metadata
-        </Button>
-      </div>
-
-      <PageHeader
-        title="Products & Medicines"
-        description="Manage pharmaceutical products and medical supplies"
-        actions={
-          <div className="flex gap-2">
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingProduct(null)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
-              </DialogTrigger>
+  const actions = (
+    <div className="flex gap-2">
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setEditingProduct(null)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
@@ -379,8 +357,15 @@ const ProductsManagement: React.FC = () => {
               Export
             </Button>
           </div>
-        }
-      />
+        );
+
+  return (
+    <PageLayout actions={actions}>
+      <Helmet>
+        <title>Products Management | Metadata Organization</title>
+        <meta name="description" content="Manage pharmaceutical products, medical supplies, and equipment in the system." />
+        <link rel="canonical" href="/settings/metadata/products" />
+      </Helmet>
 
       {/* Products List */}
       <Card>
@@ -501,7 +486,7 @@ const ProductsManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageLayout>
   );
 };
 
