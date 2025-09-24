@@ -34,12 +34,27 @@ interface Woreda {
   zone_id: number;
 }
 
+interface Zone {
+  zone_id: number;
+  zone_name: string;
+  region_id: number;
+}
+
+interface Region {
+  region_id: number;
+  region_name: string;
+}
+
 const FacilitiesManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [woredas, setWoredas] = useState<Woreda[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [filteredZones, setFilteredZones] = useState<Zone[]>([]);
+  const [filteredWoredas, setFilteredWoredas] = useState<Woreda[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
   const [viewingFacility, setViewingFacility] = useState<Facility | null>(null);
@@ -55,6 +70,8 @@ const FacilitiesManagement: React.FC = () => {
     ownership: '',
     latitude: '',
     longitude: '',
+    region_id: '',
+    zone_id: '',
     woreda_id: ''
   });
 
@@ -65,17 +82,21 @@ const FacilitiesManagement: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [facilitiesResult, woredasResult] = await Promise.all([
+      const [facilitiesResult, regionsResult, zonesResult, woredasResult] = await Promise.all([
         supabase.from('facility').select('*').order('facility_name'),
+        supabase.from('region').select('region_id, region_name').order('region_name'),
+        supabase.from('zone').select('zone_id, zone_name, region_id').order('zone_name'),
         supabase.from('woreda').select('woreda_id, woreda_name, zone_id').order('woreda_name')
       ]);
 
       if (facilitiesResult.data) setFacilities(facilitiesResult.data);
+      if (regionsResult.data) setRegions(regionsResult.data);
+      if (zonesResult.data) setZones(zonesResult.data);
       if (woredasResult.data) setWoredas(woredasResult.data);
     } catch (error) {
       toast({
         title: "Error loading data",
-        description: "Failed to load facilities and woredas",
+        description: "Failed to load administrative data",
         variant: "destructive"
       });
     } finally {
@@ -146,12 +167,21 @@ const FacilitiesManagement: React.FC = () => {
       ownership: '',
       latitude: '',
       longitude: '',
+      region_id: '',
+      zone_id: '',
       woreda_id: ''
     });
     setEditingFacility(null);
+    setFilteredZones([]);
+    setFilteredWoredas([]);
   };
 
   const handleEdit = (facility: Facility) => {
+    // Find the administrative hierarchy for this facility
+    const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
+    const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
+    const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
+
     setFormData({
       facility_name: facility.facility_name,
       facility_code: facility.facility_code || '',
@@ -160,8 +190,19 @@ const FacilitiesManagement: React.FC = () => {
       ownership: facility.ownership || '',
       latitude: facility.latitude?.toString() || '',
       longitude: facility.longitude?.toString() || '',
+      region_id: region?.region_id.toString() || '',
+      zone_id: zone?.zone_id.toString() || '',
       woreda_id: facility.woreda_id?.toString() || ''
     });
+
+    // Set filtered options based on current selection
+    if (region) {
+      setFilteredZones(zones.filter(z => z.region_id === region.region_id));
+    }
+    if (zone) {
+      setFilteredWoredas(woredas.filter(w => w.zone_id === zone.zone_id));
+    }
+
     setEditingFacility(facility);
     setIsAddModalOpen(true);
   };
@@ -203,6 +244,22 @@ const FacilitiesManagement: React.FC = () => {
   const facilityTypes = ['Hospital', 'Health Center', 'Health Post', 'Clinic', 'Pharmacy'];
   const facilityLevels = ['Primary', 'Secondary', 'Tertiary', 'Specialized'];
   const ownershipTypes = ['Public', 'Private', 'NGO', 'Faith-based'];
+
+  // Handle cascading dropdowns
+  const handleRegionChange = (regionId: string) => {
+    setFormData({ ...formData, region_id: regionId, zone_id: '', woreda_id: '' });
+    setFilteredZones(zones.filter(z => z.region_id === parseInt(regionId)));
+    setFilteredWoredas([]);
+  };
+
+  const handleZoneChange = (zoneId: string) => {
+    setFormData({ ...formData, zone_id: zoneId, woreda_id: '' });
+    setFilteredWoredas(woredas.filter(w => w.zone_id === parseInt(zoneId)));
+  };
+
+  const handleWoredaChange = (woredaId: string) => {
+    setFormData({ ...formData, woreda_id: woredaId });
+  };
 
   const actions = (
     <div className="flex gap-2">
@@ -290,16 +347,54 @@ const FacilitiesManagement: React.FC = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="woreda_id">Woreda</Label>
+                      <Label htmlFor="region_id">Region *</Label>
+                      <Select 
+                        value={formData.region_id} 
+                        onValueChange={handleRegionChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {regions.map(region => (
+                            <SelectItem key={region.region_id} value={region.region_id.toString()}>
+                              {region.region_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zone_id">Zone *</Label>
+                      <Select 
+                        value={formData.zone_id} 
+                        onValueChange={handleZoneChange}
+                        disabled={!formData.region_id}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select zone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredZones.map(zone => (
+                            <SelectItem key={zone.zone_id} value={zone.zone_id.toString()}>
+                              {zone.zone_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="woreda_id">Woreda *</Label>
                       <Select 
                         value={formData.woreda_id} 
-                        onValueChange={(value) => setFormData({ ...formData, woreda_id: value })}
+                        onValueChange={handleWoredaChange}
+                        disabled={!formData.zone_id}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select woreda" />
                         </SelectTrigger>
                         <SelectContent>
-                          {woredas.map(woreda => (
+                          {filteredWoredas.map(woreda => (
                             <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()}>
                               {woreda.woreda_name}
                             </SelectItem>
@@ -373,6 +468,7 @@ const FacilitiesManagement: React.FC = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>Ownership</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -392,6 +488,20 @@ const FacilitiesManagement: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell>{facility.ownership || '-'}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
+                        const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
+                        const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
+                        return (
+                          <div className="text-sm">
+                            {region && <div>{region.region_name}</div>}
+                            {zone && <div className="text-muted-foreground">{zone.zone_name}</div>}
+                            {woreda && <div className="text-muted-foreground">{woreda.woreda_name}</div>}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
@@ -458,10 +568,21 @@ const FacilitiesManagement: React.FC = () => {
                   <p className="mt-1">{viewingFacility.ownership || '-'}</p>
                 </div>
                 <div>
-                  <Label className="font-medium">Woreda</Label>
-                  <p className="mt-1">
-                    {woredas.find(w => w.woreda_id === viewingFacility.woreda_id)?.woreda_name || '-'}
-                  </p>
+                  <Label className="font-medium">Administrative Location</Label>
+                  <div className="mt-1">
+                    {(() => {
+                      const woreda = woredas.find(w => w.woreda_id === viewingFacility.woreda_id);
+                      const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
+                      const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
+                      return (
+                        <div className="space-y-1">
+                          {region && <p><strong>Region:</strong> {region.region_name}</p>}
+                          {zone && <p><strong>Zone:</strong> {zone.zone_name}</p>}
+                          {woreda && <p><strong>Woreda:</strong> {woreda.woreda_name}</p>}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
                 {viewingFacility.latitude && (
                   <div>
