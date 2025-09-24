@@ -78,101 +78,31 @@ const MetadataOrganization: React.FC = () => {
       </Helmet>
 
       <PageHeader
-        title="Metadata Organization"
-        description="Manage system metadata including facilities, products, users, and administrative data"
+        title="Data Management"
+        description="Simple data management for your health system"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {metadataCategories.map((category) => (
           <Card 
             key={category.path}
-            className="hover:shadow-lg transition-all duration-200 cursor-pointer group"
+            className="hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => navigate(category.path)}
           >
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-lg ${category.bgColor}`}>
-                  <category.icon className={`h-6 w-6 ${category.color}`} />
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-lg ${category.bgColor}`}>
+                  <category.icon className={`h-5 w-5 ${category.color}`} />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                    {category.title}
-                  </CardTitle>
+                  <h3 className="font-semibold">{category.title}</h3>
+                  <p className="text-sm text-muted-foreground">{category.description}</p>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground mb-4">
-                {category.description}
-              </p>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(category.path);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`${category.path}?tab=manage`);
-                  }}
-                >
-                  <Database className="h-4 w-4 mr-1" />
-                  Manage
-                </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {/* Quick Stats */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            System Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">5</div>
-              <div className="text-sm text-muted-foreground">Facilities</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">150+</div>
-              <div className="text-sm text-muted-foreground">Products</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">25</div>
-              <div className="text-sm text-muted-foreground">Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">12</div>
-              <div className="text-sm text-muted-foreground">Woredas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">8</div>
-              <div className="text-sm text-muted-foreground">Suppliers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">2.1K</div>
-              <div className="text-sm text-muted-foreground">Records</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </>
   );
 };
