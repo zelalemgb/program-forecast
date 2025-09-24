@@ -117,6 +117,19 @@ export const useInventoryData = (facilityId?: number) => {
 
       if (consumptionError) throw consumptionError;
 
+      if (balanceError) {
+        console.error('Balance query error:', balanceError);
+        throw balanceError;
+      }
+      if (transactionError) {
+        console.error('Transaction query error:', transactionError);
+        throw transactionError;
+      }
+      if (consumptionError) {
+        console.error('Consumption query error:', consumptionError);
+        throw consumptionError;
+      }
+
       console.log('Fetched balances:', balanceData);
       console.log('Fetched transactions:', transactionData);
       console.log('Fetched consumption:', consumptionData);
