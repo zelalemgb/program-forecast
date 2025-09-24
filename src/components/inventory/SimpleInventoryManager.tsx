@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, ArrowLeft, Truck } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, ArrowLeft, Truck, BarChart3, ShoppingCart } from "lucide-react";
 import { ReceivingModule } from "./ReceivingModule";
 import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
@@ -32,7 +32,7 @@ export const SimpleInventoryManager: React.FC = () => {
           description="Choose an action to get started"
         />
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {/* Stock Review Action */}
           <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => handleActionSelect("overview")}>
             <CardContent className="p-4 sm:p-6 text-center">
@@ -97,6 +97,40 @@ export const SimpleInventoryManager: React.FC = () => {
               <Badge variant="outline" className="mb-2">
                 <Package className="h-3 w-3 mr-1" />
                 Count & Correct
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Forecast Analysis Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-info/10 rounded-full flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-info" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Forecast Analysis</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Analyze consumption patterns and predict future stock needs
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                Trend Analysis
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Request Supply Action */}
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-accent/10 rounded-full flex items-center justify-center">
+                <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Request Supply</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Create procurement requests and place orders for supplies
+              </p>
+              <Badge variant="outline" className="mb-2">
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Place Order
               </Badge>
             </CardContent>
           </Card>
