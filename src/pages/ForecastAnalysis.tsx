@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,6 +40,8 @@ const ForecastAnalysis: React.FC = () => {
   const [showBudgetAdjustmentModal, setShowBudgetAdjustmentModal] = useState(false);
   const [selectedForecastSummary, setSelectedForecastSummary] = useState<ForecastSummary | null>(null);
   const [savedForecasts, setSavedForecasts] = useState<ForecastSummary[]>([]);
+  const [loadedForecastData, setLoadedForecastData] = useState<any[]>([]);
+  const [currentLoadedForecast, setCurrentLoadedForecast] = useState<ForecastSummary | null>(null);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [forecastName, setForecastName] = useState('');
   const [forecastDescription, setForecastDescription] = useState('');
@@ -100,7 +103,7 @@ const ForecastAnalysis: React.FC = () => {
   }, [selectedAccountType]);
 
   // Initialize forecast summary hook
-  const { getForecastSummaries } = useForecastSummary();
+  const { getForecastSummaries, getForecastSummaryDetails } = useForecastSummary();
 
   // Fetch saved forecasts
   useEffect(() => {
@@ -474,10 +477,95 @@ const ForecastAnalysis: React.FC = () => {
 
   return (
     <PageLayout 
-      title="Forecast Analysis" 
+      title={currentLoadedForecast ? `Forecast Analysis - ${currentLoadedForecast.name}` : "Forecast Analysis"} 
       actions={titleActions}
     >
       <div className="space-y-6">
+        {/* Current Forecast Status */}
+        {currentLoadedForecast && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-900">Currently Viewing: {currentLoadedForecast.name}</h3>
+                  <p className="text-sm text-blue-700">
+                    {currentLoadedForecast.description} • {currentLoadedForecast.total_line_items} items • 
+                    Created {format(new Date(currentLoadedForecast.created_at), 'MMM dd, yyyy')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-blue-900">
+                    {currentLoadedForecast.current_total_value.toLocaleString()}
+                  </div>
+                  {currentLoadedForecast.available_budget && (
+                    <div className="text-sm text-blue-700">
+                      Budget: {currentLoadedForecast.available_budget.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Saved Forecasts Section */}
+        {!currentLoadedForecast && savedForecasts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BookOpen className="w-5 h-5 mr-2" />
+                Saved Forecasts ({savedForecasts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {savedForecasts.slice(0, 6).map((summary) => (
+                  <div 
+                    key={summary.id}
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => loadSavedForecast(summary)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-sm">{summary.name}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {summary.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      {summary.description || 'No description'}
+                    </p>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>Items:</span>
+                        <span>{summary.total_line_items}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Value:</span>
+                        <span className="font-medium">{summary.current_total_value.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Created:</span>
+                        <span>{format(new Date(summary.created_at), 'MMM dd')}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {savedForecasts.length > 6 && (
+                <div className="mt-4 text-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowSavedForecastsModal(true)}
+                  >
+                    View All {savedForecasts.length} Forecasts
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -708,6 +796,10 @@ const ForecastAnalysis: React.FC = () => {
           onSaved={async () => {
             const summaries = await getForecastSummaries();
             setSavedForecasts(summaries);
+            // Reload current forecast if it was adjusted
+            if (currentLoadedForecast) {
+              await loadSavedForecast(currentLoadedForecast);
+            }
             setSelectedForecastSummary(null);
           }}
         />
@@ -724,11 +816,11 @@ const ForecastAnalysis: React.FC = () => {
                   key={summary.id}
                   summary={summary}
                   onView={(summary) => {
-                    // Could open a detailed view modal
-                    setSelectedForecastSummary(summary);
+                    loadSavedForecast(summary);
                     setShowSavedForecastsModal(false);
                   }}
                   onAdjust={(summary) => {
+                    loadSavedForecast(summary);
                     setSelectedForecastSummary(summary);
                     setShowSavedForecastsModal(false);
                     setShowBudgetAdjustmentModal(true);
