@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PageHeader from '@/components/layout/PageHeader';
 import { RoleRequestForm } from '@/components/users/RoleRequestForm';
 import { RoleApprovalTable } from '@/components/users/RoleApprovalTable';
-import { UserPlus, Shield, CheckSquare } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('request');
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 
   return (
     <>
@@ -18,61 +18,34 @@ const UserManagement: React.FC = () => {
         <link rel="canonical" href="/user-management" />
       </Helmet>
       
-      <PageHeader
-        title="User Management"
-        description="Manage user roles, permissions, and access control across the system"
-      />
-
-      <div className="space-y-6">
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Role Request</CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <CardDescription>Request access to specific roles and permissions</CardDescription>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <CardDescription>Review and approve role requests from users</CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="request" className="flex items-center gap-2">
+      
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="User Management"
+          description="Manage user roles, permissions, and access control across the system"
+        />
+        
+        <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Request Role
-            </TabsTrigger>
-            <TabsTrigger value="approvals" className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              Approvals
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="request" className="space-y-6">
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Request User Role</DialogTitle>
+            </DialogHeader>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <RoleRequestForm onSuccess={() => {
-                  // Optionally switch to approvals tab or show success message
+                  setIsRequestDialogOpen(false);
                 }} />
               </div>
               <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Role Descriptions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                <div className="rounded-lg border p-4">
+                  <h3 className="text-lg font-medium mb-4">Role Descriptions</h3>
+                  <div className="space-y-4">
                     <div>
                       <h4 className="font-medium">Facility Roles</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
@@ -96,16 +69,16 @@ const UserManagement: React.FC = () => {
                         <li><strong>Program Officer:</strong> Manages health program forecasts and national data access</li>
                       </ul>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
-          </TabsContent>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-          <TabsContent value="approvals" className="space-y-6">
-            <RoleApprovalTable />
-          </TabsContent>
-        </Tabs>
+      <div className="mt-6">
+        <RoleApprovalTable />
       </div>
     </>
   );
