@@ -7,68 +7,52 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Package, Plus, Edit, Trash2, Upload, Download, ArrowLeft } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Package, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/layout/PageHeader";
 
 interface Product {
   id: string;
-  name: string;
+  canonical_name: string;
   code?: string;
-  unit?: string;
-  category?: string;
-  product_type?: string;
-  therapeutic_category?: string;
-  dosage_form?: string;
+  base_unit: string;
+  program?: string;
+  atc_code?: string;
   strength?: string;
-  manufacturer?: string;
-  generic_name?: string;
-  brand_name?: string;
+  form?: string;
   pack_size?: number;
-  cold_chain_required?: boolean;
-  controlled_substance?: boolean;
-  prescription_required?: boolean;
-  essential_medicine?: boolean;
-  pediatric_formulation?: boolean;
-  active_status?: boolean;
+  tracer_flag?: boolean;
+  active?: boolean;
   created_at?: string;
 }
 
 const ProductsManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
-  const defaultTab = searchParams.get('tab') === 'manage' ? 'manage' : 'add';
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
+    canonical_name: '',
     code: '',
-    unit: '',
-    category: '',
-    product_type: '',
-    therapeutic_category: '',
-    dosage_form: '',
+    base_unit: '',
+    program: '',
+    atc_code: '',
     strength: '',
-    manufacturer: '',
-    generic_name: '',
-    brand_name: '',
+    form: '',
     pack_size: '',
-    cold_chain_required: false,
-    controlled_substance: false,
-    prescription_required: false,
-    essential_medicine: false,
-    pediatric_formulation: false,
-    active_status: true
+    tracer_flag: false,
+    active: true
   });
 
   useEffect(() => {
@@ -79,9 +63,9 @@ const ProductsManagement: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('product_reference')
         .select('*')
-        .order('name');
+        .order('canonical_name');
 
       if (error) throw error;
       setProducts(data || []);
@@ -98,10 +82,10 @@ const ProductsManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
+    if (!formData.canonical_name.trim() || !formData.base_unit.trim()) {
       toast({
         title: "Validation Error",
-        description: "Product name is required",
+        description: "Product name and base unit are required",
         variant: "destructive"
       });
       return;
@@ -111,19 +95,20 @@ const ProductsManagement: React.FC = () => {
     try {
       const payload = {
         ...formData,
-        name: formData.name.trim(),
+        canonical_name: formData.canonical_name.trim(),
+        base_unit: formData.base_unit.trim(),
         pack_size: formData.pack_size ? parseInt(formData.pack_size) : null,
       };
 
       let result;
       if (editingProduct) {
         result = await supabase
-          .from('products')
+          .from('product_reference')
           .update(payload)
           .eq('id', editingProduct.id);
       } else {
         result = await supabase
-          .from('products')
+          .from('product_reference')
           .insert([payload]);
       }
 
@@ -135,6 +120,7 @@ const ProductsManagement: React.FC = () => {
       });
 
       resetForm();
+      setIsAddModalOpen(false);
       loadProducts();
     } catch (error: any) {
       toast({
@@ -149,50 +135,40 @@ const ProductsManagement: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      canonical_name: '',
       code: '',
-      unit: '',
-      category: '',
-      product_type: '',
-      therapeutic_category: '',
-      dosage_form: '',
+      base_unit: '',
+      program: '',
+      atc_code: '',
       strength: '',
-      manufacturer: '',
-      generic_name: '',
-      brand_name: '',
+      form: '',
       pack_size: '',
-      cold_chain_required: false,
-      controlled_substance: false,
-      prescription_required: false,
-      essential_medicine: false,
-      pediatric_formulation: false,
-      active_status: true
+      tracer_flag: false,
+      active: true
     });
     setEditingProduct(null);
   };
 
   const handleEdit = (product: Product) => {
     setFormData({
-      name: product.name,
+      canonical_name: product.canonical_name,
       code: product.code || '',
-      unit: product.unit || '',
-      category: product.category || '',
-      product_type: product.product_type || '',
-      therapeutic_category: product.therapeutic_category || '',
-      dosage_form: product.dosage_form || '',
+      base_unit: product.base_unit,
+      program: product.program || '',
+      atc_code: product.atc_code || '',
       strength: product.strength || '',
-      manufacturer: product.manufacturer || '',
-      generic_name: product.generic_name || '',
-      brand_name: product.brand_name || '',
+      form: product.form || '',
       pack_size: product.pack_size?.toString() || '',
-      cold_chain_required: product.cold_chain_required || false,
-      controlled_substance: product.controlled_substance || false,
-      prescription_required: product.prescription_required || false,
-      essential_medicine: product.essential_medicine || false,
-      pediatric_formulation: product.pediatric_formulation || false,
-      active_status: product.active_status !== false
+      tracer_flag: product.tracer_flag || false,
+      active: product.active !== false
     });
     setEditingProduct(product);
+    setIsAddModalOpen(true);
+  };
+
+  const handleView = (product: Product) => {
+    setViewingProduct(product);
+    setIsViewModalOpen(true);
   };
 
   const handleDelete = async (productId: string) => {
@@ -201,7 +177,7 @@ const ProductsManagement: React.FC = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('products')
+        .from('product_reference')
         .delete()
         .eq('id', productId);
 
@@ -220,8 +196,11 @@ const ProductsManagement: React.FC = () => {
     }
   };
 
-  const categories = ['Medicines', 'Medical Supplies', 'Laboratory Supplies', 'Equipment', 'Vaccines'];
-  const productTypes = ['Pharmaceutical', 'Medical Device', 'Consumable', 'Equipment', 'Reagent'];
+  const handleBulkImport = () => {
+    navigate('/settings/metadata/bulk-import?type=products');
+  };
+
+  const programs = ['Essential Medicines', 'TB Program', 'HIV/AIDS Program', 'Malaria Program', 'Maternal Health'];
   const dosageForms = ['Tablet', 'Capsule', 'Injection', 'Syrup', 'Ointment', 'Drops', 'Powder'];
   const units = ['Tablet', 'Capsule', 'Vial', 'Bottle', 'Tube', 'Pack', 'Box', 'ml', 'mg', 'g'];
 
@@ -245,37 +224,32 @@ const ProductsManagement: React.FC = () => {
       </div>
 
       <PageHeader
-        title="Products & Medicines Management"
-        description="Add, edit, and manage pharmaceutical products and medical supplies"
-      />
-
-      <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="add">Add Product</TabsTrigger>
-          <TabsTrigger value="manage">Manage Products</TabsTrigger>
-          <TabsTrigger value="bulk">Bulk Import</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="add">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Basic Information</h3>
+        title="Products & Medicines"
+        description="Manage pharmaceutical products and medical supplies"
+        actions={
+          <div className="flex gap-2">
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingProduct(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    {editingProduct ? 'Edit Product' : 'Add New Product'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Product Name *</Label>
+                      <Label htmlFor="canonical_name">Product Name *</Label>
                       <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        id="canonical_name"
+                        value={formData.canonical_name}
+                        onChange={(e) => setFormData({ ...formData, canonical_name: e.target.value })}
                         placeholder="Enter product name"
                         required
                       />
@@ -290,93 +264,45 @@ const ProductsManagement: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="generic_name">Generic Name</Label>
-                      <Input
-                        id="generic_name"
-                        value={formData.generic_name}
-                        onChange={(e) => setFormData({ ...formData, generic_name: e.target.value })}
-                        placeholder="Enter generic name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="brand_name">Brand Name</Label>
-                      <Input
-                        id="brand_name"
-                        value={formData.brand_name}
-                        onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
-                        placeholder="Enter brand name"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Classification */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Classification</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="base_unit">Base Unit *</Label>
                       <Select 
-                        value={formData.category} 
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        value={formData.base_unit} 
+                        onValueChange={(value) => setFormData({ ...formData, base_unit: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Select base unit" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(category => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="product_type">Product Type</Label>
+                      <Label htmlFor="program">Program</Label>
                       <Select 
-                        value={formData.product_type} 
-                        onValueChange={(value) => setFormData({ ...formData, product_type: value })}
+                        value={formData.program} 
+                        onValueChange={(value) => setFormData({ ...formData, program: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Select program" />
                         </SelectTrigger>
                         <SelectContent>
-                          {productTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          {programs.map(program => (
+                            <SelectItem key={program} value={program}>{program}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="therapeutic_category">Therapeutic Category</Label>
+                      <Label htmlFor="atc_code">ATC Code</Label>
                       <Input
-                        id="therapeutic_category"
-                        value={formData.therapeutic_category}
-                        onChange={(e) => setFormData({ ...formData, therapeutic_category: e.target.value })}
-                        placeholder="Enter therapeutic category"
+                        id="atc_code"
+                        value={formData.atc_code}
+                        onChange={(e) => setFormData({ ...formData, atc_code: e.target.value })}
+                        placeholder="Enter ATC code"
                       />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Physical Properties */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Physical Properties</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dosage_form">Dosage Form</Label>
-                      <Select 
-                        value={formData.dosage_form} 
-                        onValueChange={(value) => setFormData({ ...formData, dosage_form: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select form" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dosageForms.map(form => (
-                            <SelectItem key={form} value={form}>{form}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="strength">Strength</Label>
@@ -388,17 +314,17 @@ const ProductsManagement: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="unit">Unit</Label>
+                      <Label htmlFor="form">Form</Label>
                       <Select 
-                        value={formData.unit} 
-                        onValueChange={(value) => setFormData({ ...formData, unit: value })}
+                        value={formData.form} 
+                        onValueChange={(value) => setFormData({ ...formData, form: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
+                          <SelectValue placeholder="Select form" />
                         </SelectTrigger>
                         <SelectContent>
-                          {units.map(unit => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                          {dosageForms.map(form => (
+                            <SelectItem key={form} value={form}>{form}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -414,206 +340,175 @@ const ProductsManagement: React.FC = () => {
                       />
                     </div>
                   </div>
-                </div>
-
-                {/* Manufacturer */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Manufacturer Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="manufacturer">Manufacturer</Label>
-                      <Input
-                        id="manufacturer"
-                        value={formData.manufacturer}
-                        onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                        placeholder="Enter manufacturer name"
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tracer_flag"
+                        checked={formData.tracer_flag}
+                        onCheckedChange={(checked) => setFormData({ ...formData, tracer_flag: !!checked })}
                       />
+                      <Label htmlFor="tracer_flag">Tracer Product</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="active"
+                        checked={formData.active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, active: !!checked })}
+                      />
+                      <Label htmlFor="active">Active</Label>
                     </div>
                   </div>
-                </div>
-
-                {/* Flags */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Product Flags</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="cold_chain_required"
-                        checked={formData.cold_chain_required}
-                        onCheckedChange={(checked) => setFormData({ ...formData, cold_chain_required: !!checked })}
-                      />
-                      <Label htmlFor="cold_chain_required">Cold Chain Required</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="controlled_substance"
-                        checked={formData.controlled_substance}
-                        onCheckedChange={(checked) => setFormData({ ...formData, controlled_substance: !!checked })}
-                      />
-                      <Label htmlFor="controlled_substance">Controlled Substance</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="prescription_required"
-                        checked={formData.prescription_required}
-                        onCheckedChange={(checked) => setFormData({ ...formData, prescription_required: !!checked })}
-                      />
-                      <Label htmlFor="prescription_required">Prescription Required</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="essential_medicine"
-                        checked={formData.essential_medicine}
-                        onCheckedChange={(checked) => setFormData({ ...formData, essential_medicine: !!checked })}
-                      />
-                      <Label htmlFor="essential_medicine">Essential Medicine</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="pediatric_formulation"
-                        checked={formData.pediatric_formulation}
-                        onCheckedChange={(checked) => setFormData({ ...formData, pediatric_formulation: !!checked })}
-                      />
-                      <Label htmlFor="pediatric_formulation">Pediatric Formulation</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="active_status"
-                        checked={formData.active_status}
-                        onCheckedChange={(checked) => setFormData({ ...formData, active_status: !!checked })}
-                      />
-                      <Label htmlFor="active_status">Active Status</Label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" disabled={loading}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingProduct ? 'Update' : 'Add'} Product
-                  </Button>
-                  {editingProduct && (
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel Edit
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" disabled={loading}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      {editingProduct ? 'Update' : 'Add'} Product
                     </Button>
-                  )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" onClick={handleBulkImport}>
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
+          </div>
+        }
+      />
 
-        <TabsContent value="manage">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Products ({products.length})
-                </div>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            <div>{product.name}</div>
-                            {product.generic_name && (
-                              <div className="text-xs text-muted-foreground">{product.generic_name}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{product.code || '-'}</TableCell>
-                        <TableCell>
-                          {product.category && (
-                            <Badge variant="outline">{product.category}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {product.product_type && (
-                            <Badge variant="secondary">{product.product_type}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{product.unit || '-'}</TableCell>
-                        <TableCell>
-                          <Badge variant={product.active_status !== false ? "default" : "secondary"}>
-                            {product.active_status !== false ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(product)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(product.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Products List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Products ({products.length})
+            </div>
+            <Button size="sm" variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Program</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">{product.canonical_name}</TableCell>
+                    <TableCell>{product.code || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{product.base_unit}</Badge>
+                    </TableCell>
+                    <TableCell>{product.program || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={product.active !== false ? "default" : "secondary"}>
+                        {product.active !== false ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleView(product)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="bulk">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Bulk Import Products
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  Import multiple products from Excel or CSV files. Download the template to ensure proper formatting.
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Product Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewingProduct && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="font-medium">Name</Label>
+                  <p className="mt-1">{viewingProduct.canonical_name}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
-                  </Button>
-                  <Button>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload File
-                  </Button>
+                <div>
+                  <Label className="font-medium">Code</Label>
+                  <p className="mt-1">{viewingProduct.code || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Base Unit</Label>
+                  <p className="mt-1">{viewingProduct.base_unit}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Program</Label>
+                  <p className="mt-1">{viewingProduct.program || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">ATC Code</Label>
+                  <p className="mt-1">{viewingProduct.atc_code || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Strength</Label>
+                  <p className="mt-1">{viewingProduct.strength || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Form</Label>
+                  <p className="mt-1">{viewingProduct.form || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Pack Size</Label>
+                  <p className="mt-1">{viewingProduct.pack_size || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Tracer Product</Label>
+                  <p className="mt-1">{viewingProduct.tracer_flag ? 'Yes' : 'No'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Status</Label>
+                  <p className="mt-1">{viewingProduct.active !== false ? 'Active' : 'Inactive'}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
