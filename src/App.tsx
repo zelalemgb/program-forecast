@@ -30,6 +30,7 @@ import SupplyPlanning from "./pages/SupplyPlanning";
 import BudgetAlignment from "./pages/BudgetAlignment";
 import Guides from "./pages/Guides";
 import Videos from "./pages/Videos";
+import ForecastAnalysis from "./pages/ForecastAnalysis";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -54,6 +55,7 @@ const AppShell: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
               <Route path="/forecast" element={<RunForecast />} />
+              <Route path="/forecast-analysis" element={<ForecastAnalysis />} />
               
               <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
               <Route path="/dagu" element={<Dagu />} />

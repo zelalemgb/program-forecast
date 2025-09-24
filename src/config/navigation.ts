@@ -90,6 +90,14 @@ export const navigationPages: Record<string, NavigationPage> = {
     breadcrumbLabel: 'Forecast Workbench',
     showInSidebar: false,
   },
+  '/forecast-analysis': {
+    path: '/forecast-analysis',
+    title: 'Forecast Analysis',
+    description: 'Analyze historical consumption patterns and future demand forecasts',
+    category: 'forecasting',
+    breadcrumbLabel: 'Forecast Analysis',
+    showInSidebar: true,
+  },
 
   // Supply Planning
   '/supply-planning': {
