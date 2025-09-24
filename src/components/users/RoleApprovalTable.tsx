@@ -69,16 +69,11 @@ export const RoleApprovalTable: React.FC = () => {
       const enrichedRequests = await Promise.all(
         (requests || []).map(async (request) => {
           // Get profile data
-          const { data: profile, error: profileError } = await supabase
+          const { data: profile } = await supabase
             .from('profiles')
             .select('full_name, email')
             .eq('user_id', request.user_id)
             .maybeSingle();
-
-          if (profileError) {
-            console.error('Profile fetch error:', profileError);
-          }
-          console.log('Fetched profile for user:', request.user_id, profile);
 
           // Get facility data if applicable
           let facility = null;
