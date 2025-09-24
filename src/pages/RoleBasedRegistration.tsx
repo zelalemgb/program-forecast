@@ -418,18 +418,30 @@ const RoleBasedRegistration: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* Location Selection Based on Role */}
+                {/* Administrative Level Selection Based on Role */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    <Label className="text-blue-900 font-medium">
+                      Administrative Level Assignment
+                    </Label>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-4">
+                    Based on your selected role ({selectedRoleInfo?.label}), please specify your {selectedRoleInfo?.level}-level assignment:
+                  </p>
+                </div>
+                {/* Facility Level Selection */}
                 {selectedRoleInfo?.level === 'facility' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <Label>Facility Selection</Label>
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="font-medium">Select Your Facility *</Label>
                     </div>
                     
                     {/* Facility Filters */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
                       <div className="space-y-2">
-                        <Label htmlFor="regionFilter">Filter by Region</Label>
+                        <Label htmlFor="regionFilter" className="text-sm">Filter by Region</Label>
                         <Select value={selectedRegionFilter} onValueChange={setSelectedRegionFilter}>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All regions" />
@@ -446,7 +458,7 @@ const RoleBasedRegistration: React.FC = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="zoneFilter">Filter by Zone</Label>
+                        <Label htmlFor="zoneFilter" className="text-sm">Filter by Zone</Label>
                         <Select value={selectedZoneFilter} onValueChange={setSelectedZoneFilter} disabled={!selectedRegionFilter || selectedRegionFilter === 'all'}>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All zones" />
@@ -463,7 +475,7 @@ const RoleBasedRegistration: React.FC = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="facilitySearch">Search Facility</Label>
+                        <Label htmlFor="facilitySearch" className="text-sm">Search Facility</Label>
                         <div className="relative">
                           <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                           <Input
@@ -478,10 +490,10 @@ const RoleBasedRegistration: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="facility">Select Facility *</Label>
+                      <Label htmlFor="facility" className="font-medium">Health Facility *</Label>
                       <Select value={selectedFacility} onValueChange={setSelectedFacility}>
                         <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Choose your facility" />
+                          <SelectValue placeholder="Choose the facility where you work" />
                         </SelectTrigger>
                         <SelectContent className="bg-background border z-50 max-h-60 overflow-auto">
                           {facilities.map(facility => (
@@ -496,70 +508,120 @@ const RoleBasedRegistration: React.FC = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the health facility where you work and will be managing operations.
+                      </p>
                     </div>
                   </div>
                 )}
 
-                {/* Other location selectors for non-facility roles */}
+                {/* Woreda Level Selection */}
                 {selectedRoleInfo?.level === 'woreda' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="woreda">Select Woreda *</Label>
-                    <Select value={selectedWoreda} onValueChange={setSelectedWoreda}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Choose your woreda" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border z-50">
-                        {woredas.map(woreda => (
-                          <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()} className="hover:bg-muted">
-                            <div>
-                              <div className="font-medium">{woreda.woreda_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {woreda.zone?.zone_name} • {woreda.zone?.region?.region_name}
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="font-medium">Select Your Woreda *</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="woreda">Woreda (District) *</Label>
+                      <Select value={selectedWoreda} onValueChange={setSelectedWoreda}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Choose the woreda you will manage" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border z-50">
+                          {woredas.map(woreda => (
+                            <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()} className="hover:bg-muted">
+                              <div>
+                                <div className="font-medium">{woreda.woreda_name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {woreda.zone?.zone_name} Zone • {woreda.zone?.region?.region_name} Region
+                                </div>
                               </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the woreda (district) where you will oversee health facilities and manage supply operations.
+                      </p>
+                    </div>
                   </div>
                 )}
 
+                {/* Zone Level Selection */}
                 {selectedRoleInfo?.level === 'zone' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="zone">Select Zone *</Label>
-                    <Select value={selectedZone} onValueChange={setSelectedZone}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Choose your zone" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border z-50">
-                        {zones.map(zone => (
-                          <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
-                            <div>
-                              <div className="font-medium">{zone.zone_name}</div>
-                              <div className="text-sm text-muted-foreground">{zone.region?.region_name}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="font-medium">Select Your Zone *</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zone">Zone *</Label>
+                      <Select value={selectedZone} onValueChange={setSelectedZone}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Choose the zone you will manage" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border z-50">
+                          {zones.map(zone => (
+                            <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
+                              <div>
+                                <div className="font-medium">{zone.zone_name}</div>
+                                <div className="text-sm text-muted-foreground">{zone.region?.region_name} Region</div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the zone where you will oversee woreda-level operations and coordinate with regional authorities.
+                      </p>
+                    </div>
                   </div>
                 )}
 
+                {/* Regional Level Selection */}
                 {selectedRoleInfo?.level === 'regional' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="region">Select Region *</Label>
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Choose your region" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border z-50">
-                        {regions.map(region => (
-                          <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
-                            {region.region_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="font-medium">Select Your Region *</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="region">Region *</Label>
+                      <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Choose the region you will manage" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border z-50">
+                          {regions.map(region => (
+                            <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
+                              {region.region_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Select the region where you will oversee all zones and coordinate with national authorities.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* National Level Selection */}
+                {selectedRoleInfo?.level === 'national' && (
+                  <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="font-medium">National Level Assignment</Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Country: Ethiopia 🇪🇹</Label>
+                      <div className="p-3 bg-muted rounded-md">
+                        <p className="text-sm text-muted-foreground">
+                          As a {selectedRoleInfo?.label}, you will have national-level access to manage health supply operations across all regions of Ethiopia.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
