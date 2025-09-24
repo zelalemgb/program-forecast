@@ -155,7 +155,13 @@ const RoleBasedRegistration: React.FC = () => {
 
   const loadRegions = async () => {
     try {
-      const { data } = await supabase.from('region').select('region_id, region_name');
+      console.log('Loading regions...');
+      const { data, error } = await supabase.from('region').select('region_id, region_name');
+      if (error) {
+        console.error('Error loading regions:', error);
+      } else {
+        console.log('Regions loaded successfully:', data?.length || 0);
+      }
       setRegions(data || []);
     } catch (error) {
       console.error('Error loading regions:', error);
