@@ -88,7 +88,7 @@ const settings: Item[] = [
 ];
 
 const admin: Item[] = [
-  { title: "User Management", url: "/admin/users", icon: Users },
+  { title: "User Management", url: "/user-management", icon: Users },
 ];
 
 const helpTraining: Item[] = [
