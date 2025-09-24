@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,53 +18,78 @@ export const ConsumptionAnalysis: React.FC<ConsumptionAnalysisProps> = ({ facili
   const [selectedGranularity, setSelectedGranularity] = useState<TimeGranularity>('monthly');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [forecastData, setForecastData] = useState<any[]>([]);
+  const [combinedAnalysis, setCombinedAnalysis] = useState<any[]>([]);
   
   const { data: historicalData, loading: historicalLoading, fetchHistoricalConsumption } = useHistoricalConsumption(facilityId);
   const { generateForecastFromInventory, loading: forecastLoading } = useForecastIntegration();
-  
-  const [forecastData, setForecastData] = useState<any[]>([]);
-  const [combinedAnalysis, setCombinedAnalysis] = useState<any[]>([]);
-
-  // Fetch data when component mounts or filters change
-  useEffect(() => {
-    const periodMonths = {
+  // Memoize period calculation to prevent unnecessary recalculations
+  const periodMonths = useMemo(() => {
+    return {
       weekly: 3, // 3 months for weekly analysis
       monthly: 12, // 12 months for monthly analysis
       quarterly: 24, // 24 months (8 quarters) for quarterly analysis
       yearly: 36 // 36 months (3 years) for yearly analysis
     }[selectedGranularity];
+  }, [selectedGranularity]);
 
+  // Fetch data when component mounts or filters change
+  const fetchData = useCallback(() => {
     fetchHistoricalConsumption(periodMonths, selectedGranularity);
-  }, [selectedGranularity, facilityId, fetchHistoricalConsumption]);
+  }, [periodMonths, selectedGranularity, fetchHistoricalConsumption]);
 
-  // Generate forecasts when historical data is available
   useEffect(() => {
-    if (historicalData && historicalData.products.length > 0) {
-      generateForecastFromInventory(facilityId, 12, 3)
-        .then(forecast => {
-          setForecastData(forecast);
-        })
-        .catch(console.error);
+    fetchData();
+  }, [fetchData]);
+
+  // Generate forecasts when historical data is available - with debouncing
+  useEffect(() => {
+    if (!historicalData || historicalData.products.length === 0) {
+      return;
     }
+
+    let timeoutId: NodeJS.Timeout;
+    
+    const generateForecast = async () => {
+      try {
+        const forecast = await generateForecastFromInventory(facilityId, 12, 3);
+        setForecastData(forecast);
+      } catch (error) {
+        console.error('Forecast generation error:', error);
+        setForecastData([]);
+      }
+    };
+
+    // Debounce the forecast generation to prevent rapid updates
+    timeoutId = setTimeout(generateForecast, 500);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [historicalData, facilityId, generateForecastFromInventory]);
 
-  // Combine historical and forecast data
-  useEffect(() => {
-    if (historicalData && forecastData.length > 0) {
-      const combined = historicalData.products
-        .map(product => {
-          const forecast = forecastData.find(f => f.productName === product.product_name);
-          return {
-            ...product,
-            forecast: forecast || null
-          };
-        })
-        .sort((a, b) => b.total_consumption - a.total_consumption)
-        .slice(0, 20); // Top 20 products
-      
-      setCombinedAnalysis(combined);
+  // Combine historical and forecast data with memoization
+  const combinedData = useMemo(() => {
+    if (!historicalData || forecastData.length === 0) {
+      return [];
     }
+
+    return historicalData.products
+      .map(product => {
+        const forecast = forecastData.find(f => f.productName === product.product_name);
+        return {
+          ...product,
+          forecast: forecast || null
+        };
+      })
+      .sort((a, b) => b.total_consumption - a.total_consumption)
+      .slice(0, 20); // Top 20 products
   }, [historicalData, forecastData]);
+
+  // Update state when combined data changes
+  useEffect(() => {
+    setCombinedAnalysis(combinedData);
+  }, [combinedData]);
 
   const getGranularityLabel = (granularity: TimeGranularity) => {
     const labels = {
@@ -192,7 +217,7 @@ export const ConsumptionAnalysis: React.FC<ConsumptionAnalysisProps> = ({ facili
                 const trend = lastTwo.length === 2 ? lastTwo[1].consumption - lastTwo[0].consumption : 0;
                 
                 return (
-                  <TableRow key={product.productId || index}>
+                  <TableRow key={product.product_id || index}>
                     <TableCell className="font-medium text-xs sm:text-sm">
                       <div className="min-w-0">
                         <div className="truncate">{product.product_name}</div>
