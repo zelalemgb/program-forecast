@@ -6,13 +6,19 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useHistoricalConsumption, PeriodGranularity } from '@/hooks/useHistoricalConsumption';
 import { useForecastIntegration } from '@/hooks/useForecastIntegration';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 const ForecastAnalysis: React.FC = () => {
   const [selectedGranularity, setSelectedGranularity] = useState<PeriodGranularity>('monthly');
   const [periodMonths, setPeriodMonths] = useState(12);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { toast } = useToast();
   const facilityId = 1; // This should come from context or user selection
 
   const { data: historicalData, loading: historicalLoading, fetchHistoricalConsumption } = useHistoricalConsumption(facilityId);
@@ -88,6 +94,58 @@ const ForecastAnalysis: React.FC = () => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toFixed(0);
+  };
+
+  const handleRowClick = (product: any) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const getChartData = (product: any) => {
+    if (!product) return [];
+    
+    const historicalData = product.periods.map((period: any, index: number) => ({
+      name: period.period_label,
+      consumption: period.consumption,
+      type: 'Historical',
+      period: index + 1
+    }));
+
+    const forecastData = product.forecast_quantities.map((quantity: number, index: number) => ({
+      name: `Forecast ${index + 1}`,
+      consumption: quantity,
+      type: 'Forecast',
+      period: product.periods.length + index + 1
+    }));
+
+    return [...historicalData, ...forecastData];
+  };
+
+  const getTrendAnalysis = (product: any) => {
+    if (!product || product.periods.length < 2) return { direction: 'stable', change: 0, description: 'Insufficient data' };
+    
+    const recent = product.periods.slice(-3);
+    const older = product.periods.slice(-6, -3);
+    
+    const recentAvg = recent.reduce((sum: number, p: any) => sum + p.consumption, 0) / recent.length;
+    const olderAvg = older.length > 0 ? older.reduce((sum: number, p: any) => sum + p.consumption, 0) / older.length : recentAvg;
+    
+    const change = ((recentAvg - olderAvg) / olderAvg) * 100;
+    
+    let direction = 'stable';
+    let description = '';
+    
+    if (change > 10) {
+      direction = 'increasing';
+      description = `Consumption has increased by ${change.toFixed(1)}% in recent periods`;
+    } else if (change < -10) {
+      direction = 'decreasing';
+      description = `Consumption has decreased by ${Math.abs(change).toFixed(1)}% in recent periods`;
+    } else {
+      description = 'Consumption has remained relatively stable';
+    }
+    
+    return { direction, change, description };
   };
 
   const titleActions = (
@@ -187,7 +245,11 @@ const ForecastAnalysis: React.FC = () => {
                       </TableRow>
                     ) : (
                       combinedData.map((product) => (
-                        <TableRow key={product.product_id}>
+                        <TableRow 
+                          key={product.product_id} 
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleRowClick(product)}
+                        >
                           <TableCell className="font-medium">
                             {product.product_name}
                           </TableCell>
@@ -224,6 +286,127 @@ const ForecastAnalysis: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Product Detail Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                {selectedProduct?.product_name} - Consumption Analysis
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedProduct && (
+              <div className="space-y-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {formatNumber(selectedProduct.total_consumption)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Consumption</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatNumber(selectedProduct.average_consumption)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Average per Period</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold flex items-center justify-center gap-1">
+                        {getTrendIcon(selectedProduct.trend)}
+                        {Math.abs(selectedProduct.trend).toFixed(0)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Recent Trend</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold">
+                        {getConfidenceBadge(selectedProduct.confidence)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Forecast Confidence</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Trend Analysis */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Trend Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        {getTrendAnalysis(selectedProduct).description}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span>Unit: <strong>{selectedProduct.unit}</strong></span>
+                        <span>Data Points: <strong>{selectedProduct.periods.length}</strong></span>
+                        <span>Forecast Periods: <strong>3</strong></span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Consumption Trend & Forecast</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={getChartData(selectedProduct)}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                            fontSize={12}
+                          />
+                          <YAxis />
+                          <Tooltip 
+                            formatter={(value: any, name: string) => [
+                              `${formatNumber(value)} ${selectedProduct.unit}`,
+                              name === 'consumption' ? 'Consumption' : name
+                            ]}
+                            labelFormatter={(label) => `Period: ${label}`}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="consumption" 
+                            stroke="#8884d8"
+                            strokeWidth={2}
+                            dot={{ fill: '#8884d8', strokeWidth: 2, r: 4 }}
+                            connectNulls={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>Historical & Forecast Data</span>
+                      </div>
+                      <div>Last {selectedProduct.periods.length} periods + 3 forecast periods</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
