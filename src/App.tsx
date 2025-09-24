@@ -16,12 +16,15 @@ import RegisterFacility from "./pages/RegisterFacility";
 import Approvals from "./pages/Approvals";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ProgramSettings from "./pages/ProgramSettings";
+import MetadataOrganization from "./pages/settings/MetadataOrganization";
+import FacilitiesManagement from "./pages/settings/FacilitiesManagement";
+import ProductsManagement from "./pages/settings/ProductsManagement";
+import BulkImport from "./pages/settings/BulkImport";
 import Requests from "./pages/Requests";
 import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
 import ForecastWorkbench from "./pages/ForecastWorkbench";
 import RunForecast from "./pages/RunForecast";
-
 import Dagu from "./pages/Dagu";
 import SupplyPlanning from "./pages/SupplyPlanning";
 import BudgetAlignment from "./pages/BudgetAlignment";
@@ -63,6 +66,10 @@ const AppShell: React.FC = () => {
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/program-settings" element={<ProgramSettings />} />
+              <Route path="/settings/metadata" element={<MetadataOrganization />} />
+              <Route path="/settings/metadata/facilities" element={<FacilitiesManagement />} />
+              <Route path="/settings/metadata/products" element={<ProductsManagement />} />
+              <Route path="/settings/metadata/bulk-import" element={<BulkImport />} />
               <Route path="/requests" element={<Requests />} />
               <Route path="/requests/new" element={<RequestWizard />} />
               <Route path="/requests/:id" element={<RequestDetail />} />

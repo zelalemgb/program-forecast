@@ -8,19 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Settings, Database, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Types from Supabase
-import type { Database } from "@/integrations/supabase/types";
+import type { Database as DatabaseType } from "@/integrations/supabase/types";
 import PageHeader from "@/components/layout/PageHeader";
 
-type Program = Database["public"]["Tables"]["programs"]["Row"];
-type ProgramSettings = Database["public"]["Tables"]["program_settings"]["Row"];
-type FundingSource = Database["public"]["Tables"]["funding_sources"]["Row"];
-type Allocation = Database["public"]["Tables"]["program_funding_allocations"]["Row"];
+type Program = DatabaseType["public"]["Tables"]["programs"]["Row"];
+type ProgramSettings = DatabaseType["public"]["Tables"]["program_settings"]["Row"];
+type FundingSource = DatabaseType["public"]["Tables"]["funding_sources"]["Row"];
+type Allocation = DatabaseType["public"]["Tables"]["program_funding_allocations"]["Row"];
 
 const years = Array.from({ length: 6 }, (_, i) => `${2024 + i}`);
 
 const ProgramSettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
@@ -170,10 +173,21 @@ const ProgramSettingsPage: React.FC = () => {
         <meta name="description" content="Configure program budgets, PSM %, and funding sources for the selected forecast year." />
         <link rel="canonical" href="/program-settings" />
       </Helmet>
-      <PageHeader
-        title="Program Settings"
-        description="Configure program budgets, PSM %, and funding sources for the selected forecast year."
-      />
+      <div className="flex items-center justify-between mb-6">
+        <PageHeader
+          title="Settings"
+          description="Configure program budgets, PSM %, funding sources, and system metadata"
+        />
+        <Button 
+          variant="outline"
+          onClick={() => navigate('/settings/metadata')}
+          className="flex items-center gap-2"
+        >
+          <Database className="h-4 w-4" />
+          Metadata Organization
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
