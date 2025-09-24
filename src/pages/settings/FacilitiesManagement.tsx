@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Plus, Edit, Trash2, Upload, Download, ArrowLeft } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Building2, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/layout/PageHeader";
@@ -36,16 +36,15 @@ interface Woreda {
 
 const FacilitiesManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [woredas, setWoredas] = useState<Woreda[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  
-  const defaultTab = searchParams.get('tab') === 'manage' ? 'manage' : 'add';
+  const [viewingFacility, setViewingFacility] = useState<Facility | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -125,6 +124,7 @@ const FacilitiesManagement: React.FC = () => {
       });
 
       resetForm();
+      setIsAddModalOpen(false);
       loadData();
     } catch (error: any) {
       toast({
@@ -163,6 +163,12 @@ const FacilitiesManagement: React.FC = () => {
       woreda_id: facility.woreda_id?.toString() || ''
     });
     setEditingFacility(facility);
+    setIsAddModalOpen(true);
+  };
+
+  const handleView = (facility: Facility) => {
+    setViewingFacility(facility);
+    setIsViewModalOpen(true);
   };
 
   const handleDelete = async (facilityId: number) => {
@@ -190,28 +196,7 @@ const FacilitiesManagement: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      toast({
-        title: "File Selected",
-        description: `Selected ${file.name} for upload`
-      });
-    }
-  };
-
   const handleBulkImport = () => {
-    if (!uploadedFile) {
-      toast({
-        title: "No File Selected",
-        description: "Please select a file first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Navigate to bulk import page with facilities type pre-selected
     navigate('/settings/metadata/bulk-import?type=facilities');
   };
 
@@ -239,278 +224,285 @@ const FacilitiesManagement: React.FC = () => {
       </div>
 
       <PageHeader
-        title="Health Facilities Management"
-        description="Add, edit, and manage health facilities in the system"
+        title="Health Facilities"
+        description="Manage health facilities in the system"
+        actions={
+          <div className="flex gap-2">
+            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingFacility(null)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Facility
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    {editingFacility ? 'Edit Facility' : 'Add New Facility'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="facility_name">Facility Name *</Label>
+                      <Input
+                        id="facility_name"
+                        value={formData.facility_name}
+                        onChange={(e) => setFormData({ ...formData, facility_name: e.target.value })}
+                        placeholder="Enter facility name"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="facility_code">Facility Code</Label>
+                      <Input
+                        id="facility_code"
+                        value={formData.facility_code}
+                        onChange={(e) => setFormData({ ...formData, facility_code: e.target.value })}
+                        placeholder="Enter facility code"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="facility_type">Facility Type</Label>
+                      <Select 
+                        value={formData.facility_type} 
+                        onValueChange={(value) => setFormData({ ...formData, facility_type: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select facility type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {facilityTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="level">Level</Label>
+                      <Select 
+                        value={formData.level} 
+                        onValueChange={(value) => setFormData({ ...formData, level: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {facilityLevels.map(level => (
+                            <SelectItem key={level} value={level}>{level}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ownership">Ownership</Label>
+                      <Select 
+                        value={formData.ownership} 
+                        onValueChange={(value) => setFormData({ ...formData, ownership: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select ownership type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ownershipTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="woreda_id">Woreda</Label>
+                      <Select 
+                        value={formData.woreda_id} 
+                        onValueChange={(value) => setFormData({ ...formData, woreda_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select woreda" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {woredas.map(woreda => (
+                            <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()}>
+                              {woreda.woreda_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="latitude">Latitude</Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="any"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                        placeholder="Enter latitude"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="longitude">Longitude</Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="any"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                        placeholder="Enter longitude"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" disabled={loading}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      {editingFacility ? 'Update' : 'Add'} Facility
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button variant="outline" onClick={handleBulkImport}>
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
+          </div>
+        }
       />
 
-      <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="add">Add Facility</TabsTrigger>
-          <TabsTrigger value="manage">Manage Facilities</TabsTrigger>
-          <TabsTrigger value="bulk">Bulk Import</TabsTrigger>
-        </TabsList>
+      {/* Facilities List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Facilities ({facilities.length})
+            </div>
+            <Button size="sm" variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Level</TableHead>
+                  <TableHead>Ownership</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {facilities.map((facility) => (
+                  <TableRow key={facility.facility_id}>
+                    <TableCell className="font-medium">{facility.facility_name}</TableCell>
+                    <TableCell>{facility.facility_code || '-'}</TableCell>
+                    <TableCell>
+                      {facility.facility_type && (
+                        <Badge variant="outline">{facility.facility_type}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {facility.level && (
+                        <Badge variant="secondary">{facility.level}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{facility.ownership || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleView(facility)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(facility)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(facility.facility_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="add">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                {editingFacility ? 'Edit Facility' : 'Add New Facility'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="facility_name">Facility Name *</Label>
-                    <Input
-                      id="facility_name"
-                      value={formData.facility_name}
-                      onChange={(e) => setFormData({ ...formData, facility_name: e.target.value })}
-                      placeholder="Enter facility name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facility_code">Facility Code</Label>
-                    <Input
-                      id="facility_code"
-                      value={formData.facility_code}
-                      onChange={(e) => setFormData({ ...formData, facility_code: e.target.value })}
-                      placeholder="Enter facility code"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facility_type">Facility Type</Label>
-                    <Select 
-                      value={formData.facility_type} 
-                      onValueChange={(value) => setFormData({ ...formData, facility_type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select facility type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {facilityTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="level">Level</Label>
-                    <Select 
-                      value={formData.level} 
-                      onValueChange={(value) => setFormData({ ...formData, level: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {facilityLevels.map(level => (
-                          <SelectItem key={level} value={level}>{level}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ownership">Ownership</Label>
-                    <Select 
-                      value={formData.ownership} 
-                      onValueChange={(value) => setFormData({ ...formData, ownership: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select ownership type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ownershipTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="woreda_id">Woreda</Label>
-                    <Select 
-                      value={formData.woreda_id} 
-                      onValueChange={(value) => setFormData({ ...formData, woreda_id: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select woreda" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {woredas.map(woreda => (
-                          <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()}>
-                            {woreda.woreda_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      value={formData.latitude}
-                      onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                      placeholder="Enter latitude"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      value={formData.longitude}
-                      onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                      placeholder="Enter longitude"
-                    />
-                  </div>
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Facility Details
+            </DialogTitle>
+          </DialogHeader>
+          {viewingFacility && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="font-medium">Name</Label>
+                  <p className="mt-1">{viewingFacility.facility_name}</p>
                 </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" disabled={loading}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingFacility ? 'Update' : 'Add'} Facility
-                  </Button>
-                  {editingFacility && (
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel Edit
-                    </Button>
-                  )}
+                <div>
+                  <Label className="font-medium">Code</Label>
+                  <p className="mt-1">{viewingFacility.facility_code || '-'}</p>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="manage">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Facilities ({facilities.length})
+                <div>
+                  <Label className="font-medium">Type</Label>
+                  <p className="mt-1">{viewingFacility.facility_type || '-'}</p>
                 </div>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Level</TableHead>
-                      <TableHead>Ownership</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {facilities.map((facility) => (
-                      <TableRow key={facility.facility_id}>
-                        <TableCell className="font-medium">{facility.facility_name}</TableCell>
-                        <TableCell>{facility.facility_code || '-'}</TableCell>
-                        <TableCell>
-                          {facility.facility_type && (
-                            <Badge variant="outline">{facility.facility_type}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {facility.level && (
-                            <Badge variant="secondary">{facility.level}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{facility.ownership || '-'}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(facility)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(facility.facility_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bulk">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Bulk Import Facilities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  Import multiple facilities from Excel or CSV files. Download the template to ensure proper formatting.
+                <div>
+                  <Label className="font-medium">Level</Label>
+                  <p className="mt-1">{viewingFacility.level || '-'}</p>
                 </div>
-                
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center space-y-4">
-                  <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
+                <div>
+                  <Label className="font-medium">Ownership</Label>
+                  <p className="mt-1">{viewingFacility.ownership || '-'}</p>
+                </div>
+                <div>
+                  <Label className="font-medium">Woreda</Label>
+                  <p className="mt-1">
+                    {woredas.find(w => w.woreda_id === viewingFacility.woreda_id)?.woreda_name || '-'}
+                  </p>
+                </div>
+                {viewingFacility.latitude && (
                   <div>
-                    <label htmlFor="bulk-file-upload" className="cursor-pointer">
-                      <span className="text-sm text-muted-foreground">
-                        Drop your file here or{" "}
-                        <span className="text-primary underline">browse</span>
-                      </span>
-                      <input
-                        id="bulk-file-upload"
-                        type="file"
-                        className="hidden"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleFileUpload}
-                      />
-                    </label>
+                    <Label className="font-medium">Latitude</Label>
+                    <p className="mt-1">{viewingFacility.latitude}</p>
                   </div>
-                  {uploadedFile && (
-                    <div className="text-sm text-green-600">
-                      Selected: {uploadedFile.name}
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground">
-                    Supported formats: CSV, Excel (.xlsx, .xls)
+                )}
+                {viewingFacility.longitude && (
+                  <div>
+                    <Label className="font-medium">Longitude</Label>
+                    <p className="mt-1">{viewingFacility.longitude}</p>
                   </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
-                  </Button>
-                  <Button onClick={handleBulkImport} disabled={!uploadedFile}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Process Upload
-                  </Button>
-                </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
