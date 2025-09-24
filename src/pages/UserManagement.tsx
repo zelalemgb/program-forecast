@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import PageHeader from '@/components/layout/PageHeader';
 import { RoleRequestForm } from '@/components/users/RoleRequestForm';
 import { RoleApprovalTable } from '@/components/users/RoleApprovalTable';
-import { UserRolesList } from '@/components/users/UserRolesList';
-import { Users, UserPlus, Shield, CheckSquare } from 'lucide-react';
+import { UserPlus, Shield, CheckSquare } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('request');
@@ -26,7 +25,7 @@ const UserManagement: React.FC = () => {
 
       <div className="space-y-6">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Role Request</CardTitle>
@@ -46,21 +45,11 @@ const UserManagement: React.FC = () => {
               <CardDescription>Review and approve role requests from users</CardDescription>
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Roles</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <CardDescription>View and manage existing user roles</CardDescription>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="request" className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Request Role
@@ -68,10 +57,6 @@ const UserManagement: React.FC = () => {
             <TabsTrigger value="approvals" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
               Approvals
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              User Roles
             </TabsTrigger>
           </TabsList>
 
@@ -119,10 +104,6 @@ const UserManagement: React.FC = () => {
 
           <TabsContent value="approvals" className="space-y-6">
             <RoleApprovalTable />
-          </TabsContent>
-
-          <TabsContent value="roles" className="space-y-6">
-            <UserRolesList />
           </TabsContent>
         </Tabs>
       </div>
