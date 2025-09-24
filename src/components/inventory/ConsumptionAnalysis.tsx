@@ -36,7 +36,7 @@ export const ConsumptionAnalysis: React.FC<ConsumptionAnalysisProps> = ({ facili
   // Fetch data when component mounts or filters change
   const fetchData = useCallback(() => {
     fetchHistoricalConsumption(periodMonths, selectedGranularity);
-  }, [periodMonths, selectedGranularity, fetchHistoricalConsumption]);
+  }, [periodMonths, selectedGranularity]); // Remove fetchHistoricalConsumption dependency
 
   useEffect(() => {
     fetchData();
@@ -66,7 +66,7 @@ export const ConsumptionAnalysis: React.FC<ConsumptionAnalysisProps> = ({ facili
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [historicalData, facilityId, generateForecastFromInventory]);
+  }, [historicalData, facilityId]); // Remove generateForecastFromInventory dependency
 
   // Combine historical and forecast data with memoization
   const combinedData = useMemo(() => {

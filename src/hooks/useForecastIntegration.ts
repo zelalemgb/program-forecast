@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConsumptionAnalytics } from './useInventoryData';
 
@@ -30,7 +30,7 @@ export const useForecastIntegration = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateForecastFromInventory = async (
+  const generateForecastFromInventory = useCallback(async (
     facilityId: number,
     periodMonths: number = 12,
     forecastPeriodMonths: number = 12
@@ -130,7 +130,7 @@ export const useForecastIntegration = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const saveForecastWithSource = async (
     forecastData: ForecastFromInventory[],

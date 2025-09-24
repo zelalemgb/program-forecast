@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export type PeriodGranularity = 'weekly' | 'monthly' | 'bi-monthly' | 'quarterly' | 'yearly';
@@ -96,7 +96,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
     return periods;
   };
 
-  const fetchHistoricalConsumption = async (
+  const fetchHistoricalConsumption = useCallback(async (
     periodMonths: number = 12,
     granularity: PeriodGranularity = 'monthly'
   ) => {
@@ -195,7 +195,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [facilityId]);
 
   return {
     data,
