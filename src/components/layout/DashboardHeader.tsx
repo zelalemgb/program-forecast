@@ -7,17 +7,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useUserFacility } from "@/hooks/useUserFacility";
 
 interface DashboardHeaderProps {
   currentLocation?: string;
 }
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
-  currentLocation = "National Overview" 
+  currentLocation 
 }) => {
   const { user, signOut } = useAuth();
   const { toggleSidebar } = useSidebar();
-  const [isOnline] = React.useState(true); // Would be connected to actual online status
+  const [isOnline] = React.useState(true);
+  const { locationDisplay, role, loading } = useUserFacility();
+
+  // Use dynamic location or fallback to prop or default
+  const displayLocation = locationDisplay || currentLocation || "National Overview";
 
   return (
     <header className="h-14 border-b bg-background flex items-center justify-between px-4 gap-4">
@@ -33,8 +38,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </Button>
         
         <div className="hidden sm:block">
-          <h1 className="font-medium text-foreground">{currentLocation}</h1>
-          <p className="text-xs text-muted-foreground">Role-Based View</p>
+          <h1 className="font-medium text-foreground">
+            {loading ? "Loading..." : displayLocation}
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {loading ? "Role-Based View" : (role ? `${role} View` : "Role-Based View")}
+          </p>
         </div>
       </div>
 
@@ -112,7 +121,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <div className="flex flex-col space-y-1 p-2">
               <p className="text-sm font-medium">{user?.email}</p>
-              <p className="text-xs text-muted-foreground">Facility Administrator</p>
+              <p className="text-xs text-muted-foreground">
+                {loading ? "Loading role..." : (role || "No role assigned")}
+              </p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
