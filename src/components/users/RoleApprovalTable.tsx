@@ -54,21 +54,85 @@ export const RoleApprovalTable: React.FC = () => {
 
   const loadRoleRequests = async () => {
     try {
-      const { data, error } = await supabase
+      // First get all role requests
+      const { data: requests, error: requestsError } = await supabase
         .from('user_role_requests')
-        .select(`
-          *,
-          profiles!user_id (full_name, email),
-          facility!facility_id (facility_name),
-          woreda!woreda_id (woreda_name),
-          zone!zone_id (zone_name),
-          region!region_id (region_name)
-        `)
+        .select('*')
         .order('requested_at', { ascending: false });
 
-      if (error) throw error;
-      setRequests((data as any) || []);
+      if (requestsError) {
+        console.error('Supabase error:', requestsError);
+        throw requestsError;
+      }
+
+      // Then get related data for each request
+      const enrichedRequests = await Promise.all(
+        (requests || []).map(async (request) => {
+          // Get profile data
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('user_id', request.user_id)
+            .maybeSingle();
+
+          // Get facility data if applicable
+          let facility = null;
+          if (request.facility_id) {
+            const { data: facilityData } = await supabase
+              .from('facility')
+              .select('facility_name')
+              .eq('facility_id', request.facility_id)
+              .maybeSingle();
+            facility = facilityData;
+          }
+
+          // Get woreda data if applicable
+          let woreda = null;
+          if (request.woreda_id) {
+            const { data: woredaData } = await supabase
+              .from('woreda')
+              .select('woreda_name')
+              .eq('woreda_id', request.woreda_id)
+              .maybeSingle();
+            woreda = woredaData;
+          }
+
+          // Get zone data if applicable
+          let zone = null;
+          if (request.zone_id) {
+            const { data: zoneData } = await supabase
+              .from('zone')
+              .select('zone_name')
+              .eq('zone_id', request.zone_id)
+              .maybeSingle();
+            zone = zoneData;
+          }
+
+          // Get region data if applicable
+          let region = null;
+          if (request.region_id) {
+            const { data: regionData } = await supabase
+              .from('region')
+              .select('region_name')
+              .eq('region_id', request.region_id)
+              .maybeSingle();
+            region = regionData;
+          }
+
+          return {
+            ...request,
+            profiles: profile,
+            facility,
+            woreda,
+            zone,
+            region
+          };
+        })
+      );
+
+      setRequests(enrichedRequests);
     } catch (error: any) {
+      console.error('Failed to load role requests:', error);
       toast({
         title: "Error",
         description: "Failed to load role requests",
