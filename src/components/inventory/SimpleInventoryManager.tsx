@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
 
 export const SimpleInventoryManager: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<InventoryAction>(null);
+  const navigate = useNavigate();
   const facilityId = 1; // Would come from user context/auth
 
   const handleActionSelect = (action: InventoryAction) => {
@@ -102,7 +104,7 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Forecast Analysis Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface">
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => navigate('/forecast-analysis')}>
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-info/10 rounded-full flex items-center justify-center">
                 <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-info" />
@@ -119,7 +121,7 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Request Supply Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface">
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => navigate('/requests/new')}>
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-accent/10 rounded-full flex items-center justify-center">
                 <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
