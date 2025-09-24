@@ -34,6 +34,7 @@ import Videos from "./pages/Videos";
 import ForecastAnalysis from "./pages/ForecastAnalysis";
 import SavedForecasts from "./pages/SavedForecasts";
 import UserManagement from "./pages/UserManagement";
+import RoleBasedRegistration from "./pages/RoleBasedRegistration";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -68,6 +69,7 @@ const AppShell: React.FC = () => {
               <Route path="/validation" element={<Validation />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/role-registration" element={<RoleBasedRegistration />} />
               <Route path="/register" element={<RegisterFacility />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />

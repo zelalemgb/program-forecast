@@ -143,7 +143,7 @@ const Auth: React.FC = () => {
                     Already have an account?
                   </Link>
                 ) : (
-                  <Link to="/auth?mode=signup" className="text-blue-600 hover:underline">
+                  <Link to="/role-registration" className="text-blue-600 hover:underline">
                     Create account
                   </Link>
                 )}
