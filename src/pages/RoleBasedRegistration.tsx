@@ -72,8 +72,8 @@ const RoleBasedRegistration: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
-  const [justification, setJustification] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -199,7 +199,7 @@ const RoleBasedRegistration: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRole || !justification || !fullName) {
+    if (!selectedRole || !fullName || !phoneNumber) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -264,6 +264,7 @@ const RoleBasedRegistration: React.FC = () => {
           user_id: user.id,
           full_name: fullName,
           email: email,
+          phone_number: phoneNumber,
         });
 
       if (profileError) {
@@ -276,7 +277,6 @@ const RoleBasedRegistration: React.FC = () => {
         user_id: user.id,
         requested_role: selectedRole as any,
         admin_level: selectedRoleInfo?.level as any,
-        justification,
         facility_id: selectedFacility ? parseInt(selectedFacility) : null,
         woreda_id: selectedWoreda ? parseInt(selectedWoreda) : null,
         zone_id: selectedZone ? parseInt(selectedZone) : null,
@@ -360,16 +360,28 @@ const RoleBasedRegistration: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="phoneNumber">Phone Number *</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.name@moh.gov.et"
+                      id="phoneNumber"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+251-9-12345678"
                       required
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.name@moh.gov.et"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -625,17 +637,6 @@ const RoleBasedRegistration: React.FC = () => {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="justification">Justification *</Label>
-                  <Textarea
-                    id="justification"
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    placeholder="Please explain why you need this role and how you plan to use it..."
-                    required
-                    className="min-h-20"
-                  />
-                </div>
               </div>
 
               <Button type="submit" disabled={loading} className="w-full h-11 hero-gradient">
