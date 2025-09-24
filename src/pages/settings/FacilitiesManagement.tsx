@@ -43,6 +43,7 @@ const FacilitiesManagement: React.FC = () => {
   const [woredas, setWoredas] = useState<Woreda[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   
   const defaultTab = searchParams.get('tab') === 'manage' ? 'manage' : 'add';
 
@@ -187,6 +188,31 @@ const FacilitiesManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      toast({
+        title: "File Selected",
+        description: `Selected ${file.name} for upload`
+      });
+    }
+  };
+
+  const handleBulkImport = () => {
+    if (!uploadedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a file first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Navigate to bulk import page with facilities type pre-selected
+    navigate('/settings/metadata/bulk-import?type=facilities');
   };
 
   const facilityTypes = ['Hospital', 'Health Center', 'Health Post', 'Clinic', 'Pharmacy'];
@@ -442,14 +468,42 @@ const FacilitiesManagement: React.FC = () => {
                 <div className="text-sm text-muted-foreground">
                   Import multiple facilities from Excel or CSV files. Download the template to ensure proper formatting.
                 </div>
+                
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center space-y-4">
+                  <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <div>
+                    <label htmlFor="bulk-file-upload" className="cursor-pointer">
+                      <span className="text-sm text-muted-foreground">
+                        Drop your file here or{" "}
+                        <span className="text-primary underline">browse</span>
+                      </span>
+                      <input
+                        id="bulk-file-upload"
+                        type="file"
+                        className="hidden"
+                        accept=".csv,.xlsx,.xls"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
+                  {uploadedFile && (
+                    <div className="text-sm text-green-600">
+                      Selected: {uploadedFile.name}
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground">
+                    Supported formats: CSV, Excel (.xlsx, .xls)
+                  </div>
+                </div>
+
                 <div className="flex gap-2">
                   <Button variant="outline">
                     <Download className="h-4 w-4 mr-2" />
                     Download Template
                   </Button>
-                  <Button>
+                  <Button onClick={handleBulkImport} disabled={!uploadedFile}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Upload File
+                    Process Upload
                   </Button>
                 </div>
               </div>
