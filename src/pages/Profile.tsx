@@ -217,9 +217,30 @@ const Profile: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Role</label>
-                  <Input value={role || "No role assigned"} readOnly className="bg-muted" />
+                  <label className="text-sm font-medium">Location/Facility Assignment</label>
+                  <Input value={locationDisplay || "No location assigned"} readOnly className="bg-muted" />
                 </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Health Facility</label>
+                  <Input 
+                    value={facilityName || "No facility assigned"} 
+                    readOnly 
+                    className="bg-muted" 
+                  />
+                  {!facilityName && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      You are not currently assigned to a health facility
+                    </p>
+                  )}
+                </div>
+                
+                {facilityType && (
+                  <div>
+                    <label className="text-sm font-medium">Facility Type</label>
+                    <Input value={facilityType} readOnly className="bg-muted" />
+                  </div>
+                )}
                 
                 {adminLevel && (
                   <div>
@@ -228,30 +249,11 @@ const Profile: React.FC = () => {
                   </div>
                 )}
                 
-                <div>
-                  <label className="text-sm font-medium">Location</label>
-                  <Input value={locationDisplay || "No location assigned"} readOnly className="bg-muted" />
+                <div className="bg-muted/50 p-3 rounded-md">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Need facility access?</strong> Contact your system administrator to request assignment to a health facility or to change your current facility assignment.
+                  </p>
                 </div>
-                
-                {facilityName && (
-                  <>
-                    <div>
-                      <label className="text-sm font-medium">Facility Name</label>
-                      <Input value={facilityName} readOnly className="bg-muted" />
-                    </div>
-                    
-                    {facilityType && (
-                      <div>
-                        <label className="text-sm font-medium">Facility Type</label>
-                        <Input value={facilityType} readOnly className="bg-muted" />
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                <p className="text-xs text-muted-foreground">
-                  Contact your administrator to change facility assignments or roles.
-                </p>
               </div>
             )}
           </CardContent>
