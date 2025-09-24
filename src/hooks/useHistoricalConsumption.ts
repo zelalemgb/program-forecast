@@ -118,7 +118,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
         .from('inventory_transactions')
         .select(`
           *,
-          products:products(name, unit)
+          products(name, unit)
         `)
         .eq('facility_id', facilityId)
         .eq('transaction_type', 'issue')
@@ -155,7 +155,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
             return transactionDate >= period.start && transactionDate <= period.end;
           });
 
-          const consumption = periodTransactions.reduce((sum, t) => sum + (t.quantity || 0), 0);
+          const consumption = periodTransactions.reduce((sum, t) => sum + Math.abs(t.quantity || 0), 0);
 
           return {
             period_label: period.label,

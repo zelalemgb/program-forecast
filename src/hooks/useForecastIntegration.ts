@@ -49,7 +49,7 @@ export const useForecastIntegration = () => {
         .from('consumption_analytics')
         .select(`
           *,
-          products:products(name, unit)
+          products(name, unit)
         `)
         .eq('facility_id', facilityId)
         .gte('period_start', startDate.toISOString().split('T')[0])
