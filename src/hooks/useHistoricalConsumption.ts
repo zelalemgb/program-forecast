@@ -14,6 +14,7 @@ export interface ProductConsumptionHistory {
   product_id: string;
   product_name: string;
   unit?: string;
+  ven_classification?: string;
   periods: ConsumptionPeriod[];
   total_consumption: number;
   average_consumption: number;
@@ -142,11 +143,31 @@ export const useHistoricalConsumption = (facilityId?: number) => {
       const products: ProductConsumptionHistory[] = [];
       const periodHeaders = periods.map(p => p.label);
 
+      // Get unique product IDs to fetch VEN classification
+      const productIds = Array.from(productTransactions.keys());
+      
+      // Fetch VEN classification for all products
+      const { data: productReferenceData, error: productReferenceError } = await supabase
+        .from('product_reference')
+        .select('id, ven_classification')
+        .in('id', productIds);
+
+      if (productReferenceError) {
+        console.warn('Failed to fetch VEN classification:', productReferenceError);
+      }
+
+      // Create a map of product ID to VEN classification
+      const venClassificationMap = new Map<string, string>();
+      productReferenceData?.forEach(product => {
+        venClassificationMap.set(product.id, product.ven_classification || 'Essential');
+      });
+
       for (const [productId, transactions] of productTransactions.entries()) {
         if (transactions.length === 0) continue;
 
         const productName = transactions[0].products?.name || 'Unknown Product';
         const unit = transactions[0].products?.unit || 'units';
+        const venClassification = venClassificationMap.get(productId) || 'Essential';
 
         // Calculate consumption for each period
         const periodConsumption: ConsumptionPeriod[] = periods.map(period => {
@@ -172,6 +193,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
           product_id: productId,
           product_name: productName,
           unit,
+          ven_classification: venClassification,
           periods: periodConsumption,
           total_consumption: totalConsumption,
           average_consumption: averageConsumption

@@ -223,6 +223,7 @@ const ForecastAnalysis: React.FC = () => {
                     <TableRow>
                       <TableHead className="min-w-[200px]">Product</TableHead>
                       <TableHead className="text-center">Unit</TableHead>
+                      <TableHead className="text-center">VEN Class</TableHead>
                       <TableHead className="text-center">Avg Consumption</TableHead>
                       <TableHead className="text-center">Trend</TableHead>
                       {historicalData?.period_headers?.map((header, index) => (
@@ -239,7 +240,7 @@ const ForecastAnalysis: React.FC = () => {
                   <TableBody>
                     {combinedData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8 + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={9 + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
                           No consumption data available for the selected period
                         </TableCell>
                       </TableRow>
@@ -254,6 +255,18 @@ const ForecastAnalysis: React.FC = () => {
                             {product.product_name}
                           </TableCell>
                           <TableCell className="text-center">{product.unit}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge 
+                              variant={
+                                product.ven_classification === 'Vital' ? 'destructive' :
+                                product.ven_classification === 'Essential' ? 'default' : 
+                                'secondary'
+                              }
+                              className="text-xs"
+                            >
+                              {product.ven_classification || 'Essential'}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-center">
                             {formatNumber(product.average_consumption)}
                           </TableCell>
@@ -316,6 +329,31 @@ const ForecastAnalysis: React.FC = () => {
                         {formatNumber(selectedProduct.average_consumption)}
                       </div>
                       <div className="text-sm text-muted-foreground">Average per Period</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-lg font-bold text-green-600">
+                        {selectedProduct.unit}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Unit</div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Badge 
+                        variant={
+                          selectedProduct.ven_classification === 'Vital' ? 'destructive' :
+                          selectedProduct.ven_classification === 'Essential' ? 'default' : 
+                          'secondary'
+                        }
+                        className="text-sm font-bold px-3 py-1"
+                      >
+                        {selectedProduct.ven_classification || 'Essential'}
+                      </Badge>
+                      <div className="text-sm text-muted-foreground mt-1">VEN Classification</div>
                     </CardContent>
                   </Card>
                   

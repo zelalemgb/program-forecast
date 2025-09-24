@@ -1618,6 +1618,7 @@ export type Database = {
           unit_to_base_factor: number
           uom: string | null
           updated_at: string
+          ven_classification: string | null
         }
         Insert: {
           active?: boolean
@@ -1644,6 +1645,7 @@ export type Database = {
           unit_to_base_factor?: number
           uom?: string | null
           updated_at?: string
+          ven_classification?: string | null
         }
         Update: {
           active?: boolean
@@ -1670,6 +1672,7 @@ export type Database = {
           unit_to_base_factor?: number
           uom?: string | null
           updated_at?: string
+          ven_classification?: string | null
         }
         Relationships: [
           {
