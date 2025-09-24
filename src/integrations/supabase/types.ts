@@ -1774,25 +1774,40 @@ export type Database = {
       }
       product_reference: {
         Row: {
+          abc_classification: string | null
           active: boolean
           atc_code: string | null
           barcode_type: string | null
           base_unit: string
+          buffer_stock_level: number | null
           canonical_name: string
           code: string | null
+          controlled_substance: boolean | null
           course_rule_id: string | null
           created_at: string
+          criticality_level: string | null
           default_unit: string | null
           effective_from: string | null
           effective_to: string | null
           form: string | null
           gtin: string | null
           id: string
+          lead_time_days: number | null
+          maximum_stock_level: number | null
+          minimum_order_quantity: number | null
+          narcotics_classification: string | null
           pack_size: number | null
           price_benchmark_high: number | null
           price_benchmark_low: number | null
           program: string | null
           recommended_formulation: string | null
+          refrigeration_required: boolean | null
+          reorder_point: number | null
+          shelf_life_months: number | null
+          storage_humidity_max: number | null
+          storage_humidity_min: number | null
+          storage_temperature_max: number | null
+          storage_temperature_min: number | null
           strength: string | null
           tracer_flag: boolean
           unit_to_base_factor: number
@@ -1801,25 +1816,40 @@ export type Database = {
           ven_classification: string | null
         }
         Insert: {
+          abc_classification?: string | null
           active?: boolean
           atc_code?: string | null
           barcode_type?: string | null
           base_unit: string
+          buffer_stock_level?: number | null
           canonical_name: string
           code?: string | null
+          controlled_substance?: boolean | null
           course_rule_id?: string | null
           created_at?: string
+          criticality_level?: string | null
           default_unit?: string | null
           effective_from?: string | null
           effective_to?: string | null
           form?: string | null
           gtin?: string | null
           id?: string
+          lead_time_days?: number | null
+          maximum_stock_level?: number | null
+          minimum_order_quantity?: number | null
+          narcotics_classification?: string | null
           pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
           program?: string | null
           recommended_formulation?: string | null
+          refrigeration_required?: boolean | null
+          reorder_point?: number | null
+          shelf_life_months?: number | null
+          storage_humidity_max?: number | null
+          storage_humidity_min?: number | null
+          storage_temperature_max?: number | null
+          storage_temperature_min?: number | null
           strength?: string | null
           tracer_flag?: boolean
           unit_to_base_factor?: number
@@ -1828,25 +1858,40 @@ export type Database = {
           ven_classification?: string | null
         }
         Update: {
+          abc_classification?: string | null
           active?: boolean
           atc_code?: string | null
           barcode_type?: string | null
           base_unit?: string
+          buffer_stock_level?: number | null
           canonical_name?: string
           code?: string | null
+          controlled_substance?: boolean | null
           course_rule_id?: string | null
           created_at?: string
+          criticality_level?: string | null
           default_unit?: string | null
           effective_from?: string | null
           effective_to?: string | null
           form?: string | null
           gtin?: string | null
           id?: string
+          lead_time_days?: number | null
+          maximum_stock_level?: number | null
+          minimum_order_quantity?: number | null
+          narcotics_classification?: string | null
           pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
           program?: string | null
           recommended_formulation?: string | null
+          refrigeration_required?: boolean | null
+          reorder_point?: number | null
+          shelf_life_months?: number | null
+          storage_humidity_max?: number | null
+          storage_humidity_min?: number | null
+          storage_temperature_max?: number | null
+          storage_temperature_min?: number | null
           strength?: string | null
           tracer_flag?: boolean
           unit_to_base_factor?: number
