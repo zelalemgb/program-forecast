@@ -25,7 +25,7 @@ const ForecastAnalysis: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // New filtering and saving state
-  const [filterType, setFilterType] = useState<'all' | 'program' | 'ven_classification' | 'custom'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'program' | 'ven_classification' | 'account_type' | 'custom'>('all');
   const [programFilter, setProgramFilter] = useState<string>('');
   const [venFilter, setVenFilter] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
@@ -351,7 +351,7 @@ const ForecastAnalysis: React.FC = () => {
         <Label className="text-xs">Filter Type</Label>
         <Select 
           value={filterType} 
-          onValueChange={(value: 'all' | 'program' | 'ven_classification' | 'custom') => {
+          onValueChange={(value: 'all' | 'program' | 'ven_classification' | 'account_type' | 'custom') => {
             setFilterType(value);
             if (value !== 'custom') {
               setSelectedProducts(new Set());
@@ -366,6 +366,7 @@ const ForecastAnalysis: React.FC = () => {
             <SelectItem value="all">All Products</SelectItem>
             <SelectItem value="program">By Program</SelectItem>
             <SelectItem value="ven_classification">By VEN Class</SelectItem>
+            <SelectItem value="account_type">By Account Type</SelectItem>
             <SelectItem value="custom">Custom Selection</SelectItem>
           </SelectContent>
         </Select>
