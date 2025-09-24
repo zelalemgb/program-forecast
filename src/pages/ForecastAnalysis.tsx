@@ -109,7 +109,9 @@ const ForecastAnalysis: React.FC = () => {
   useEffect(() => {
     const fetchSavedForecasts = async () => {
       try {
+        console.log('Loading saved forecasts on page load...');
         const summaries = await getForecastSummaries();
+        console.log('Loaded saved forecasts:', summaries);
         setSavedForecasts(summaries);
       } catch (error) {
         console.error('Error fetching saved forecasts:', error);
@@ -509,7 +511,7 @@ const ForecastAnalysis: React.FC = () => {
         )}
 
         {/* Saved Forecasts Section */}
-        {!currentLoadedForecast && savedForecasts.length > 0 && (
+        {!currentLoadedForecast && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -518,7 +520,9 @@ const ForecastAnalysis: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedForecasts.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {savedForecasts.slice(0, 6).map((summary) => (
                   <div 
                     key={summary.id}
@@ -550,16 +554,24 @@ const ForecastAnalysis: React.FC = () => {
                     </div>
                   </div>
                 ))}
-              </div>
-              {savedForecasts.length > 6 && (
-                <div className="mt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowSavedForecastsModal(true)}
-                  >
-                    View All {savedForecasts.length} Forecasts
-                  </Button>
+                  </div>
+                  {savedForecasts.length > 6 && (
+                    <div className="mt-4 text-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowSavedForecastsModal(true)}
+                      >
+                        View All {savedForecasts.length} Forecasts
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No saved forecasts yet</p>
+                  <p className="text-sm">Generate and save a forecast to see it here</p>
                 </div>
               )}
             </CardContent>

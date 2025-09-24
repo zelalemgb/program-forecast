@@ -139,14 +139,17 @@ export const useForecastSummary = () => {
   const getForecastSummaries = async (): Promise<ForecastSummary[]> => {
     setLoading(true);
     try {
+      console.log('Fetching forecast summaries...');
       const { data, error } = await supabase
         .from('forecast_summaries')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Forecast summaries query result:', { data, error });
       if (error) throw error;
       return data || [];
     } catch (error: any) {
+      console.error('Error in getForecastSummaries:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to fetch forecast summaries",
