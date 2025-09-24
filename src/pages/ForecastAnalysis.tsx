@@ -24,7 +24,7 @@ const ForecastAnalysis: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Account type filtering state
-  const [selectedAccountType, setSelectedAccountType] = useState<string>('');
+  const [selectedAccountType, setSelectedAccountType] = useState<string>('all');
   const [availableAccountTypes, setAvailableAccountTypes] = useState<any[]>([]);
   const [accountTypeProducts, setAccountTypeProducts] = useState<string[]>([]);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
@@ -64,7 +64,7 @@ const ForecastAnalysis: React.FC = () => {
   // Fetch account type products when account type is selected
   useEffect(() => {
     const fetchAccountTypeProducts = async () => {
-      if (!selectedAccountType) {
+      if (!selectedAccountType || selectedAccountType === 'all') {
         setAccountTypeProducts([]);
         return;
       }
@@ -141,7 +141,7 @@ const ForecastAnalysis: React.FC = () => {
     let filtered = historicalData.products;
 
     // Apply account type filter
-    if (selectedAccountType && accountTypeProducts.length > 0) {
+    if (selectedAccountType && selectedAccountType !== 'all' && accountTypeProducts.length > 0) {
       filtered = filtered.filter(product => 
         accountTypeProducts.includes(product.product_id)
       );
@@ -259,7 +259,7 @@ const ForecastAnalysis: React.FC = () => {
 
   const loadSavedForecast = async (savedForecast: any) => {
     try {
-      setSelectedAccountType(savedForecast.filter_criteria?.account_type_id || '');
+      setSelectedAccountType(savedForecast.filter_criteria?.account_type_id || 'all');
       setSelectedGranularity(savedForecast.forecast_parameters?.granularity || 'monthly');
       setPeriodMonths(savedForecast.forecast_parameters?.period_months || 12);
 
@@ -335,7 +335,7 @@ const ForecastAnalysis: React.FC = () => {
             <SelectValue placeholder="Select account type..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Products</SelectItem>
+            <SelectItem value="all">All Products</SelectItem>
             {availableAccountTypes.map(accountType => (
               <SelectItem key={accountType.id} value={accountType.id}>
                 {accountType.name}
@@ -458,7 +458,7 @@ const ForecastAnalysis: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold">{combinedData.length}</div>
               <p className="text-xs text-muted-foreground">
-                {selectedAccountType ? `In selected account type` : 'All products'}
+                {selectedAccountType && selectedAccountType !== 'all' ? `In selected account type` : 'All products'}
               </p>
             </CardContent>
           </Card>
@@ -525,7 +525,7 @@ const ForecastAnalysis: React.FC = () => {
               </div>
             ) : combinedData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                {selectedAccountType ? 'No products found for the selected account type.' : 'No consumption data available for the selected period.'}
+                {selectedAccountType && selectedAccountType !== 'all' ? 'No products found for the selected account type.' : 'No consumption data available for the selected period.'}
               </div>
             ) : (
               <Table>
