@@ -119,7 +119,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <Link to="/profile">Profile Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/program-settings">Program Settings</Link>
+              <Link to="/settings/metadata">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-red-600">

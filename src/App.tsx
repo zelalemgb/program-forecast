@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Validation from "./pages/Validation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { NavigationProvider } from "@/context/NavigationContext";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CDSSDashboard from "./pages/CDSSDashboard";
@@ -15,7 +16,6 @@ import Profile from "./pages/Profile";
 import RegisterFacility from "./pages/RegisterFacility";
 import Approvals from "./pages/Approvals";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import ProgramSettings from "./pages/ProgramSettings";
 import MetadataOrganization from "./pages/settings/MetadataOrganization";
 import FacilitiesManagement from "./pages/settings/FacilitiesManagement";
 import ProductsManagement from "./pages/settings/ProductsManagement";
@@ -65,7 +65,6 @@ const AppShell: React.FC = () => {
               <Route path="/register" element={<RegisterFacility />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
-              <Route path="/program-settings" element={<ProgramSettings />} />
               <Route path="/settings/metadata" element={<MetadataOrganization />} />
               <Route path="/settings/metadata/facilities" element={<FacilitiesManagement />} />
               <Route path="/settings/metadata/products" element={<ProductsManagement />} />
@@ -110,7 +109,9 @@ const App = () => (
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
-            <AppShell />
+            <NavigationProvider>
+              <AppShell />
+            </NavigationProvider>
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>

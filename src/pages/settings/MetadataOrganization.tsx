@@ -1,7 +1,6 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { 
   Building2, 
@@ -10,10 +9,8 @@ import {
   MapPin, 
   FileText, 
   Upload,
-  Plus,
-  Database
 } from "lucide-react";
-import PageHeader from "@/components/layout/PageHeader";
+import PageLayout from "@/components/layout/PageLayout";
 
 const MetadataOrganization: React.FC = () => {
   const navigate = useNavigate();
@@ -70,17 +67,12 @@ const MetadataOrganization: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageLayout>
       <Helmet>
         <title>Metadata Organization | System Settings</title>
         <meta name="description" content="Manage health facilities, products, users, and other metadata objects through manual entry or bulk import." />
         <link rel="canonical" href="/settings/metadata" />
       </Helmet>
-
-      <PageHeader
-        title="Data Management"
-        description="Simple data management for your health system"
-      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {metadataCategories.map((category) => (
@@ -103,7 +95,7 @@ const MetadataOrganization: React.FC = () => {
           </Card>
         ))}
       </div>
-    </>
+    </PageLayout>
   );
 };
 
