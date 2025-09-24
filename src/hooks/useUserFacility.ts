@@ -183,6 +183,9 @@ export const useUserFacility = (): UserFacilityInfo => {
           if (locationInfo.zone?.region?.region_name) locationParts.push(locationInfo.zone.region.region_name);
           
           locationDisplay = locationParts.join(', ') + ` – ${primaryRole.admin_level} Level`;
+        } else {
+          // For users without facility assignment, show role-based view
+          locationDisplay = `${primaryRole.role} Dashboard`;
         }
 
         setFacilityInfo({
