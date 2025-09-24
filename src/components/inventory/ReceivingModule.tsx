@@ -49,7 +49,7 @@ interface ReceivedItem {
 
 interface DeliveryInfo {
   source: string;
-  driverName: string;
+  deliveryVoucherNumber: string;
   deliveryNote: string;
 }
 
@@ -61,7 +61,7 @@ export const ReceivingModule: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<ReceivingStep>("method");
   const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
     source: "",
-    driverName: "",
+    deliveryVoucherNumber: "",
     deliveryNote: ""
   });
   const [receivedItems, setReceivedItems] = useState<ReceivedItem[]>([]);
@@ -149,7 +149,7 @@ export const ReceivingModule: React.FC = () => {
     setCurrentStep("method");
     setDocumentImage(null);
     setReceivedItems([]);
-    setDeliveryInfo({ source: "", driverName: "", deliveryNote: "" });
+    setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "" });
   };
 
   const proceedToInspection = () => {
@@ -187,7 +187,7 @@ export const ReceivingModule: React.FC = () => {
         // Mock extracted data from document
         setDeliveryInfo({
           source: "central-store",
-          driverName: "Ahmed Hassan",
+          deliveryVoucherNumber: "DV-2024-03-001",
           deliveryNote: "DN-2024-03-001"
         });
         
@@ -275,7 +275,7 @@ export const ReceivingModule: React.FC = () => {
             unit_cost: item.unitCost,
             transaction_date: new Date().toISOString().split('T')[0],
             reference_number: deliveryInfo.deliveryNote,
-            notes: `Received from ${deliveryInfo.source}. Driver: ${deliveryInfo.driverName}. Condition: ${item.conditionAtReceipt || 'good'}`
+            notes: `Received from ${deliveryInfo.source}. Delivery Voucher: ${deliveryInfo.deliveryVoucherNumber || 'N/A'}. Condition: ${item.conditionAtReceipt || 'good'}`
           });
 
           // Create adjustment transaction if there's a discrepancy
@@ -296,7 +296,7 @@ export const ReceivingModule: React.FC = () => {
       
       // Reset form
       setReceivedItems([]);
-      setDeliveryInfo({ source: "", driverName: "", deliveryNote: "" });
+      setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "" });
       setDocumentImage(null);
       setReceivingMethod(null);
       setCurrentStep("method");
@@ -434,7 +434,7 @@ export const ReceivingModule: React.FC = () => {
               <h4 className="text-sm font-medium text-green-800 mb-2">Extracted Delivery Information</h4>
               <div className="text-sm space-y-1">
                 <div><strong>Source:</strong> {deliveryInfo.source === "central-store" ? "Central Medical Store" : deliveryInfo.source}</div>
-                <div><strong>Driver:</strong> {deliveryInfo.driverName}</div>
+                <div><strong>Delivery Voucher #:</strong> {deliveryInfo.deliveryVoucherNumber}</div>
                 <div><strong>Delivery Note:</strong> {deliveryInfo.deliveryNote}</div>
               </div>
             </div>
@@ -525,12 +525,12 @@ export const ReceivingModule: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="driver">Driver Name</Label>
+                <Label htmlFor="deliveryVoucher">Delivery Voucher #</Label>
                 <Input
-                  id="driver"
-                  value={deliveryInfo.driverName}
-                  onChange={(e) => setDeliveryInfo(prev => ({...prev, driverName: e.target.value}))}
-                  placeholder="Enter driver name"
+                  id="deliveryVoucher"
+                  value={deliveryInfo.deliveryVoucherNumber}
+                  onChange={(e) => setDeliveryInfo(prev => ({...prev, deliveryVoucherNumber: e.target.value}))}
+                  placeholder="Enter delivery voucher number (if any)"
                 />
               </div>
               <div>
