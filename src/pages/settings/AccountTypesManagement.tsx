@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Package, ChevronDown, ChevronUp, X } from "lucide-react";
 import PageLayout from "@/components/layout/PageLayout";
 
 const accountTypeSchema = z.object({
@@ -48,9 +50,10 @@ const AccountTypesManagement: React.FC = () => {
   const [selectedAccountTypeProducts, setSelectedAccountTypeProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [editingAccountType, setEditingAccountType] = useState<AccountType | null>(null);
-  const [viewingAccountType, setViewingAccountType] = useState<AccountType | null>(null);
+  const [expandedAccountType, setExpandedAccountType] = useState<string | null>(null);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [selectedProductToAdd, setSelectedProductToAdd] = useState<string>("");
 
   const form = useForm<AccountTypeForm>({
     resolver: zodResolver(accountTypeSchema),
@@ -260,10 +263,73 @@ const AccountTypesManagement: React.FC = () => {
   };
 
   const handleViewAccountType = async (accountType: AccountType) => {
-    setViewingAccountType(accountType);
+    if (expandedAccountType === accountType.id) {
+      setExpandedAccountType(null);
+      setSelectedAccountTypeProducts([]);
+      setAvailableProducts([]);
+      return;
+    }
+
+    setExpandedAccountType(accountType.id);
     const productDetails = await fetchAccountTypeProductDetails(accountType.id);
     setSelectedAccountTypeProducts(productDetails);
-    setIsDetailDialogOpen(true);
+    
+    // Get products not yet in this account type
+    const usedProductIds = productDetails.map(p => p.id);
+    const available = products.filter(p => !usedProductIds.includes(p.id));
+    setAvailableProducts(available);
+  };
+
+  const handleAddProductToAccountType = async () => {
+    if (!selectedProductToAdd || !expandedAccountType) return;
+
+    try {
+      const { error } = await supabase
+        .from("account_type_products")
+        .insert({
+          account_type_id: expandedAccountType,
+          product_id: selectedProductToAdd,
+        });
+
+      if (error) throw error;
+
+      toast.success("Product added successfully");
+      setSelectedProductToAdd("");
+      
+      // Refresh the current view
+      const accountType = accountTypes.find(at => at.id === expandedAccountType);
+      if (accountType) {
+        handleViewAccountType(accountType);
+      }
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Failed to add product");
+    }
+  };
+
+  const handleRemoveProductFromAccountType = async (productId: string) => {
+    if (!expandedAccountType) return;
+
+    try {
+      const { error } = await supabase
+        .from("account_type_products")
+        .delete()
+        .eq("account_type_id", expandedAccountType)
+        .eq("product_id", productId);
+
+      if (error) throw error;
+
+      toast.success("Product removed successfully");
+      
+      // Refresh the current view
+      const accountType = accountTypes.find(at => at.id === expandedAccountType);
+      if (accountType) {
+        handleViewAccountType(accountType);
+      }
+    } catch (error) {
+      console.error("Error removing product:", error);
+      toast.error("Failed to remove product");
+    }
   };
 
   if (loading) {
@@ -420,45 +486,148 @@ const AccountTypesManagement: React.FC = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-4">
+        <div className="space-y-4">
           {accountTypes.map((accountType) => (
-            <Card 
-              key={accountType.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleViewAccountType(accountType)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
+            <div key={accountType.id} className="space-y-0">
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleViewAccountType(accountType)}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
                       <Package className="h-5 w-5" />
-                      {accountType.name}
-                    </CardTitle>
-                    {accountType.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {accountType.description}
-                      </p>
-                    )}
+                      <div>
+                        <CardTitle>{accountType.name}</CardTitle>
+                        {accountType.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {accountType.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {expandedAccountType === accountType.id ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditAccountType(accountType)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteAccountType(accountType.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditAccountType(accountType)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteAccountType(accountType.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
+                </CardHeader>
+              </Card>
+
+              {/* Expanded Product Table */}
+              {expandedAccountType === accountType.id && (
+                <Card className="border-t-0 rounded-t-none">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">Product List</h4>
+                        <div className="flex items-center gap-2">
+                          <Select value={selectedProductToAdd} onValueChange={setSelectedProductToAdd}>
+                            <SelectTrigger className="w-64">
+                              <SelectValue placeholder="Select product to add" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableProducts.map((product) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  {product.canonical_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="sm" 
+                            onClick={handleAddProductToAccountType}
+                            disabled={!selectedProductToAdd}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+
+                      {selectedAccountTypeProducts.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product Name</TableHead>
+                              <TableHead>Form & Strength</TableHead>
+                              <TableHead>Program</TableHead>
+                              <TableHead>VEN</TableHead>
+                              <TableHead className="w-16">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedAccountTypeProducts.map((product) => (
+                              <TableRow key={product.id}>
+                                <TableCell className="font-medium">
+                                  {product.canonical_name}
+                                </TableCell>
+                                <TableCell>
+                                  {[product.form, product.strength].filter(Boolean).join(" - ") || "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {product.program ? (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {product.program}
+                                    </Badge>
+                                  ) : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {product.ven_classification ? (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${
+                                        product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
+                                        product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
+                                        product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
+                                        'border-gray-300'
+                                      }`}
+                                    >
+                                      {product.ven_classification}
+                                    </Badge>
+                                  ) : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleRemoveProductFromAccountType(product.id)}
+                                  >
+                                    <X className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <p className="text-muted-foreground">No products found in this account type.</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ))}
         </div>
 
@@ -475,69 +644,6 @@ const AccountTypesManagement: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Detail Dialog */}
-        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                {viewingAccountType?.name} - Product List
-              </DialogTitle>
-              {viewingAccountType?.description && (
-                <p className="text-sm text-muted-foreground">
-                  {viewingAccountType.description}
-                </p>
-              )}
-            </DialogHeader>
-            
-            <ScrollArea className="h-96">
-              <div className="space-y-3">
-                {selectedAccountTypeProducts.length > 0 ? (
-                  selectedAccountTypeProducts.map((product) => (
-                    <Card key={product.id} className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{product.canonical_name}</h4>
-                          {(product.form || product.strength) && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {[product.form, product.strength].filter(Boolean).join(" - ")}
-                            </p>
-                          )}
-                          <div className="flex gap-2 mt-2">
-                            {product.program && (
-                              <Badge variant="secondary" className="text-xs">
-                                {product.program}
-                              </Badge>
-                            )}
-                            {product.ven_classification && (
-                              <Badge 
-                                variant="outline" 
-                                className={`text-xs ${
-                                  product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
-                                  product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
-                                  product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
-                                  'border-gray-300'
-                                }`}
-                              >
-                                {product.ven_classification}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No products found in this account type.</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
       </div>
     </PageLayout>
   );
