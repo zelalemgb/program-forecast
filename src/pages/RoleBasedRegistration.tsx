@@ -17,6 +17,7 @@ interface Facility {
   facility_id: number;
   facility_name: string;
   facility_type: string;
+  woreda_id?: number; // For simple facility data
   woreda?: {
     woreda_name: string;
     zone?: {
@@ -186,49 +187,56 @@ const RoleBasedRegistration: React.FC = () => {
   };
 
   const loadLocationData = async (level: string) => {
+    console.log('Loading location data for level:', level);
     try {
       if (level === 'facility') {
-        let query = supabase
+        // First, try to load facilities with a simple query
+        console.log('Loading facilities...');
+        const { data: simpleData, error: simpleError } = await supabase
           .from('facility')
-          .select(`
-            facility_id, 
-            facility_name, 
-            facility_type,
-            woreda!inner(
-              woreda_name,
-              zone!inner(
-                zone_name,
-                region!inner(region_name)
-              )
-            )
-          `);
-
-        // Apply hierarchical filters for facility selection only if they are set and not 'all'
-        if (selectedRegionFilter && selectedRegionFilter !== 'all') {
-          query = query.eq('woreda.zone.region.region_id', parseInt(selectedRegionFilter));
+          .select('facility_id, facility_name, facility_type, woreda_id')
+          .limit(100);
+        
+        if (simpleError) {
+          console.error('Error loading facilities (simple query):', simpleError);
+          setFacilities([]);
+          return;
         }
-        if (selectedZoneFilter && selectedZoneFilter !== 'all') {
-          query = query.eq('woreda.zone.zone_id', parseInt(selectedZoneFilter));
-        }
-        if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
-          query = query.eq('woreda.woreda_id', parseInt(selectedWoredaFilter));
-        }
-        if (facilitySearch) {
-          query = query.ilike('facility_name', `%${facilitySearch}%`);
-        }
-
-        const { data, error } = await query.limit(100);
-        if (error) {
-          console.error('Error loading facilities:', error);
-          // Fallback: load facilities without joins if the complex query fails
-          const fallbackQuery = await supabase
-            .from('facility')
-            .select('facility_id, facility_name, facility_type, woreda_id')
-            .limit(100);
-          setFacilities((fallbackQuery.data as any) || []);
+        
+        console.log('Simple facilities loaded:', simpleData?.length || 0);
+        
+        // If we have facilities, try to enrich them with location data
+        if (simpleData && simpleData.length > 0) {
+          try {
+            const { data: enrichedData, error: enrichedError } = await supabase
+              .from('facility')
+              .select(`
+                facility_id, 
+                facility_name, 
+                facility_type,
+                woreda(
+                  woreda_name,
+                  zone(
+                    zone_name,
+                    region(region_name)
+                  )
+                )
+              `)
+              .limit(100);
+            
+            if (enrichedError) {
+              console.warn('Could not load enriched facility data, using simple data:', enrichedError);
+              setFacilities(simpleData as any);
+            } else {
+              console.log('Enriched facilities loaded:', enrichedData?.length || 0);
+              setFacilities((enrichedData as any) || []);
+            }
+          } catch (enrichError) {
+            console.warn('Enrichment failed, using simple data:', enrichError);
+            setFacilities(simpleData as any);
+          }
         } else {
-          console.log('Facilities loaded successfully:', data?.length || 0);
-          setFacilities((data as any) || []);
+          setFacilities([]);
         }
         
       } else if (level === 'woreda') {
@@ -405,13 +413,18 @@ const RoleBasedRegistration: React.FC = () => {
   };
 
   const getLocationDisplay = (facility: Facility) => {
-    const parts = [
-      facility.woreda?.woreda_name,
-      facility.woreda?.zone?.zone_name,
-      facility.woreda?.zone?.region?.region_name
-    ].filter(Boolean);
+    // Handle both enriched and simple facility data
+    if (facility.woreda) {
+      const parts = [
+        facility.woreda.woreda_name,
+        facility.woreda.zone?.zone_name,
+        facility.woreda.zone?.region?.region_name
+      ].filter(Boolean);
+      return parts.join(', ');
+    }
     
-    return parts.join(', ');
+    // Fallback for simple facility data
+    return facility.woreda_id ? `Woreda ID: ${facility.woreda_id}` : 'Location not specified';
   };
 
   return (
@@ -627,14 +640,14 @@ const RoleBasedRegistration: React.FC = () => {
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Choose the facility where you work" />
                         </SelectTrigger>
-                        <SelectContent className="bg-background border z-50 max-h-60 overflow-auto">
+                        <SelectContent className="bg-background border z-[60] max-h-60 overflow-auto shadow-lg">
                           {facilities.length === 0 ? (
                             <SelectItem value="no-facilities" disabled className="text-muted-foreground">
-                              No facilities found. Try adjusting your filters.
+                              No facilities found. Try adjusting your filters or check if data is loaded.
                             </SelectItem>
                           ) : (
                             facilities.map(facility => (
-                              <SelectItem key={facility.facility_id} value={facility.facility_id.toString()} className="hover:bg-muted">
+                              <SelectItem key={facility.facility_id} value={facility.facility_id.toString()} className="hover:bg-muted bg-background">
                                 <div>
                                   <div className="font-medium">{facility.facility_name}</div>
                                   <div className="text-sm text-muted-foreground">
