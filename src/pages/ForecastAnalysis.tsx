@@ -167,21 +167,21 @@ const ForecastAnalysis: React.FC = () => {
                       <TableHead className="text-center">Unit</TableHead>
                       <TableHead className="text-center">Avg Consumption</TableHead>
                       <TableHead className="text-center">Trend</TableHead>
-                      {historicalData?.period_headers?.slice(-3).map((header, index) => (
-                        <TableHead key={`hist-${index}`} className="text-center">
+                      {historicalData?.period_headers?.map((header, index) => (
+                        <TableHead key={`hist-${index}`} className="text-center min-w-[100px]">
                           {header}
                         </TableHead>
                       ))}
-                      <TableHead className="text-center bg-blue-50">Forecast P1</TableHead>
-                      <TableHead className="text-center bg-blue-50">Forecast P2</TableHead>
-                      <TableHead className="text-center bg-blue-50">Forecast P3</TableHead>
+                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P1</TableHead>
+                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P2</TableHead>
+                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P3</TableHead>
                       <TableHead className="text-center">Confidence</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {combinedData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8 + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
                           No consumption data available for the selected period
                         </TableCell>
                       </TableRow>
@@ -200,7 +200,7 @@ const ForecastAnalysis: React.FC = () => {
                               {getTrendIcon(product.trend)}
                             </div>
                           </TableCell>
-                          {product.periods.slice(-3).map((period, index) => (
+                          {product.periods.map((period, index) => (
                             <TableCell key={`period-${index}`} className="text-center">
                               {formatNumber(period.consumption)}
                             </TableCell>
