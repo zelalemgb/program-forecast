@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,18 +23,15 @@ const ForecastAnalysis: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // New filtering and saving state
-  const [filterType, setFilterType] = useState<'all' | 'program' | 'ven_classification' | 'account_type' | 'custom'>('all');
-  const [programFilter, setProgramFilter] = useState<string>('');
-  const [venFilter, setVenFilter] = useState<string>('');
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-  const [isSelectMode, setIsSelectMode] = useState(false);
+  // Account type filtering state
+  const [selectedAccountType, setSelectedAccountType] = useState<string>('');
+  const [availableAccountTypes, setAvailableAccountTypes] = useState<any[]>([]);
+  const [accountTypeProducts, setAccountTypeProducts] = useState<string[]>([]);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [forecastName, setForecastName] = useState('');
   const [forecastDescription, setForecastDescription] = useState('');
   const [savedForecasts, setSavedForecasts] = useState<any[]>([]);
-  const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
-  
+
   const { toast } = useToast();
   const facilityId = 1; // This should come from context or user selection
 
@@ -45,27 +41,52 @@ const ForecastAnalysis: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
   const [forecastLoading, setForecastLoading] = useState(false);
 
-  // Fetch available programs for filtering
+  // Fetch available account types for filtering
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const fetchAccountTypes = async () => {
       try {
         const { data, error } = await supabase
-          .from('product_reference')
-          .select('program')
-          .not('program', 'is', null)
-          .eq('active', true);
+          .from('account_types')
+          .select('*')
+          .order('created_at', { ascending: false });
         
         if (error) throw error;
         
-        const uniquePrograms = [...new Set(data?.map(p => p.program).filter(Boolean))];
-        setAvailablePrograms(uniquePrograms);
+        setAvailableAccountTypes(data || []);
       } catch (error) {
-        console.error('Error fetching programs:', error);
+        console.error('Error fetching account types:', error);
       }
     };
 
-    fetchPrograms();
+    fetchAccountTypes();
   }, []);
+
+  // Fetch account type products when account type is selected
+  useEffect(() => {
+    const fetchAccountTypeProducts = async () => {
+      if (!selectedAccountType) {
+        setAccountTypeProducts([]);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('account_type_products')
+          .select('product_id')
+          .eq('account_type_id', selectedAccountType);
+        
+        if (error) throw error;
+        
+        const productIds = data?.map(item => item.product_id) || [];
+        setAccountTypeProducts(productIds);
+      } catch (error) {
+        console.error('Error fetching account type products:', error);
+        setAccountTypeProducts([]);
+      }
+    };
+
+    fetchAccountTypeProducts();
+  }, [selectedAccountType]);
 
   // Fetch saved forecasts
   useEffect(() => {
@@ -119,36 +140,15 @@ const ForecastAnalysis: React.FC = () => {
 
     let filtered = historicalData.products;
 
-    // Apply filters based on type
-    switch (filterType) {
-      case 'program':
-        if (programFilter) {
-          filtered = filtered.filter(product => 
-            product.program === programFilter
-          );
-        }
-        break;
-      case 'ven_classification':
-        if (venFilter) {
-          filtered = filtered.filter(product => 
-            product.ven_classification === venFilter
-          );
-        }
-        break;
-      case 'custom':
-        if (selectedProducts.size > 0) {
-          filtered = filtered.filter(product => 
-            selectedProducts.has(product.product_id)
-          );
-        }
-        break;
-      default:
-        // 'all' - no additional filtering
-        break;
+    // Apply account type filter
+    if (selectedAccountType && accountTypeProducts.length > 0) {
+      filtered = filtered.filter(product => 
+        accountTypeProducts.includes(product.product_id)
+      );
     }
 
     return filtered;
-  }, [historicalData, filterType, programFilter, venFilter, selectedProducts]);
+  }, [historicalData, selectedAccountType, accountTypeProducts]);
 
   const combinedData = useMemo(() => {
     return filteredData.map(product => {
@@ -191,26 +191,8 @@ const ForecastAnalysis: React.FC = () => {
   };
 
   const handleRowClick = (product: any) => {
-    if (isSelectMode) {
-      const newSelected = new Set(selectedProducts);
-      if (newSelected.has(product.product_id)) {
-        newSelected.delete(product.product_id);
-      } else {
-        newSelected.add(product.product_id);
-      }
-      setSelectedProducts(newSelected);
-    } else {
-      setSelectedProduct(product);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleSelectAll = () => {
-    if (selectedProducts.size === combinedData.length) {
-      setSelectedProducts(new Set());
-    } else {
-      setSelectedProducts(new Set(combinedData.map(p => p.product_id)));
-    }
+    setSelectedProduct(product);
+    setIsModalOpen(true);
   };
 
   const handleSaveForecast = async () => {
@@ -230,12 +212,11 @@ const ForecastAnalysis: React.FC = () => {
         user_id: user.id,
         name: forecastName,
         description: forecastDescription,
-        filter_type: filterType,
+        filter_type: 'account_type',
         filter_criteria: {
-          program: programFilter,
-          ven_classification: venFilter
+          account_type_id: selectedAccountType
         },
-        selected_products: filterType === 'custom' ? Array.from(selectedProducts) : [],
+        selected_products: [],
         forecast_parameters: {
           granularity: selectedGranularity,
           period_months: periodMonths
@@ -278,10 +259,7 @@ const ForecastAnalysis: React.FC = () => {
 
   const loadSavedForecast = async (savedForecast: any) => {
     try {
-      setFilterType(savedForecast.filter_type);
-      setProgramFilter(savedForecast.filter_criteria?.program || '');
-      setVenFilter(savedForecast.filter_criteria?.ven_classification || '');
-      setSelectedProducts(new Set(savedForecast.selected_products || []));
+      setSelectedAccountType(savedForecast.filter_criteria?.account_type_id || '');
       setSelectedGranularity(savedForecast.forecast_parameters?.granularity || 'monthly');
       setPeriodMonths(savedForecast.forecast_parameters?.period_months || 12);
 
@@ -348,77 +326,24 @@ const ForecastAnalysis: React.FC = () => {
   const titleActions = (
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
       <div className="flex flex-col gap-1">
-        <Label className="text-xs">Filter Type</Label>
+        <Label className="text-xs">Account Type</Label>
         <Select 
-          value={filterType} 
-          onValueChange={(value: 'all' | 'program' | 'ven_classification' | 'account_type' | 'custom') => {
-            setFilterType(value);
-            if (value !== 'custom') {
-              setSelectedProducts(new Set());
-              setIsSelectMode(false);
-            }
-          }}
+          value={selectedAccountType} 
+          onValueChange={setSelectedAccountType}
         >
-          <SelectTrigger className="w-36">
-            <SelectValue />
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select account type..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Products</SelectItem>
-            <SelectItem value="program">By Program</SelectItem>
-            <SelectItem value="ven_classification">By VEN Class</SelectItem>
-            <SelectItem value="account_type">By Account Type</SelectItem>
-            <SelectItem value="custom">Custom Selection</SelectItem>
+            <SelectItem value="">All Products</SelectItem>
+            {availableAccountTypes.map(accountType => (
+              <SelectItem key={accountType.id} value={accountType.id}>
+                {accountType.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-
-      {filterType === 'program' && (
-        <div className="flex flex-col gap-1">
-          <Label className="text-xs">Program</Label>
-          <Select value={programFilter} onValueChange={setProgramFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Programs</SelectItem>
-              {availablePrograms.map(program => (
-                <SelectItem key={program} value={program}>{program}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {filterType === 'ven_classification' && (
-        <div className="flex flex-col gap-1">
-          <Label className="text-xs">VEN Class</Label>
-          <Select value={venFilter} onValueChange={setVenFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Classes</SelectItem>
-              <SelectItem value="Vital">Vital</SelectItem>
-              <SelectItem value="Essential">Essential</SelectItem>
-              <SelectItem value="Nonessential">Nonessential</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {filterType === 'custom' && (
-        <div className="flex flex-col gap-1">
-          <Label className="text-xs">Selection Mode</Label>
-          <Button
-            variant={isSelectMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsSelectMode(!isSelectMode)}
-            className="w-32"
-          >
-            {isSelectMode ? 'Exit Select' : 'Select Products'}
-          </Button>
-        </div>
-      )}
 
       <div className="flex flex-col gap-1">
         <Label className="text-xs">Period</Label>
@@ -486,24 +411,12 @@ const ForecastAnalysis: React.FC = () => {
                   <Textarea
                     value={forecastDescription}
                     onChange={(e) => setForecastDescription(e.target.value)}
-                    placeholder="Enter description (optional)"
+                    placeholder="Optional description"
                   />
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  <p><strong>Filter:</strong> {filterType}</p>
-                  {filterType === 'program' && programFilter && <p><strong>Program:</strong> {programFilter}</p>}
-                  {filterType === 'ven_classification' && venFilter && <p><strong>VEN Class:</strong> {venFilter}</p>}
-                  {filterType === 'custom' && <p><strong>Selected Products:</strong> {selectedProducts.size}</p>}
-                  <p><strong>Period:</strong> {selectedGranularity}, {periodMonths} months</p>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveForecast} disabled={!forecastName.trim()}>
-                    Save Forecast
-                  </Button>
-                </div>
+                <Button onClick={handleSaveForecast} disabled={!forecastName.trim()}>
+                  Save Forecast
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -527,214 +440,168 @@ const ForecastAnalysis: React.FC = () => {
           )}
         </div>
       </div>
-
-      <div className="flex flex-col gap-1 text-xs text-muted-foreground pt-2">
-        <div>{combinedData.length} products</div>
-        <div>{historicalData?.period_headers?.length || 0} periods</div>
-      </div>
     </div>
   );
 
   return (
-    <PageLayout
-      title="Forecast Analysis"
-      description="Analyze historical consumption patterns and future demand forecasts"
+    <PageLayout 
+      title="Forecast Analysis" 
       actions={titleActions}
     >
       <div className="space-y-6">
-        {/* Results Table */}
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Total Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{combinedData.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {selectedAccountType ? `In selected account type` : 'All products'}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Total Consumption</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatNumber(combinedData.reduce((sum, p) => sum + p.total_consumption, 0))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Last {periodMonths} months
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Avg Confidence</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {combinedData.length > 0 
+                  ? ((combinedData.reduce((sum, p) => sum + p.confidence, 0) / combinedData.length) * 100).toFixed(0)
+                  : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Forecast confidence
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Trending Up</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {combinedData.filter(p => p.trend > 0).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Products increasing
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Data Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Consumption Pattern & Forecast Analysis</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Consumption Analysis & Forecast
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {historicalLoading || forecastLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex space-x-4">
-                    <Skeleton className="h-12 w-full" />
-                  </div>
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
                 ))}
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {isSelectMode && (
-                        <TableHead className="w-12">
-                          <Checkbox
-                            checked={selectedProducts.size === combinedData.length && combinedData.length > 0}
-                            onCheckedChange={handleSelectAll}
-                          />
-                        </TableHead>
-                      )}
-                      <TableHead className="min-w-[200px]">Product</TableHead>
-                      <TableHead className="text-center">Unit</TableHead>
-                      <TableHead className="text-center">VEN Class</TableHead>
-                      <TableHead className="text-center">Avg Consumption</TableHead>
-                      <TableHead className="text-center">Trend</TableHead>
-                      {historicalData?.period_headers?.map((header, index) => (
-                        <TableHead key={`hist-${index}`} className="text-center min-w-[100px]">
-                          {header}
-                        </TableHead>
-                      ))}
-                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P1</TableHead>
-                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P2</TableHead>
-                      <TableHead className="text-center bg-blue-50 min-w-[100px]">Forecast P3</TableHead>
-                      <TableHead className="text-center">Confidence</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {combinedData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={(isSelectMode ? 10 : 9) + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
-                          {filterType !== 'all' ? 'No products match the selected filters' : 'No consumption data available for the selected period'}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      combinedData.map((product) => (
-                        <TableRow 
-                          key={product.product_id} 
-                          className={`cursor-pointer transition-colors ${
-                            isSelectMode 
-                              ? selectedProducts.has(product.product_id) 
-                                ? 'bg-blue-50 hover:bg-blue-100' 
-                                : 'hover:bg-muted/50'
-                              : 'hover:bg-muted/50'
-                          }`}
-                          onClick={() => handleRowClick(product)}
-                        >
-                          {isSelectMode && (
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedProducts.has(product.product_id)}
-                                onChange={() => {}} // Handled by row click
-                              />
-                            </TableCell>
-                          )}
-                          <TableCell className="font-medium">
-                            {product.product_name}
-                          </TableCell>
-                          <TableCell className="text-center">{product.unit}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              variant={
-                                product.ven_classification === 'Vital' ? 'destructive' :
-                                product.ven_classification === 'Essential' ? 'default' : 
-                                'secondary'
-                              }
-                              className="text-xs"
-                            >
-                              {product.ven_classification || 'Essential'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {formatNumber(product.average_consumption)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center">
-                              {getTrendIcon(product.trend)}
-                            </div>
-                          </TableCell>
-                          {product.periods.map((period, index) => (
-                            <TableCell key={`period-${index}`} className="text-center">
-                              {formatNumber(period.consumption)}
-                            </TableCell>
-                          ))}
-                          {product.forecast_quantities.map((forecast, index) => (
-                            <TableCell key={`forecast-${index}`} className="text-center bg-blue-50">
-                              <span className="font-medium text-blue-700">
-                                {formatNumber(forecast)}
-                              </span>
-                            </TableCell>
-                          ))}
-                          <TableCell className="text-center">
-                            {getConfidenceBadge(product.confidence)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+            ) : combinedData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {selectedAccountType ? 'No products found for the selected account type.' : 'No consumption data available for the selected period.'}
               </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Program</TableHead>
+                    <TableHead>Total Consumption</TableHead>
+                    <TableHead>Avg Monthly</TableHead>
+                    <TableHead>Forecast Q1</TableHead>
+                    <TableHead>Forecast Q2</TableHead>
+                    <TableHead>Forecast Q3</TableHead>
+                    <TableHead>Trend</TableHead>
+                    <TableHead>Confidence</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {combinedData.map((product) => (
+                    <TableRow 
+                      key={product.product_id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(product)}
+                    >
+                      <TableCell className="font-medium">
+                        {product.product_name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{product.program || 'N/A'}</Badge>
+                      </TableCell>
+                      <TableCell>{formatNumber(product.total_consumption)}</TableCell>
+                      <TableCell>{formatNumber(product.average_consumption)}</TableCell>
+                      <TableCell>{formatNumber(product.forecast_quantities[0])}</TableCell>
+                      <TableCell>{formatNumber(product.forecast_quantities[1])}</TableCell>
+                      <TableCell>{formatNumber(product.forecast_quantities[2])}</TableCell>
+                      <TableCell>{getTrendIcon(product.trend)}</TableCell>
+                      <TableCell>{getConfidenceBadge(product.confidence)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
 
         {/* Product Detail Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                {selectedProduct?.product_name} - Consumption Analysis
-              </DialogTitle>
+              <DialogTitle>{selectedProduct?.product_name} - Detailed Analysis</DialogTitle>
             </DialogHeader>
-            
             {selectedProduct && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {formatNumber(selectedProduct.total_consumption)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Consumption</div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Total Consumption</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-xl font-bold">{formatNumber(selectedProduct.total_consumption)}</div>
                     </CardContent>
                   </Card>
-                  
                   <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {formatNumber(selectedProduct.average_consumption)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Average per Period</div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Monthly Average</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-xl font-bold">{formatNumber(selectedProduct.average_consumption)}</div>
                     </CardContent>
                   </Card>
-                  
                   <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-lg font-bold text-green-600">
-                        {selectedProduct.unit}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Unit</div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <Badge 
-                        variant={
-                          selectedProduct.ven_classification === 'Vital' ? 'destructive' :
-                          selectedProduct.ven_classification === 'Essential' ? 'default' : 
-                          'secondary'
-                        }
-                        className="text-sm font-bold px-3 py-1"
-                      >
-                        {selectedProduct.ven_classification || 'Essential'}
-                      </Badge>
-                      <div className="text-sm text-muted-foreground mt-1">VEN Classification</div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold flex items-center justify-center gap-1">
-                        {getTrendIcon(selectedProduct.trend)}
-                        {Math.abs(selectedProduct.trend).toFixed(0)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Recent Trend</div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold">
-                        {getConfidenceBadge(selectedProduct.confidence)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Forecast Confidence</div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Forecast Confidence</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-xl font-bold">{(selectedProduct.confidence * 100).toFixed(0)}%</div>
                     </CardContent>
                   </Card>
                 </div>
@@ -746,60 +613,42 @@ const ForecastAnalysis: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {getTrendIcon(selectedProduct.trend)}
+                        <span className="font-medium">
+                          {getTrendAnalysis(selectedProduct).direction.charAt(0).toUpperCase() + 
+                           getTrendAnalysis(selectedProduct).direction.slice(1)} Trend
+                        </span>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {getTrendAnalysis(selectedProduct).description}
                       </p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span>Unit: <strong>{selectedProduct.unit}</strong></span>
-                        <span>Data Points: <strong>{selectedProduct.periods.length}</strong></span>
-                        <span>Forecast Periods: <strong>3</strong></span>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Chart */}
+                {/* Consumption Chart */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Consumption Trend & Forecast</CardTitle>
+                    <CardTitle className="text-lg">Consumption & Forecast Timeline</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={getChartData(selectedProduct)}>
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="name" 
-                            angle={-45}
-                            textAnchor="end"
-                            height={60}
-                            fontSize={12}
-                          />
+                          <XAxis dataKey="name" />
                           <YAxis />
-                          <Tooltip 
-                            formatter={(value: any, name: string) => [
-                              `${formatNumber(value)} ${selectedProduct.unit}`,
-                              name === 'consumption' ? 'Consumption' : name
-                            ]}
-                            labelFormatter={(label) => `Period: ${label}`}
-                          />
+                          <Tooltip />
                           <Line 
                             type="monotone" 
                             dataKey="consumption" 
-                            stroke="#8884d8"
+                            stroke="#3b82f6"
                             strokeWidth={2}
-                            dot={{ fill: '#8884d8', strokeWidth: 2, r: 4 }}
-                            connectNulls={false}
+                            dot={{ r: 4 }}
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                        <span>Historical & Forecast Data</span>
-                      </div>
-                      <div>Last {selectedProduct.periods.length} periods + 3 forecast periods</div>
                     </div>
                   </CardContent>
                 </Card>
