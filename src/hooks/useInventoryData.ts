@@ -78,8 +78,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('inventory_balances')
         .select(`
           *,
-          products:products(name, unit),
-          facility:facility(facility_name)
+          products!inventory_balances_product_id_fkey(name, unit)
         `)
         .eq('facility_id', facilityId)
         .order('last_updated', { ascending: false });
@@ -94,7 +93,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('inventory_transactions')
         .select(`
           *,
-          products:products(name, unit)
+          products!inventory_transactions_product_id_fkey(name, unit)
         `)
         .eq('facility_id', facilityId)
         .gte('transaction_date', thirtyDaysAgo.toISOString().split('T')[0])
@@ -110,7 +109,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('consumption_analytics')
         .select(`
           *,
-          products:products(name, unit)
+          products!consumption_analytics_product_id_fkey(name, unit)
         `)
         .eq('facility_id', facilityId)
         .gte('period_start', sixMonthsAgo.toISOString().split('T')[0])
