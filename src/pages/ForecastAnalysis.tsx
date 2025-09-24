@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 const ForecastAnalysis: React.FC = () => {
   const [selectedGranularity, setSelectedGranularity] = useState<PeriodGranularity>('monthly');
   const [periodMonths, setPeriodMonths] = useState(12);
+  const [forecastDuration, setForecastDuration] = useState(3);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -121,7 +122,7 @@ const ForecastAnalysis: React.FC = () => {
       if (facilityId && historicalData?.products?.length > 0) {
         setForecastLoading(true);
         try {
-          const forecast = await generateForecastFromInventory(facilityId, periodMonths, 3);
+          const forecast = await generateForecastFromInventory(facilityId, periodMonths, forecastDuration);
           setForecastData(forecast);
         } catch (error) {
           console.error('Error generating forecast:', error);
@@ -132,7 +133,7 @@ const ForecastAnalysis: React.FC = () => {
     };
 
     generateForecast();
-  }, [facilityId, historicalData, periodMonths, generateForecastFromInventory]);
+  }, [facilityId, historicalData, periodMonths, forecastDuration, generateForecastFromInventory]);
 
   // Filter and combine historical and forecast data
   const filteredData = useMemo(() => {
@@ -161,11 +162,9 @@ const ForecastAnalysis: React.FC = () => {
 
       return {
         ...product,
-        forecast_quantities: forecast ? [
-          forecast.forecasted_quantity_1,
-          forecast.forecasted_quantity_2, 
-          forecast.forecasted_quantity_3
-        ] : [0, 0, 0],
+        forecast_quantities: forecast ? Array.from({ length: forecastDuration }, (_, i) => 
+          forecast[`forecasted_quantity_${i + 1}`] || 0
+        ) : Array(forecastDuration).fill(0),
         trend,
         confidence: forecast?.confidence_score || 0
       };
@@ -219,7 +218,8 @@ const ForecastAnalysis: React.FC = () => {
         selected_products: [],
         forecast_parameters: {
           granularity: selectedGranularity,
-          period_months: periodMonths
+          period_months: periodMonths,
+          forecast_duration: forecastDuration
         }
       };
 
@@ -262,6 +262,7 @@ const ForecastAnalysis: React.FC = () => {
       setSelectedAccountType(savedForecast.filter_criteria?.account_type_id || 'all');
       setSelectedGranularity(savedForecast.forecast_parameters?.granularity || 'monthly');
       setPeriodMonths(savedForecast.forecast_parameters?.period_months || 12);
+      setForecastDuration(savedForecast.forecast_parameters?.forecast_duration || 3);
 
       toast({
         title: "Forecast Loaded",
@@ -360,6 +361,26 @@ const ForecastAnalysis: React.FC = () => {
             <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
             <SelectItem value="quarterly">Quarterly</SelectItem>
             <SelectItem value="yearly">Yearly</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Forecast Duration ({selectedGranularity})</Label>
+        <Select 
+          value={forecastDuration.toString()} 
+          onValueChange={(value) => setForecastDuration(parseInt(value))}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Period</SelectItem>
+            <SelectItem value="2">2 Periods</SelectItem>
+            <SelectItem value="3">3 Periods</SelectItem>
+            <SelectItem value="4">4 Periods</SelectItem>
+            <SelectItem value="5">5 Periods</SelectItem>
+            <SelectItem value="6">6 Periods</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -535,9 +556,9 @@ const ForecastAnalysis: React.FC = () => {
                     <TableHead>Program</TableHead>
                     <TableHead>Total Consumption</TableHead>
                     <TableHead>Avg Monthly</TableHead>
-                    <TableHead>Forecast Q1</TableHead>
-                    <TableHead>Forecast Q2</TableHead>
-                    <TableHead>Forecast Q3</TableHead>
+                    {Array.from({ length: forecastDuration }, (_, i) => (
+                      <TableHead key={i}>Forecast P{i + 1}</TableHead>
+                    ))}
                     <TableHead>Trend</TableHead>
                     <TableHead>Confidence</TableHead>
                   </TableRow>
@@ -557,9 +578,9 @@ const ForecastAnalysis: React.FC = () => {
                       </TableCell>
                       <TableCell>{formatNumber(product.total_consumption)}</TableCell>
                       <TableCell>{formatNumber(product.average_consumption)}</TableCell>
-                      <TableCell>{formatNumber(product.forecast_quantities[0])}</TableCell>
-                      <TableCell>{formatNumber(product.forecast_quantities[1])}</TableCell>
-                      <TableCell>{formatNumber(product.forecast_quantities[2])}</TableCell>
+                      {product.forecast_quantities.map((quantity: number, i: number) => (
+                        <TableCell key={i}>{formatNumber(quantity)}</TableCell>
+                      ))}
                       <TableCell>{getTrendIcon(product.trend)}</TableCell>
                       <TableCell>{getConfidenceBadge(product.confidence)}</TableCell>
                     </TableRow>
