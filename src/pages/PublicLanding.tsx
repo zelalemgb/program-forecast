@@ -32,7 +32,7 @@ const PublicLanding: React.FC = () => {
           </div>
           <nav className="flex items-center gap-2">
             <Button asChild size="sm" variant="outline">
-              <Link to="/auth?mode=signup">Register</Link>
+              <Link to="/role-registration">Register</Link>
             </Button>
             <Button asChild size="sm" className="hero-gradient">
               <Link to="/auth">Continue with MoH Account</Link>
@@ -104,7 +104,7 @@ const PublicLanding: React.FC = () => {
                     <Link to="/auth">Continue with MoH Account</Link>
                   </Button>
                   <Button asChild variant="outline" className="w-full">
-                    <Link to="/auth?mode=signup">Register New Facility</Link>
+                    <Link to="/role-registration">Register</Link>
                   </Button>
                 </div>
 
