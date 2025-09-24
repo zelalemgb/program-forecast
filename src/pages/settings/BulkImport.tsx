@@ -451,58 +451,82 @@ const BulkImport: React.FC = () => {
             </Card>
           )}
 
-          {currentStep === 'mapping' && (
+           {currentStep === 'mapping' && (
             <Card>
               <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Map CSV Columns to Database Fields
-              </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Map Columns
+                </CardTitle>
                 <div className="text-sm text-muted-foreground">
-                  Map each column from your CSV file to the corresponding database field for{" "}
+                  Map CSV columns to database fields for{" "}
                   <span className="font-medium">
                     {importTypes.find(t => t.value === selectedType)?.label}
                   </span>
                 </div>
-
-                <div className="space-y-4">
-                  {columnMappings.map((mapping, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">CSV Column</label>
-                        <div className="p-2 bg-muted rounded border">
-                          <span className="text-sm font-mono">{mapping.csvColumn}</span>
-                        </div>
-                        {csvPreview && (
-                          <div className="text-xs text-muted-foreground">
-                            Sample: {csvPreview.rows[0]?.[index] || 'No data'}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Database Field</label>
-                        <Select 
-                          value={mapping.dbColumn} 
-                          onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select database field" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">-- Skip this column --</SelectItem>
-                            {databaseFields[selectedType as keyof typeof databaseFields]?.map(field => (
-                              <SelectItem key={field.value} value={field.value}>
-                                {field.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Database Fields - Left Side */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Database className="h-4 w-4" />
+                      <h3 className="text-sm font-medium">Database Fields</h3>
                     </div>
-                  ))}
+                    <div className="space-y-2">
+                      {selectedType && databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
+                        <div key={field.value} className="p-3 border rounded-lg bg-muted/30">
+                          <div className="font-medium text-sm">{field.label}</div>
+                          <div className="text-xs text-muted-foreground font-mono">{field.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CSV Columns & Mapping - Right Side */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      <h3 className="text-sm font-medium">CSV Columns & Mapping</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {columnMappings.map((mapping, index) => (
+                        <div key={index} className="space-y-2 p-3 border rounded-lg">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">CSV Column</label>
+                            <div className="p-2 bg-background rounded border text-sm font-mono">
+                              {mapping.csvColumn}
+                            </div>
+                            {csvPreview && csvPreview.rows[0] && (
+                              <div className="text-xs text-muted-foreground">
+                                Sample: "{csvPreview.rows[0][index] || 'No data'}"
+                              </div>
+                            )}
+                           </div>
+                          
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Maps to Database Field</label>
+                            <Select 
+                              value={mapping.dbColumn} 
+                              onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select database field" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">-- Skip this column --</SelectItem>
+                                {selectedType && databaseFields[selectedType as keyof typeof databaseFields]?.map(field => (
+                                  <SelectItem key={field.value} value={field.value}>
+                                    {field.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-4">
