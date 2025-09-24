@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Camera, Upload, Plus, Trash2, Package, Truck, FileText, ScanLine, ArrowLeft, Smartphone, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Camera, Upload, Plus, Trash2, Package, Truck, FileText, ScanLine, ArrowLeft, Smartphone, Search, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
 import { InspectionStep } from "./InspectionStep";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface Product {
   id: string;
@@ -51,6 +53,7 @@ interface DeliveryInfo {
   source: string;
   deliveryVoucherNumber: string;
   deliveryNote: string;
+  receiveDate: Date;
 }
 
 type ReceivingMethod = "document" | "manual" | "barcode" | null;
@@ -62,7 +65,8 @@ export const ReceivingModule: React.FC = () => {
   const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
     source: "",
     deliveryVoucherNumber: "",
-    deliveryNote: ""
+    deliveryNote: "",
+    receiveDate: new Date()
   });
   const [receivedItems, setReceivedItems] = useState<ReceivedItem[]>([]);
   const [newItem, setNewItem] = useState<Partial<ReceivedItem>>({});
@@ -149,7 +153,7 @@ export const ReceivingModule: React.FC = () => {
     setCurrentStep("method");
     setDocumentImage(null);
     setReceivedItems([]);
-    setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "" });
+    setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "", receiveDate: new Date() });
   };
 
   const proceedToInspection = () => {
@@ -188,7 +192,8 @@ export const ReceivingModule: React.FC = () => {
         setDeliveryInfo({
           source: "central-store",
           deliveryVoucherNumber: "DV-2024-03-001",
-          deliveryNote: "DN-2024-03-001"
+          deliveryNote: "DN-2024-03-001",
+          receiveDate: new Date()
         });
         
         // Mock extracted items
@@ -273,7 +278,7 @@ export const ReceivingModule: React.FC = () => {
             batch_number: item.batchNumber,
             expiry_date: item.expiryDate,
             unit_cost: item.unitCost,
-            transaction_date: new Date().toISOString().split('T')[0],
+            transaction_date: format(deliveryInfo.receiveDate, 'yyyy-MM-dd'),
             reference_number: deliveryInfo.deliveryNote,
             notes: `Received from ${deliveryInfo.source}. Delivery Voucher: ${deliveryInfo.deliveryVoucherNumber || 'N/A'}. Condition: ${item.conditionAtReceipt || 'good'}`
           });
@@ -287,7 +292,7 @@ export const ReceivingModule: React.FC = () => {
               transaction_type: "adjustment",
               quantity: adjustmentQuantity,
               batch_number: item.batchNumber,
-              transaction_date: new Date().toISOString().split('T')[0],
+              transaction_date: format(deliveryInfo.receiveDate, 'yyyy-MM-dd'),
               reference_number: `ADJ-${deliveryInfo.deliveryNote || Date.now()}`,
               notes: `Receiving adjustment: ${item.adjustmentReason || 'quantity discrepancy'}. Expected: ${item.quantity}, Actual: ${actualQuantity}`
             });
@@ -296,7 +301,7 @@ export const ReceivingModule: React.FC = () => {
       
       // Reset form
       setReceivedItems([]);
-      setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "" });
+      setDeliveryInfo({ source: "", deliveryVoucherNumber: "", deliveryNote: "", receiveDate: new Date() });
       setDocumentImage(null);
       setReceivingMethod(null);
       setCurrentStep("method");
@@ -436,6 +441,7 @@ export const ReceivingModule: React.FC = () => {
                 <div><strong>Source:</strong> {deliveryInfo.source === "central-store" ? "Central Medical Store" : deliveryInfo.source}</div>
                 <div><strong>Delivery Voucher #:</strong> {deliveryInfo.deliveryVoucherNumber}</div>
                 <div><strong>Delivery Note:</strong> {deliveryInfo.deliveryNote}</div>
+                <div><strong>Receive Date:</strong> {format(deliveryInfo.receiveDate, 'PPP')}</div>
               </div>
             </div>
           )}
@@ -541,6 +547,33 @@ export const ReceivingModule: React.FC = () => {
                   onChange={(e) => setDeliveryInfo(prev => ({...prev, deliveryNote: e.target.value}))}
                   placeholder="Enter delivery note reference"
                 />
+              </div>
+              <div>
+                <Label htmlFor="receive-date">Receive Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="receive-date"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !deliveryInfo.receiveDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {deliveryInfo.receiveDate ? format(deliveryInfo.receiveDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={deliveryInfo.receiveDate}
+                      onSelect={(date) => date && setDeliveryInfo(prev => ({...prev, receiveDate: date}))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
