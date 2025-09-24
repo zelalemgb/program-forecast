@@ -78,7 +78,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('inventory_balances')
         .select(`
           *,
-          products!inventory_balances_product_id_fkey(name, unit)
+          products(name, unit)
         `)
         .eq('facility_id', facilityId)
         .order('last_updated', { ascending: false });
@@ -93,7 +93,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('inventory_transactions')
         .select(`
           *,
-          products!inventory_transactions_product_id_fkey(name, unit)
+          products(name, unit)
         `)
         .eq('facility_id', facilityId)
         .gte('transaction_date', thirtyDaysAgo.toISOString().split('T')[0])
@@ -109,7 +109,7 @@ export const useInventoryData = (facilityId?: number) => {
         .from('consumption_analytics')
         .select(`
           *,
-          products!consumption_analytics_product_id_fkey(name, unit)
+          products(name, unit)
         `)
         .eq('facility_id', facilityId)
         .gte('period_start', sixMonthsAgo.toISOString().split('T')[0])
@@ -117,6 +117,10 @@ export const useInventoryData = (facilityId?: number) => {
 
       if (consumptionError) throw consumptionError;
 
+      console.log('Fetched balances:', balanceData);
+      console.log('Fetched transactions:', transactionData);
+      console.log('Fetched consumption:', consumptionData);
+      
       setBalances(balanceData as InventoryBalance[] || []);
       setTransactions(transactionData as InventoryTransaction[] || []);
       setConsumption(consumptionData as ConsumptionAnalytics[] || []);
