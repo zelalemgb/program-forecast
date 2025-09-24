@@ -90,72 +90,60 @@ const ForecastAnalysis: React.FC = () => {
     return num.toFixed(0);
   };
 
+  const titleActions = (
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Period</Label>
+        <Select 
+          value={selectedGranularity} 
+          onValueChange={(value: PeriodGranularity) => setSelectedGranularity(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="weekly">Weekly</SelectItem>
+            <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
+            <SelectItem value="quarterly">Quarterly</SelectItem>
+            <SelectItem value="yearly">Yearly</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Duration</Label>
+        <Select 
+          value={periodMonths.toString()} 
+          onValueChange={(value) => setPeriodMonths(parseInt(value))}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="6">6 Months</SelectItem>
+            <SelectItem value="12">12 Months</SelectItem>
+            <SelectItem value="18">18 Months</SelectItem>
+            <SelectItem value="24">24 Months</SelectItem>
+            <SelectItem value="36">36 Months</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-1 text-xs text-muted-foreground pt-2">
+        <div>{historicalData?.products?.length || 0} products</div>
+        <div>{historicalData?.period_headers?.length || 0} periods</div>
+      </div>
+    </div>
+  );
+
   return (
     <PageLayout
       title="Forecast Analysis"
       description="Analyze historical consumption patterns and future demand forecasts"
+      actions={titleActions}
     >
       <div className="space-y-6">
-        {/* Controls */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Analysis Parameters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Period Granularity</Label>
-                <Select 
-                  value={selectedGranularity} 
-                  onValueChange={(value: PeriodGranularity) => setSelectedGranularity(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Historical Period (Months)</Label>
-                <Select 
-                  value={periodMonths.toString()} 
-                  onValueChange={(value) => setPeriodMonths(parseInt(value))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="6">6 Months</SelectItem>
-                    <SelectItem value="12">12 Months</SelectItem>
-                    <SelectItem value="18">18 Months</SelectItem>
-                    <SelectItem value="24">24 Months</SelectItem>
-                    <SelectItem value="36">36 Months</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Summary</Label>
-                <div className="text-sm text-muted-foreground pt-2">
-                  {historicalData?.products?.length || 0} products analyzed
-                  <br />
-                  {historicalData?.period_headers?.length || 0} historical periods
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Results Table */}
         <Card>
           <CardHeader>
