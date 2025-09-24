@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Package, TrendingUp, TrendingDown, CheckCircle, Clock, Eye } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
+import { ConsumptionAnalysis } from "./ConsumptionAnalysis";
 
 interface StockOverviewProps {
   facilityId: number;
@@ -193,45 +194,8 @@ export const StockOverview: React.FC<StockOverviewProps> = ({ facilityId }) => {
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <Card className="surface">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Clock className="h-5 w-5" />
-            Recent Stock Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <TrendingUp className="h-4 w-4 text-status-ok flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm sm:text-base">Stock Received</div>
-                <div className="text-xs sm:text-sm text-muted-foreground truncate">Central Medical Store delivery - 15 items</div>
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">2h ago</div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <TrendingDown className="h-4 w-4 text-brand flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm sm:text-base">Ward Issue</div>
-                <div className="text-xs sm:text-sm text-muted-foreground truncate">Maternity Ward - 8 items dispensed</div>
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">4h ago</div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-status-warning flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm sm:text-base">Stock Adjustment</div>
-                <div className="text-xs sm:text-sm text-muted-foreground truncate">Damaged items removed - 3 batches</div>
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">1d ago</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Consumption Analysis & Forecast */}
+      <ConsumptionAnalysis facilityId={facilityId} />
     </div>
   );
 };
