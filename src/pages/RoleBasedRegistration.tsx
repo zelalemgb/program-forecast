@@ -89,10 +89,16 @@ const RoleBasedRegistration: React.FC = () => {
   const [selectedZone, setSelectedZone] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
   
-  // Search and filter states
+  // Search and filter states for all levels
   const [facilitySearch, setFacilitySearch] = useState('');
+  const [woredaSearch, setWoredaSearch] = useState('');
+  const [zoneSearch, setZoneSearch] = useState('');
+  const [regionSearch, setRegionSearch] = useState('');
+  
+  // Hierarchical filter states
   const [selectedRegionFilter, setSelectedRegionFilter] = useState('');
   const [selectedZoneFilter, setSelectedZoneFilter] = useState('');
+  const [selectedWoredaFilter, setSelectedWoredaFilter] = useState('');
 
   const selectedRoleInfo = roleOptions.find(r => r.value === selectedRole);
 
@@ -112,8 +118,26 @@ const RoleBasedRegistration: React.FC = () => {
       loadZonesByRegion(parseInt(selectedRegionFilter));
     } else {
       setZones([]);
+      setSelectedZoneFilter('');
+      setSelectedWoredaFilter('');
     }
   }, [selectedRegionFilter]);
+
+  useEffect(() => {
+    if (selectedZoneFilter && selectedZoneFilter !== 'all') {
+      loadWoredasByZone(parseInt(selectedZoneFilter));
+    } else {
+      setWoredas([]);
+      setSelectedWoredaFilter('');
+    }
+  }, [selectedZoneFilter]);
+
+  // Trigger data loading when search terms change
+  useEffect(() => {
+    if (selectedRoleInfo) {
+      loadLocationData(selectedRoleInfo.level);
+    }
+  }, [selectedRole, selectedRegionFilter, selectedZoneFilter, selectedWoredaFilter, facilitySearch, woredaSearch, zoneSearch, regionSearch]);
 
   const loadRegions = async () => {
     try {
@@ -136,6 +160,18 @@ const RoleBasedRegistration: React.FC = () => {
     }
   };
 
+  const loadWoredasByZone = async (zoneId: number) => {
+    try {
+      const { data } = await supabase
+        .from('woreda')
+        .select('woreda_id, woreda_name')
+        .eq('zone_id', zoneId);
+      setWoredas(data || []);
+    } catch (error) {
+      console.error('Error loading woredas:', error);
+    }
+  };
+
   const loadLocationData = async (level: string) => {
     try {
       if (level === 'facility') {
@@ -154,12 +190,15 @@ const RoleBasedRegistration: React.FC = () => {
             )
           `);
 
-        // Apply filters
+        // Apply hierarchical filters for facility selection
         if (selectedRegionFilter && selectedRegionFilter !== 'all') {
           query = query.eq('woreda.zone.region_id', parseInt(selectedRegionFilter));
         }
         if (selectedZoneFilter && selectedZoneFilter !== 'all') {
           query = query.eq('woreda.zone_id', parseInt(selectedZoneFilter));
+        }
+        if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
+          query = query.eq('woreda_id', parseInt(selectedWoredaFilter));
         }
         if (facilitySearch) {
           query = query.ilike('facility_name', `%${facilitySearch}%`);
@@ -167,29 +206,61 @@ const RoleBasedRegistration: React.FC = () => {
 
         const { data } = await query.limit(100);
         setFacilities((data as any) || []);
+        
       } else if (level === 'woreda') {
-        const { data } = await supabase
+        let query = supabase
           .from('woreda')
           .select(`
             woreda_id, 
             woreda_name,
-            zone(
+            zone!inner(
               zone_name,
-              region(region_name)
+              region!inner(region_name)
             )
           `);
+
+        // Apply hierarchical filters for woreda selection
+        if (selectedRegionFilter && selectedRegionFilter !== 'all') {
+          query = query.eq('zone.region_id', parseInt(selectedRegionFilter));
+        }
+        if (selectedZoneFilter && selectedZoneFilter !== 'all') {
+          query = query.eq('zone_id', parseInt(selectedZoneFilter));
+        }
+        if (woredaSearch) {
+          query = query.ilike('woreda_name', `%${woredaSearch}%`);
+        }
+
+        const { data } = await query.limit(100);
         setWoredas((data as any) || []);
+        
       } else if (level === 'zone') {
-        const { data } = await supabase
+        let query = supabase
           .from('zone')
           .select(`
             zone_id, 
             zone_name,
-            region(region_name)
+            region!inner(region_name)
           `);
+
+        // Apply hierarchical filters for zone selection
+        if (selectedRegionFilter && selectedRegionFilter !== 'all') {
+          query = query.eq('region_id', parseInt(selectedRegionFilter));
+        }
+        if (zoneSearch) {
+          query = query.ilike('zone_name', `%${zoneSearch}%`);
+        }
+
+        const { data } = await query.limit(100);
         setZones((data as any) || []);
+        
       } else if (level === 'regional') {
-        const { data } = await supabase.from('region').select('region_id, region_name');
+        let query = supabase.from('region').select('region_id, region_name');
+        
+        if (regionSearch) {
+          query = query.ilike('region_name', `%${regionSearch}%`);
+        }
+        
+        const { data } = await query.limit(100);
         setRegions(data || []);
       }
     } catch (error) {
@@ -450,8 +521,8 @@ const RoleBasedRegistration: React.FC = () => {
                       <Label className="font-medium">Select Your Facility *</Label>
                     </div>
                     
-                    {/* Facility Filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                    {/* Hierarchical Filters for Facility */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
                       <div className="space-y-2">
                         <Label htmlFor="regionFilter" className="text-sm">Filter by Region</Label>
                         <Select value={selectedRegionFilter} onValueChange={setSelectedRegionFilter}>
@@ -480,6 +551,23 @@ const RoleBasedRegistration: React.FC = () => {
                             {zones.map(zone => (
                               <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
                                 {zone.zone_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="woredaFilter" className="text-sm">Filter by Woreda</Label>
+                        <Select value={selectedWoredaFilter} onValueChange={setSelectedWoredaFilter} disabled={!selectedZoneFilter || selectedZoneFilter === 'all'}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="All woredas" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="all" className="hover:bg-muted">All woredas</SelectItem>
+                            {woredas.map(woreda => (
+                              <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()} className="hover:bg-muted">
+                                {woreda.woreda_name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -534,6 +622,58 @@ const RoleBasedRegistration: React.FC = () => {
                       <MapPin className="h-4 w-4 text-primary" />
                       <Label className="font-medium">Select Your Woreda *</Label>
                     </div>
+                    
+                    {/* Hierarchical Filters for Woreda */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="space-y-2">
+                        <Label htmlFor="regionFilterWoreda" className="text-sm">Filter by Region</Label>
+                        <Select value={selectedRegionFilter} onValueChange={setSelectedRegionFilter}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="All regions" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="all" className="hover:bg-muted">All regions</SelectItem>
+                            {regions.map(region => (
+                              <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
+                                {region.region_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="zoneFilterWoreda" className="text-sm">Filter by Zone</Label>
+                        <Select value={selectedZoneFilter} onValueChange={setSelectedZoneFilter} disabled={!selectedRegionFilter || selectedRegionFilter === 'all'}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="All zones" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="all" className="hover:bg-muted">All zones</SelectItem>
+                            {zones.map(zone => (
+                              <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
+                                {zone.zone_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="woredaSearch" className="text-sm">Search Woreda</Label>
+                        <div className="relative">
+                          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            id="woredaSearch"
+                            value={woredaSearch}
+                            onChange={(e) => setWoredaSearch(e.target.value)}
+                            placeholder="Search woredas..."
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="woreda">Woreda (District) *</Label>
                       <Select value={selectedWoreda} onValueChange={setSelectedWoreda}>
@@ -567,6 +707,41 @@ const RoleBasedRegistration: React.FC = () => {
                       <MapPin className="h-4 w-4 text-primary" />
                       <Label className="font-medium">Select Your Zone *</Label>
                     </div>
+                    
+                    {/* Hierarchical Filters for Zone */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="space-y-2">
+                        <Label htmlFor="regionFilterZone" className="text-sm">Filter by Region</Label>
+                        <Select value={selectedRegionFilter} onValueChange={setSelectedRegionFilter}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="All regions" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="all" className="hover:bg-muted">All regions</SelectItem>
+                            {regions.map(region => (
+                              <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
+                                {region.region_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="zoneSearch" className="text-sm">Search Zone</Label>
+                        <div className="relative">
+                          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            id="zoneSearch"
+                            value={zoneSearch}
+                            onChange={(e) => setZoneSearch(e.target.value)}
+                            placeholder="Search zones..."
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="zone">Zone *</Label>
                       <Select value={selectedZone} onValueChange={setSelectedZone}>
@@ -598,6 +773,24 @@ const RoleBasedRegistration: React.FC = () => {
                       <MapPin className="h-4 w-4 text-primary" />
                       <Label className="font-medium">Select Your Region *</Label>
                     </div>
+                    
+                    {/* Search for Region */}
+                    <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="space-y-2">
+                        <Label htmlFor="regionSearch" className="text-sm">Search Region</Label>
+                        <div className="relative">
+                          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            id="regionSearch"
+                            value={regionSearch}
+                            onChange={(e) => setRegionSearch(e.target.value)}
+                            placeholder="Search regions..."
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="region">Region *</Label>
                       <Select value={selectedRegion} onValueChange={setSelectedRegion}>
