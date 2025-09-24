@@ -510,73 +510,6 @@ const ForecastAnalysis: React.FC = () => {
           </Card>
         )}
 
-        {/* Saved Forecasts Section */}
-        {!currentLoadedForecast && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BookOpen className="w-5 h-5 mr-2" />
-                Saved Forecasts ({savedForecasts.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {savedForecasts.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {savedForecasts.slice(0, 6).map((summary) => (
-                  <div 
-                    key={summary.id}
-                    className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => loadSavedForecast(summary)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-sm">{summary.name}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {summary.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                      {summary.description || 'No description'}
-                    </p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span>Items:</span>
-                        <span>{summary.total_line_items}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Value:</span>
-                        <span className="font-medium">{summary.current_total_value.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Created:</span>
-                        <span>{format(new Date(summary.created_at), 'MMM dd')}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                  </div>
-                  {savedForecasts.length > 6 && (
-                    <div className="mt-4 text-center">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setShowSavedForecastsModal(true)}
-                      >
-                        View All {savedForecasts.length} Forecasts
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No saved forecasts yet</p>
-                  <p className="text-sm">Generate and save a forecast to see it here</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -698,6 +631,74 @@ const ForecastAnalysis: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Saved Forecasts Section */}
+        {!currentLoadedForecast && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BookOpen className="w-5 h-5 mr-2" />
+                Saved Forecasts ({savedForecasts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {savedForecasts.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {savedForecasts.slice(0, 6).map((summary) => (
+                  <div 
+                    key={summary.id}
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => loadSavedForecast(summary)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-sm">{summary.name}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {summary.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      {summary.description || 'No description'}
+                    </p>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>Items:</span>
+                        <span>{summary.total_line_items}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Value:</span>
+                        <span className="font-medium">{summary.current_total_value.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Created:</span>
+                        <span>{format(new Date(summary.created_at), 'MMM dd')}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                  </div>
+                  {savedForecasts.length > 6 && (
+                    <div className="mt-4 text-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowSavedForecastsModal(true)}
+                      >
+                        View All {savedForecasts.length} Forecasts
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No saved forecasts yet</p>
+                  <p className="text-sm">Generate and save a forecast to see it here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Product Detail Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
