@@ -108,8 +108,10 @@ const RoleBasedRegistration: React.FC = () => {
   }, [selectedRole]);
 
   useEffect(() => {
-    if (selectedRegionFilter) {
+    if (selectedRegionFilter && selectedRegionFilter !== 'all') {
       loadZonesByRegion(parseInt(selectedRegionFilter));
+    } else {
+      setZones([]);
     }
   }, [selectedRegionFilter]);
 
@@ -153,10 +155,10 @@ const RoleBasedRegistration: React.FC = () => {
           `);
 
         // Apply filters
-        if (selectedRegionFilter) {
+        if (selectedRegionFilter && selectedRegionFilter !== 'all') {
           query = query.eq('woreda.zone.region_id', parseInt(selectedRegionFilter));
         }
-        if (selectedZoneFilter) {
+        if (selectedZoneFilter && selectedZoneFilter !== 'all') {
           query = query.eq('woreda.zone_id', parseInt(selectedZoneFilter));
         }
         if (facilitySearch) {
@@ -433,7 +435,7 @@ const RoleBasedRegistration: React.FC = () => {
                             <SelectValue placeholder="All regions" />
                           </SelectTrigger>
                           <SelectContent className="bg-background border z-50">
-                            <SelectItem value="" className="hover:bg-muted">All regions</SelectItem>
+                            <SelectItem value="all" className="hover:bg-muted">All regions</SelectItem>
                             {regions.map(region => (
                               <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
                                 {region.region_name}
@@ -445,12 +447,12 @@ const RoleBasedRegistration: React.FC = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="zoneFilter">Filter by Zone</Label>
-                        <Select value={selectedZoneFilter} onValueChange={setSelectedZoneFilter} disabled={!selectedRegionFilter}>
+                        <Select value={selectedZoneFilter} onValueChange={setSelectedZoneFilter} disabled={!selectedRegionFilter || selectedRegionFilter === 'all'}>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All zones" />
                           </SelectTrigger>
                           <SelectContent className="bg-background border z-50">
-                            <SelectItem value="" className="hover:bg-muted">All zones</SelectItem>
+                            <SelectItem value="all" className="hover:bg-muted">All zones</SelectItem>
                             {zones.map(zone => (
                               <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
                                 {zone.zone_name}
