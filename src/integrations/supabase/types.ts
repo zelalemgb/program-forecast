@@ -1996,6 +1996,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone_number: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -2004,6 +2005,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone_number?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2012,6 +2014,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone_number?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
