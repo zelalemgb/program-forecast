@@ -592,6 +592,42 @@ export type Database = {
           },
         ]
       }
+      forecast_adjustments: {
+        Row: {
+          adjusted_at: string
+          adjusted_by: string
+          adjustment_type: string
+          forecast_row_id: string
+          forecast_summary_id: string
+          id: string
+          new_value: number
+          old_value: number
+          reason: string | null
+        }
+        Insert: {
+          adjusted_at?: string
+          adjusted_by: string
+          adjustment_type?: string
+          forecast_row_id: string
+          forecast_summary_id: string
+          id?: string
+          new_value: number
+          old_value: number
+          reason?: string | null
+        }
+        Update: {
+          adjusted_at?: string
+          adjusted_by?: string
+          adjustment_type?: string
+          forecast_row_id?: string
+          forecast_summary_id?: string
+          id?: string
+          new_value?: number
+          old_value?: number
+          reason?: string | null
+        }
+        Relationships: []
+      }
       forecast_data_sources: {
         Row: {
           confidence_score: number | null
@@ -675,6 +711,90 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           year?: string | null
+        }
+        Relationships: []
+      }
+      forecast_summaries: {
+        Row: {
+          account_type: string | null
+          available_budget: number | null
+          created_at: string
+          current_total_value: number
+          description: string | null
+          facility_name: string | null
+          forecast_duration: number
+          id: string
+          name: string
+          original_total_value: number
+          status: string
+          total_line_items: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string | null
+          available_budget?: number | null
+          created_at?: string
+          current_total_value?: number
+          description?: string | null
+          facility_name?: string | null
+          forecast_duration?: number
+          id?: string
+          name: string
+          original_total_value?: number
+          status?: string
+          total_line_items?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string | null
+          available_budget?: number | null
+          created_at?: string
+          current_total_value?: number
+          description?: string | null
+          facility_name?: string | null
+          forecast_duration?: number
+          id?: string
+          name?: string
+          original_total_value?: number
+          status?: string
+          total_line_items?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      forecast_summary_items: {
+        Row: {
+          created_at: string
+          current_price: number
+          current_quantity: number
+          current_total: number
+          forecast_row_id: string
+          forecast_summary_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_price: number
+          current_quantity: number
+          current_total: number
+          forecast_row_id: string
+          forecast_summary_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_price?: number
+          current_quantity?: number
+          current_total?: number
+          forecast_row_id?: string
+          forecast_summary_id?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }

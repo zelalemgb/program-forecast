@@ -12,10 +12,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useHistoricalConsumption, PeriodGranularity } from '@/hooks/useHistoricalConsumption';
 import { useForecastIntegration } from '@/hooks/useForecastIntegration';
-import { TrendingUp, TrendingDown, Minus, BarChart3, Save, Filter, BookOpen } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Save, Filter, BookOpen, History, Eye, Settings } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ForecastSummaryCard } from '@/components/forecast/ForecastSummaryCard';
+import { BudgetAdjustmentModal } from '@/components/forecast/BudgetAdjustmentModal';
+import { SaveForecastModal } from '@/components/forecast/SaveForecastModal';
+import { ForecastSummary, useForecastSummary } from '@/hooks/useForecastSummary';
 
 const ForecastAnalysis: React.FC = () => {
   const [selectedGranularity, setSelectedGranularity] = useState<PeriodGranularity>('monthly');
@@ -28,10 +32,16 @@ const ForecastAnalysis: React.FC = () => {
   const [selectedAccountType, setSelectedAccountType] = useState<string>('all');
   const [availableAccountTypes, setAvailableAccountTypes] = useState<any[]>([]);
   const [accountTypeProducts, setAccountTypeProducts] = useState<string[]>([]);
+  
+  // Forecast management state
+  const [showSavedForecastsModal, setShowSavedForecastsModal] = useState(false);
+  const [showSaveForecastModal, setShowSaveForecastModal] = useState(false);
+  const [showBudgetAdjustmentModal, setShowBudgetAdjustmentModal] = useState(false);
+  const [selectedForecastSummary, setSelectedForecastSummary] = useState<ForecastSummary | null>(null);
+  const [savedForecasts, setSavedForecasts] = useState<ForecastSummary[]>([]);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [forecastName, setForecastName] = useState('');
   const [forecastDescription, setForecastDescription] = useState('');
-  const [savedForecasts, setSavedForecasts] = useState<any[]>([]);
 
   const { toast } = useToast();
   const facilityId = 1; // This should come from context or user selection
@@ -89,25 +99,22 @@ const ForecastAnalysis: React.FC = () => {
     fetchAccountTypeProducts();
   }, [selectedAccountType]);
 
+  // Initialize forecast summary hook
+  const { getForecastSummaries } = useForecastSummary();
+
   // Fetch saved forecasts
   useEffect(() => {
     const fetchSavedForecasts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('saved_forecasts')
-          .select('*')
-          .eq('facility_id', facilityId)
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        setSavedForecasts(data || []);
+        const summaries = await getForecastSummaries();
+        setSavedForecasts(summaries);
       } catch (error) {
         console.error('Error fetching saved forecasts:', error);
       }
     };
 
     fetchSavedForecasts();
-  }, [facilityId]);
+  }, []);
 
   // Fetch historical data when parameters change
   useEffect(() => {
@@ -246,7 +253,8 @@ const ForecastAnalysis: React.FC = () => {
         .eq('facility_id', facilityId)
         .order('created_at', { ascending: false });
       
-      setSavedForecasts(data || []);
+      // This old code is not compatible with new forecast summary structure
+      // setSavedForecasts(data || []);
       
     } catch (error) {
       toast({
@@ -673,6 +681,64 @@ const ForecastAnalysis: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Save Forecast Modal */}
+        <SaveForecastModal
+          open={showSaveForecastModal}
+          onOpenChange={setShowSaveForecastModal}
+          forecastData={combinedData}
+          facilityName="Current Facility"
+          accountType={selectedAccountType}
+          forecastDuration={forecastDuration}
+          onSaved={async () => {
+            const summaries = await getForecastSummaries();
+            setSavedForecasts(summaries);
+          }}
+        />
+
+        {/* Budget Adjustment Modal */}
+        <BudgetAdjustmentModal
+          open={showBudgetAdjustmentModal}
+          onOpenChange={setShowBudgetAdjustmentModal}
+          summary={selectedForecastSummary}
+          onSaved={async () => {
+            const summaries = await getForecastSummaries();
+            setSavedForecasts(summaries);
+            setSelectedForecastSummary(null);
+          }}
+        />
+
+        {/* Saved Forecasts Modal */}
+        <Dialog open={showSavedForecastsModal} onOpenChange={setShowSavedForecastsModal}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Saved Forecast Summaries</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedForecasts.map((summary) => (
+                <ForecastSummaryCard
+                  key={summary.id}
+                  summary={summary}
+                  onView={(summary) => {
+                    // Could open a detailed view modal
+                    setSelectedForecastSummary(summary);
+                    setShowSavedForecastsModal(false);
+                  }}
+                  onAdjust={(summary) => {
+                    setSelectedForecastSummary(summary);
+                    setShowSavedForecastsModal(false);
+                    setShowBudgetAdjustmentModal(true);
+                  }}
+                />
+              ))}
+            </div>
+            {savedForecasts.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No saved forecasts found. Generate and save a forecast to see it here.
               </div>
             )}
           </DialogContent>
