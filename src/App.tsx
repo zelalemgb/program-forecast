@@ -33,6 +33,7 @@ import Guides from "./pages/Guides";
 import Videos from "./pages/Videos";
 import ForecastAnalysis from "./pages/ForecastAnalysis";
 import SavedForecasts from "./pages/SavedForecasts";
+import UserManagement from "./pages/UserManagement";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -70,6 +71,7 @@ const AppShell: React.FC = () => {
               <Route path="/register" element={<RegisterFacility />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/admin" element={<SuperAdminDashboard />} />
+              <Route path="/user-management" element={<UserManagement />} />
               <Route path="/settings/metadata" element={<MetadataOrganization />} />
               <Route path="/settings/metadata/facilities" element={<FacilitiesManagement />} />
               <Route path="/settings/metadata/products" element={<ProductsManagement />} />

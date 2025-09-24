@@ -189,12 +189,20 @@ export const navigationPages: Record<string, NavigationPage> = {
   },
 
   // Admin
+  '/user-management': {
+    path: '/user-management',
+    title: 'User Management',
+    description: 'Manage user roles, permissions, and approval workflows',
+    category: 'admin',
+    breadcrumbLabel: 'User Management',
+    showInSidebar: true,
+  },
   '/admin/users': {
     path: '/admin/users',
-    title: 'User Management',
-    description: 'Manage user accounts and permissions',
+    title: 'User Accounts',
+    description: 'Manage user accounts and basic settings',
     category: 'admin',
-    breadcrumbLabel: 'Users',
+    breadcrumbLabel: 'User Accounts',
     showInSidebar: true,
   },
   '/admin': {

@@ -2625,29 +2625,159 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
+      user_role_requests: {
         Row: {
-          assigned_at: string | null
-          assigned_by: string | null
+          admin_level: Database["public"]["Enums"]["admin_level"]
+          created_at: string
+          facility_id: number | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          justification: string | null
+          region_id: number | null
+          requested_at: string
+          requested_role: Database["public"]["Enums"]["user_role_type"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          updated_at: string
           user_id: string
+          woreda_id: number | null
+          zone_id: number | null
         }
         Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
+          admin_level: Database["public"]["Enums"]["admin_level"]
+          created_at?: string
+          facility_id?: number | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          justification?: string | null
+          region_id?: number | null
+          requested_at?: string
+          requested_role: Database["public"]["Enums"]["user_role_type"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
           user_id: string
+          woreda_id?: number | null
+          zone_id?: number | null
         }
         Update: {
+          admin_level?: Database["public"]["Enums"]["admin_level"]
+          created_at?: string
+          facility_id?: number | null
+          id?: string
+          justification?: string | null
+          region_id?: number | null
+          requested_at?: string
+          requested_role?: Database["public"]["Enums"]["user_role_type"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          woreda_id?: number | null
+          zone_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_role_requests_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "user_role_requests_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
+          {
+            foreignKeyName: "user_role_requests_woreda_id_fkey"
+            columns: ["woreda_id"]
+            isOneToOne: false
+            referencedRelation: "woreda"
+            referencedColumns: ["woreda_id"]
+          },
+          {
+            foreignKeyName: "user_role_requests_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["zone_id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          admin_level: Database["public"]["Enums"]["admin_level"] | null
+          assigned_at: string | null
+          assigned_by: string | null
+          facility_id: number | null
+          id: string
+          region_id: number | null
+          role: Database["public"]["Enums"]["user_role_type"]
+          user_id: string
+          woreda_id: number | null
+          zone_id: number | null
+        }
+        Insert: {
+          admin_level?: Database["public"]["Enums"]["admin_level"] | null
           assigned_at?: string | null
           assigned_by?: string | null
+          facility_id?: number | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
+          region_id?: number | null
+          role: Database["public"]["Enums"]["user_role_type"]
+          user_id: string
+          woreda_id?: number | null
+          zone_id?: number | null
         }
-        Relationships: []
+        Update: {
+          admin_level?: Database["public"]["Enums"]["admin_level"] | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          facility_id?: number | null
+          id?: string
+          region_id?: number | null
+          role?: Database["public"]["Enums"]["user_role_type"]
+          user_id?: string
+          woreda_id?: number | null
+          zone_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "user_roles_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
+          {
+            foreignKeyName: "user_roles_woreda_id_fkey"
+            columns: ["woreda_id"]
+            isOneToOne: false
+            referencedRelation: "woreda"
+            referencedColumns: ["woreda_id"]
+          },
+          {
+            foreignKeyName: "user_roles_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["zone_id"]
+          },
+        ]
       }
       validation_results: {
         Row: {
@@ -2820,6 +2950,10 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      approve_role_request: {
+        Args: { request_id: string; reviewer_notes?: string }
+        Returns: undefined
+      }
       approve_rrf: {
         Args: { p_comment?: string; p_decision?: string; p_rrf_id: string }
         Returns: undefined
@@ -2886,13 +3020,30 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      reject_role_request: {
+        Args: { request_id: string; reviewer_notes?: string }
+        Returns: undefined
+      }
       submit_rrf: {
         Args: { p_rrf_id: string }
         Returns: undefined
       }
     }
     Enums: {
+      admin_level: "facility" | "woreda" | "zone" | "regional" | "national"
       app_role: "admin" | "analyst" | "viewer"
+      user_role_type:
+        | "facility_logistic_officer"
+        | "facility_admin"
+        | "facility_manager"
+        | "woreda_user"
+        | "zone_user"
+        | "regional_user"
+        | "national_user"
+        | "program_officer"
+        | "admin"
+        | "analyst"
+        | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3020,7 +3171,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_level: ["facility", "woreda", "zone", "regional", "national"],
       app_role: ["admin", "analyst", "viewer"],
+      user_role_type: [
+        "facility_logistic_officer",
+        "facility_admin",
+        "facility_manager",
+        "woreda_user",
+        "zone_user",
+        "regional_user",
+        "national_user",
+        "program_officer",
+        "admin",
+        "analyst",
+        "viewer",
+      ],
     },
   },
 } as const
