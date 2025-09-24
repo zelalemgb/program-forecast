@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserFacility } from "@/hooks/useUserFacility";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -19,6 +20,7 @@ const Profile: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { facilityName, facilityType, role, adminLevel, locationDisplay, loading: facilityLoading } = useUserFacility();
 
   const [fullName, setFullName] = React.useState<string>("");
   const [phoneNumber, setPhoneNumber] = React.useState<string>("");
@@ -130,10 +132,11 @@ const Profile: React.FC = () => {
         <p className="text-muted-foreground mt-2">Update your account information.</p>
       </section>
 
-      <section className="container pb-16">
+      <section className="container pb-16 space-y-6">
+        {/* Account Details Card */}
         <Card className="max-w-xl surface">
           <CardHeader>
-            <CardTitle>Account details</CardTitle>
+            <CardTitle>Account Details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSave} className="space-y-4">
@@ -196,6 +199,61 @@ const Profile: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Facility Information Card */}
+        <Card className="max-w-xl surface">
+          <CardHeader>
+            <CardTitle>Facility Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {facilityLoading ? (
+              <div className="space-y-4">
+                <div className="animate-pulse bg-muted h-4 rounded w-3/4"></div>
+                <div className="animate-pulse bg-muted h-4 rounded w-1/2"></div>
+                <div className="animate-pulse bg-muted h-4 rounded w-2/3"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Role</label>
+                  <Input value={role || "No role assigned"} readOnly className="bg-muted" />
+                </div>
+                
+                {adminLevel && (
+                  <div>
+                    <label className="text-sm font-medium">Administrative Level</label>
+                    <Input value={adminLevel} readOnly className="bg-muted" />
+                  </div>
+                )}
+                
+                <div>
+                  <label className="text-sm font-medium">Location</label>
+                  <Input value={locationDisplay || "No location assigned"} readOnly className="bg-muted" />
+                </div>
+                
+                {facilityName && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium">Facility Name</label>
+                      <Input value={facilityName} readOnly className="bg-muted" />
+                    </div>
+                    
+                    {facilityType && (
+                      <div>
+                        <label className="text-sm font-medium">Facility Type</label>
+                        <Input value={facilityType} readOnly className="bg-muted" />
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                <p className="text-xs text-muted-foreground">
+                  Contact your administrator to change facility assignments or roles.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>
