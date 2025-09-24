@@ -374,25 +374,17 @@ const ProductsManagement: React.FC = () => {
               <Upload className="h-4 w-4 mr-2" />
               Bulk Import
             </Button>
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
           </div>
         }
       />
 
       {/* Products List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Products ({products.length})
-            </div>
-            <Button size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <div className="rounded-md border">
             <Table>
               <TableHeader>
