@@ -38,14 +38,19 @@ interface Product {
   canonical_name: string;
   program?: string;
   ven_classification?: string;
+  form?: string;
+  strength?: string;
 }
 
 const AccountTypesManagement: React.FC = () => {
   const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedAccountTypeProducts, setSelectedAccountTypeProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [editingAccountType, setEditingAccountType] = useState<AccountType | null>(null);
+  const [viewingAccountType, setViewingAccountType] = useState<AccountType | null>(null);
 
   const form = useForm<AccountTypeForm>({
     resolver: zodResolver(accountTypeSchema),
@@ -105,6 +110,31 @@ const AccountTypesManagement: React.FC = () => {
       return data?.map(item => item.product_id) || [];
     } catch (error) {
       console.error("Error fetching account type products:", error);
+      return [];
+    }
+  };
+
+  const fetchAccountTypeProductDetails = async (accountTypeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("account_type_products")
+        .select(`
+          product_id,
+          product_reference!inner(
+            id,
+            canonical_name,
+            program,
+            ven_classification,
+            form,
+            strength
+          )
+        `)
+        .eq("account_type_id", accountTypeId);
+
+      if (error) throw error;
+      return data?.map(item => item.product_reference) || [];
+    } catch (error) {
+      console.error("Error fetching account type product details:", error);
       return [];
     }
   };
@@ -227,6 +257,13 @@ const AccountTypesManagement: React.FC = () => {
   const resetForm = () => {
     form.reset();
     setEditingAccountType(null);
+  };
+
+  const handleViewAccountType = async (accountType: AccountType) => {
+    setViewingAccountType(accountType);
+    const productDetails = await fetchAccountTypeProductDetails(accountType.id);
+    setSelectedAccountTypeProducts(productDetails);
+    setIsDetailDialogOpen(true);
   };
 
   if (loading) {
@@ -385,7 +422,11 @@ const AccountTypesManagement: React.FC = () => {
 
         <div className="grid gap-4">
           {accountTypes.map((accountType) => (
-            <Card key={accountType.id}>
+            <Card 
+              key={accountType.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleViewAccountType(accountType)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -399,7 +440,7 @@ const AccountTypesManagement: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"
@@ -434,6 +475,69 @@ const AccountTypesManagement: React.FC = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Detail Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {viewingAccountType?.name} - Product List
+              </DialogTitle>
+              {viewingAccountType?.description && (
+                <p className="text-sm text-muted-foreground">
+                  {viewingAccountType.description}
+                </p>
+              )}
+            </DialogHeader>
+            
+            <ScrollArea className="h-96">
+              <div className="space-y-3">
+                {selectedAccountTypeProducts.length > 0 ? (
+                  selectedAccountTypeProducts.map((product) => (
+                    <Card key={product.id} className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{product.canonical_name}</h4>
+                          {(product.form || product.strength) && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {[product.form, product.strength].filter(Boolean).join(" - ")}
+                            </p>
+                          )}
+                          <div className="flex gap-2 mt-2">
+                            {product.program && (
+                              <Badge variant="secondary" className="text-xs">
+                                {product.program}
+                              </Badge>
+                            )}
+                            {product.ven_classification && (
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
+                                  product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
+                                  product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
+                                  'border-gray-300'
+                                }`}
+                              >
+                                {product.ven_classification}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No products found in this account type.</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageLayout>
   );
