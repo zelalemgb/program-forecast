@@ -83,16 +83,12 @@ const aiAssistant: Item[] = [
   { title: "AI Assistant", url: "/ai-assistant", icon: MessageSquare },
 ];
 
+const settings: Item[] = [
+  { title: "Metadata", url: "/settings/metadata", icon: Database },
+];
+
 const admin: Item[] = [
   { title: "User Management", url: "/admin/users", icon: Users },
-  { 
-    title: "Settings", 
-    url: "/program-settings", 
-    icon: Settings,
-    items: [
-      { title: "Metadata", url: "/settings/metadata", icon: Building2 }
-    ]
-  },
 ];
 
 const helpTraining: Item[] = [
@@ -228,6 +224,7 @@ const AppSidebar = () => {
         <Group label="Supply Planning" items={supplyPlanning} />
         <Group label="Analytics & Reports" items={analytics} />
         <Group label="" items={aiAssistant} />
+        <Group label="Settings" items={settings} />
         <Group label="Admin" items={admin} />
         <Group label="Help & Training" items={helpTraining} />
       </SidebarContent>
