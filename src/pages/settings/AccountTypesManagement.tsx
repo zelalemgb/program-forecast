@@ -1,24 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Search } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Plus, Edit, Trash2, Package } from "lucide-react";
 import PageLayout from "@/components/layout/PageLayout";
+
+const accountTypeSchema = z.object({
+  name: z.string().min(1, "Account type name is required"),
+  description: z.string().optional(),
+  productIds: z.array(z.string()).min(1, "At least one product must be selected"),
+});
+
+type AccountTypeForm = z.infer<typeof accountTypeSchema>;
 
 interface AccountType {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   created_at: string;
   product_count?: number;
 }
@@ -31,167 +41,224 @@ interface Product {
 }
 
 const AccountTypesManagement: React.FC = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newAccountType, setNewAccountType] = useState({ name: "", description: "" });
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingAccountType, setEditingAccountType] = useState<AccountType | null>(null);
 
-  // Fetch account types
-  const { data: accountTypes = [], isLoading: isLoadingAccountTypes } = useQuery({
-    queryKey: ["accountTypes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("account_types")
-        .select(`
-          *,
-          account_type_products(count)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      
-      return data.map(item => ({
-        ...item,
-        product_count: item.account_type_products?.[0]?.count || 0
-      }));
+  const form = useForm<AccountTypeForm>({
+    resolver: zodResolver(accountTypeSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      productIds: [],
     },
   });
 
-  // Fetch products for selection
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ["products", productSearchTerm],
-    queryFn: async () => {
-      let query = supabase
+  useEffect(() => {
+    fetchAccountTypes();
+    fetchProducts();
+  }, []);
+
+  const fetchAccountTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("account_types")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAccountTypes(data || []);
+    } catch (error) {
+      console.error("Error fetching account types:", error);
+      toast.error("Failed to fetch account types");
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
         .from("product_reference")
         .select("id, canonical_name, program, ven_classification")
         .eq("active", true)
         .order("canonical_name");
 
-      if (productSearchTerm.trim()) {
-        query = query.ilike("canonical_name", `%${productSearchTerm}%`);
-      }
-
-      const { data, error } = await query.limit(100);
       if (error) throw error;
-      return data;
-    },
-  });
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Create account type mutation
-  const createAccountTypeMutation = useMutation({
-    mutationFn: async ({ accountType, productIds }: { accountType: typeof newAccountType, productIds: string[] }) => {
-      // Create account type
-      const { data: createdAccountType, error: accountTypeError } = await supabase
+  const fetchAccountTypeProducts = async (accountTypeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("account_type_products")
+        .select("product_id")
+        .eq("account_type_id", accountTypeId);
+
+      if (error) throw error;
+      return data?.map(item => item.product_id) || [];
+    } catch (error) {
+      console.error("Error fetching account type products:", error);
+      return [];
+    }
+  };
+
+  const handleCreateAccountType = async (data: AccountTypeForm) => {
+    try {
+      const { data: accountType, error: accountTypeError } = await supabase
         .from("account_types")
-        .insert([accountType])
+        .insert({
+          name: data.name,
+          description: data.description,
+        })
         .select()
         .single();
 
       if (accountTypeError) throw accountTypeError;
 
-      // Add products to account type
-      if (productIds.length > 0) {
-        const productMappings = productIds.map(productId => ({
-          account_type_id: createdAccountType.id,
-          product_id: productId
-        }));
+      const productAssociations = data.productIds.map(productId => ({
+        account_type_id: accountType.id,
+        product_id: productId,
+      }));
 
-        const { error: mappingError } = await supabase
-          .from("account_type_products")
-          .insert(productMappings);
+      const { error: productsError } = await supabase
+        .from("account_type_products")
+        .insert(productAssociations);
 
-        if (mappingError) throw mappingError;
-      }
+      if (productsError) throw productsError;
 
-      return createdAccountType;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accountTypes"] });
-      toast({ title: "Account type created successfully" });
-      setIsCreateModalOpen(false);
-      setNewAccountType({ name: "", description: "" });
-      setSelectedProducts([]);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error creating account type",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+      toast.success("Account type created successfully");
+      setIsCreateDialogOpen(false);
+      form.reset();
+      fetchAccountTypes();
+    } catch (error) {
+      console.error("Error creating account type:", error);
+      toast.error("Failed to create account type");
+    }
+  };
 
-  // Delete account type mutation
-  const deleteAccountTypeMutation = useMutation({
-    mutationFn: async (accountTypeId: string) => {
+  const handleEditAccountType = async (accountType: AccountType) => {
+    const productIds = await fetchAccountTypeProducts(accountType.id);
+    setEditingAccountType(accountType);
+    form.reset({
+      name: accountType.name,
+      description: accountType.description || "",
+      productIds: productIds,
+    });
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleUpdateAccountType = async (data: AccountTypeForm) => {
+    if (!editingAccountType) return;
+
+    try {
+      const { error: accountTypeError } = await supabase
+        .from("account_types")
+        .update({
+          name: data.name,
+          description: data.description,
+        })
+        .eq("id", editingAccountType.id);
+
+      if (accountTypeError) throw accountTypeError;
+
+      const { error: deleteError } = await supabase
+        .from("account_type_products")
+        .delete()
+        .eq("account_type_id", editingAccountType.id);
+
+      if (deleteError) throw deleteError;
+
+      const productAssociations = data.productIds.map(productId => ({
+        account_type_id: editingAccountType.id,
+        product_id: productId,
+      }));
+
+      const { error: productsError } = await supabase
+        .from("account_type_products")
+        .insert(productAssociations);
+
+      if (productsError) throw productsError;
+
+      toast.success("Account type updated successfully");
+      setIsCreateDialogOpen(false);
+      setEditingAccountType(null);
+      form.reset();
+      fetchAccountTypes();
+    } catch (error) {
+      console.error("Error updating account type:", error);
+      toast.error("Failed to update account type");
+    }
+  };
+
+  const handleDeleteAccountType = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this account type?")) return;
+
+    try {
       const { error } = await supabase
         .from("account_types")
         .delete()
-        .eq("id", accountTypeId);
+        .eq("id", id);
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accountTypes"] });
-      toast({ title: "Account type deleted successfully" });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error deleting account type",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  const handleCreateAccountType = () => {
-    if (!newAccountType.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an account type name",
-        variant: "destructive",
-      });
-      return;
+      toast.success("Account type deleted successfully");
+      fetchAccountTypes();
+    } catch (error) {
+      console.error("Error deleting account type:", error);
+      toast.error("Failed to delete account type");
     }
-
-    createAccountTypeMutation.mutate({
-      accountType: newAccountType,
-      productIds: selectedProducts
-    });
   };
 
-  const handleProductSelection = (productId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(prev => [...prev, productId]);
+  const onSubmit = (data: AccountTypeForm) => {
+    if (editingAccountType) {
+      handleUpdateAccountType(data);
     } else {
-      setSelectedProducts(prev => prev.filter(id => id !== productId));
+      handleCreateAccountType(data);
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.canonical_name.toLowerCase().includes(productSearchTerm.toLowerCase())
-  );
+  const resetForm = () => {
+    form.reset();
+    setEditingAccountType(null);
+  };
+
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout>
       <Helmet>
-        <title>Account Types Management | Metadata Settings</title>
-        <meta name="description" content="Manage account types and their associated product lists for organized inventory management." />
-        <link rel="canonical" href="/settings/metadata/account-types" />
+        <title>Account Types Management | System Settings</title>
+        <meta name="description" content="Manage account types and their associated drug lists" />
       </Helmet>
 
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Account Types Management</h1>
+            <h1 className="text-2xl font-bold">Account Types</h1>
             <p className="text-muted-foreground">
-              Create and manage account types with specific product lists for organized inventory management.
+              Manage account types and their associated drug lists
             </p>
           </div>
 
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -200,140 +267,172 @@ const AccountTypesManagement: React.FC = () => {
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[80vh]">
               <DialogHeader>
-                <DialogTitle>Create New Account Type</DialogTitle>
+                <DialogTitle>
+                  {editingAccountType ? "Edit Account Type" : "Create Account Type"}
+                </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Account Type Name *</Label>
-                    <Input
-                      id="name"
-                      value={newAccountType.name}
-                      onChange={(e) => setNewAccountType(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Essential Medicines"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newAccountType.description}
-                      onChange={(e) => setNewAccountType(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Brief description of this account type"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Select Products</Label>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search products..."
-                        value={productSearchTerm}
-                        onChange={(e) => setProductSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    
-                    <ScrollArea className="h-64 border rounded-md p-4">
-                      {isLoadingProducts ? (
-                        <div className="text-center text-muted-foreground">Loading products...</div>
-                      ) : filteredProducts.length === 0 ? (
-                        <div className="text-center text-muted-foreground">No products found</div>
-                      ) : (
-                        <div className="space-y-2">
-                          {filteredProducts.map((product) => (
-                            <div key={product.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={product.id}
-                                checked={selectedProducts.includes(product.id)}
-                                onCheckedChange={(checked) => handleProductSelection(product.id, checked as boolean)}
-                              />
-                              <label htmlFor={product.id} className="flex-1 text-sm cursor-pointer">
-                                <div className="font-medium">{product.canonical_name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {product.program && <span className="mr-2">Program: {product.program}</span>}
-                                  {product.ven_classification && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {product.ven_classification}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                    
-                    {selectedProducts.length > 0 && (
-                      <div className="text-sm text-muted-foreground">
-                        {selectedProducts.length} product(s) selected
-                      </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Type Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter account type name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
-                </div>
+                  />
 
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleCreateAccountType}
-                    disabled={createAccountTypeMutation.isPending}
-                  >
-                    {createAccountTypeMutation.isPending ? "Creating..." : "Create Account Type"}
-                  </Button>
-                </div>
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Enter description (optional)"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="productIds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Products</FormLabel>
+                        <ScrollArea className="h-64 border rounded-md p-4">
+                          <div className="space-y-3">
+                            {products.map((product) => (
+                              <div key={product.id} className="flex items-start space-x-3">
+                                <Checkbox
+                                  id={product.id}
+                                  checked={field.value?.includes(product.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      field.onChange([...field.value, product.id]);
+                                    } else {
+                                      field.onChange(
+                                        field.value?.filter((id) => id !== product.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                  <label
+                                    htmlFor={product.id}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  >
+                                    {product.canonical_name}
+                                  </label>
+                                  <div className="flex gap-2">
+                                    {product.program && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {product.program}
+                                      </Badge>
+                                    )}
+                                    {product.ven_classification && (
+                                      <Badge 
+                                        variant="outline" 
+                                        className={`text-xs ${
+                                          product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
+                                          product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
+                                          product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
+                                          'border-gray-300'
+                                        }`}
+                                      >
+                                        {product.ven_classification}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      {editingAccountType ? "Update" : "Create"} Account Type
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {isLoadingAccountTypes ? (
-          <div className="text-center py-8">Loading account types...</div>
-        ) : accountTypes.length === 0 ? (
+        <div className="grid gap-4">
+          {accountTypes.map((accountType) => (
+            <Card key={accountType.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      {accountType.name}
+                    </CardTitle>
+                    {accountType.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {accountType.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditAccountType(accountType)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteAccountType(accountType.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+
+        {accountTypes.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground">No account types created yet.</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Create your first account type to organize products by categories.
-              </p>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Account Types Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create your first account type to organize products by category.
+                </p>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {accountTypes.map((accountType) => (
-              <Card key={accountType.id}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg">{accountType.name}</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteAccountTypeMutation.mutate(accountType.id)}
-                    disabled={deleteAccountTypeMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {accountType.description && (
-                    <p className="text-sm text-muted-foreground mb-3">{accountType.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary">{accountType.product_count} products</Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Created {new Date(accountType.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         )}
       </div>
     </PageLayout>

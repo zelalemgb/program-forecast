@@ -59,7 +59,7 @@ const MetadataOrganization: React.FC = () => {
     },
     {
       title: "Account Types",
-      description: "Manage account types and their product lists",
+      description: "Manage account types and their associated drug lists",
       icon: FolderOpen,
       path: "/settings/metadata/account-types",
       color: "text-teal-600",
