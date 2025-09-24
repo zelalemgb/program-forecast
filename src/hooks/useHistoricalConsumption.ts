@@ -14,6 +14,7 @@ export interface ProductConsumptionHistory {
   product_id: string;
   product_name: string;
   unit?: string;
+  program?: string;
   ven_classification?: string;
   periods: ConsumptionPeriod[];
   total_consumption: number;
@@ -146,20 +147,22 @@ export const useHistoricalConsumption = (facilityId?: number) => {
       // Get unique product IDs to fetch VEN classification
       const productIds = Array.from(productTransactions.keys());
       
-      // Fetch VEN classification for all products
+      // Fetch VEN classification and program for all products
       const { data: productReferenceData, error: productReferenceError } = await supabase
         .from('product_reference')
-        .select('id, ven_classification')
+        .select('id, ven_classification, program')
         .in('id', productIds);
 
       if (productReferenceError) {
-        console.warn('Failed to fetch VEN classification:', productReferenceError);
+        console.warn('Failed to fetch product reference data:', productReferenceError);
       }
 
-      // Create a map of product ID to VEN classification
+      // Create maps for product reference data
       const venClassificationMap = new Map<string, string>();
+      const programMap = new Map<string, string>();
       productReferenceData?.forEach(product => {
         venClassificationMap.set(product.id, product.ven_classification || 'Essential');
+        programMap.set(product.id, product.program || '');
       });
 
       for (const [productId, transactions] of productTransactions.entries()) {
@@ -168,6 +171,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
         const productName = transactions[0].products?.name || 'Unknown Product';
         const unit = transactions[0].products?.unit || 'units';
         const venClassification = venClassificationMap.get(productId) || 'Essential';
+        const program = programMap.get(productId) || '';
 
         // Calculate consumption for each period
         const periodConsumption: ConsumptionPeriod[] = periods.map(period => {
@@ -193,6 +197,7 @@ export const useHistoricalConsumption = (facilityId?: number) => {
           product_id: productId,
           product_name: productName,
           unit,
+          program,
           ven_classification: venClassification,
           periods: periodConsumption,
           total_consumption: totalConsumption,

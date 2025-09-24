@@ -3,21 +3,39 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useHistoricalConsumption, PeriodGranularity } from '@/hooks/useHistoricalConsumption';
 import { useForecastIntegration } from '@/hooks/useForecastIntegration';
-import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Save, Filter, BookOpen } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const ForecastAnalysis: React.FC = () => {
   const [selectedGranularity, setSelectedGranularity] = useState<PeriodGranularity>('monthly');
   const [periodMonths, setPeriodMonths] = useState(12);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // New filtering and saving state
+  const [filterType, setFilterType] = useState<'all' | 'program' | 'ven_classification' | 'custom'>('all');
+  const [programFilter, setProgramFilter] = useState<string>('');
+  const [venFilter, setVenFilter] = useState<string>('');
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [forecastName, setForecastName] = useState('');
+  const [forecastDescription, setForecastDescription] = useState('');
+  const [savedForecasts, setSavedForecasts] = useState<any[]>([]);
+  const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
+  
   const { toast } = useToast();
   const facilityId = 1; // This should come from context or user selection
 
@@ -26,6 +44,48 @@ const ForecastAnalysis: React.FC = () => {
   
   const [forecastData, setForecastData] = useState<any[]>([]);
   const [forecastLoading, setForecastLoading] = useState(false);
+
+  // Fetch available programs for filtering
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('product_reference')
+          .select('program')
+          .not('program', 'is', null)
+          .eq('active', true);
+        
+        if (error) throw error;
+        
+        const uniquePrograms = [...new Set(data?.map(p => p.program).filter(Boolean))];
+        setAvailablePrograms(uniquePrograms);
+      } catch (error) {
+        console.error('Error fetching programs:', error);
+      }
+    };
+
+    fetchPrograms();
+  }, []);
+
+  // Fetch saved forecasts
+  useEffect(() => {
+    const fetchSavedForecasts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('saved_forecasts')
+          .select('*')
+          .eq('facility_id', facilityId)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setSavedForecasts(data || []);
+      } catch (error) {
+        console.error('Error fetching saved forecasts:', error);
+      }
+    };
+
+    fetchSavedForecasts();
+  }, [facilityId]);
 
   // Fetch historical data when parameters change
   useEffect(() => {
@@ -53,11 +113,45 @@ const ForecastAnalysis: React.FC = () => {
     generateForecast();
   }, [facilityId, historicalData, periodMonths, generateForecastFromInventory]);
 
-  // Combine historical and forecast data
-  const combinedData = useMemo(() => {
+  // Filter and combine historical and forecast data
+  const filteredData = useMemo(() => {
     if (!historicalData?.products) return [];
 
-    return historicalData.products.map(product => {
+    let filtered = historicalData.products;
+
+    // Apply filters based on type
+    switch (filterType) {
+      case 'program':
+        if (programFilter) {
+          filtered = filtered.filter(product => 
+            product.program === programFilter
+          );
+        }
+        break;
+      case 'ven_classification':
+        if (venFilter) {
+          filtered = filtered.filter(product => 
+            product.ven_classification === venFilter
+          );
+        }
+        break;
+      case 'custom':
+        if (selectedProducts.size > 0) {
+          filtered = filtered.filter(product => 
+            selectedProducts.has(product.product_id)
+          );
+        }
+        break;
+      default:
+        // 'all' - no additional filtering
+        break;
+    }
+
+    return filtered;
+  }, [historicalData, filterType, programFilter, venFilter, selectedProducts]);
+
+  const combinedData = useMemo(() => {
+    return filteredData.map(product => {
       const forecast = forecastData.find(f => f.product_id === product.product_id);
       
       // Calculate trend from last two periods
@@ -76,7 +170,7 @@ const ForecastAnalysis: React.FC = () => {
         confidence: forecast?.confidence_score || 0
       };
     });
-  }, [historicalData, forecastData]);
+  }, [filteredData, forecastData]);
 
   const getTrendIcon = (trend: number) => {
     if (trend > 0) return <TrendingUp className="h-4 w-4 text-green-600" />;
@@ -97,8 +191,111 @@ const ForecastAnalysis: React.FC = () => {
   };
 
   const handleRowClick = (product: any) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
+    if (isSelectMode) {
+      const newSelected = new Set(selectedProducts);
+      if (newSelected.has(product.product_id)) {
+        newSelected.delete(product.product_id);
+      } else {
+        newSelected.add(product.product_id);
+      }
+      setSelectedProducts(newSelected);
+    } else {
+      setSelectedProduct(product);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.size === combinedData.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(combinedData.map(p => p.product_id)));
+    }
+  };
+
+  const handleSaveForecast = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save forecasts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const forecastConfig = {
+        facility_id: facilityId,
+        user_id: user.id,
+        name: forecastName,
+        description: forecastDescription,
+        filter_type: filterType,
+        filter_criteria: {
+          program: programFilter,
+          ven_classification: venFilter
+        },
+        selected_products: filterType === 'custom' ? Array.from(selectedProducts) : [],
+        forecast_parameters: {
+          granularity: selectedGranularity,
+          period_months: periodMonths
+        }
+      };
+
+      const { error } = await supabase
+        .from('saved_forecasts')
+        .insert(forecastConfig);
+
+      if (error) throw error;
+
+      toast({
+        title: "Forecast Saved",
+        description: `"${forecastName}" has been saved successfully`,
+      });
+
+      // Reset form and close dialog
+      setForecastName('');
+      setForecastDescription('');
+      setIsSaveDialogOpen(false);
+      
+      // Refresh saved forecasts list
+      const { data } = await supabase
+        .from('saved_forecasts')
+        .select('*')
+        .eq('facility_id', facilityId)
+        .order('created_at', { ascending: false });
+      
+      setSavedForecasts(data || []);
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save forecast",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadSavedForecast = async (savedForecast: any) => {
+    try {
+      setFilterType(savedForecast.filter_type);
+      setProgramFilter(savedForecast.filter_criteria?.program || '');
+      setVenFilter(savedForecast.filter_criteria?.ven_classification || '');
+      setSelectedProducts(new Set(savedForecast.selected_products || []));
+      setSelectedGranularity(savedForecast.forecast_parameters?.granularity || 'monthly');
+      setPeriodMonths(savedForecast.forecast_parameters?.period_months || 12);
+
+      toast({
+        title: "Forecast Loaded",
+        description: `"${savedForecast.name}" configuration loaded`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load forecast configuration",
+        variant: "destructive",
+      });
+    }
   };
 
   const getChartData = (product: any) => {
@@ -151,6 +348,78 @@ const ForecastAnalysis: React.FC = () => {
   const titleActions = (
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
       <div className="flex flex-col gap-1">
+        <Label className="text-xs">Filter Type</Label>
+        <Select 
+          value={filterType} 
+          onValueChange={(value: 'all' | 'program' | 'ven_classification' | 'custom') => {
+            setFilterType(value);
+            if (value !== 'custom') {
+              setSelectedProducts(new Set());
+              setIsSelectMode(false);
+            }
+          }}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Products</SelectItem>
+            <SelectItem value="program">By Program</SelectItem>
+            <SelectItem value="ven_classification">By VEN Class</SelectItem>
+            <SelectItem value="custom">Custom Selection</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filterType === 'program' && (
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Program</Label>
+          <Select value={programFilter} onValueChange={setProgramFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Programs</SelectItem>
+              {availablePrograms.map(program => (
+                <SelectItem key={program} value={program}>{program}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {filterType === 'ven_classification' && (
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">VEN Class</Label>
+          <Select value={venFilter} onValueChange={setVenFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Classes</SelectItem>
+              <SelectItem value="Vital">Vital</SelectItem>
+              <SelectItem value="Essential">Essential</SelectItem>
+              <SelectItem value="Nonessential">Nonessential</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {filterType === 'custom' && (
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Selection Mode</Label>
+          <Button
+            variant={isSelectMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsSelectMode(!isSelectMode)}
+            className="w-32"
+          >
+            {isSelectMode ? 'Exit Select' : 'Select Products'}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
         <Label className="text-xs">Period</Label>
         <Select 
           value={selectedGranularity} 
@@ -188,8 +457,78 @@ const ForecastAnalysis: React.FC = () => {
         </Select>
       </div>
 
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Actions</Label>
+        <div className="flex gap-2">
+          <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save Forecast Configuration</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Forecast Name</Label>
+                  <Input
+                    value={forecastName}
+                    onChange={(e) => setForecastName(e.target.value)}
+                    placeholder="Enter forecast name"
+                  />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={forecastDescription}
+                    onChange={(e) => setForecastDescription(e.target.value)}
+                    placeholder="Enter description (optional)"
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <p><strong>Filter:</strong> {filterType}</p>
+                  {filterType === 'program' && programFilter && <p><strong>Program:</strong> {programFilter}</p>}
+                  {filterType === 'ven_classification' && venFilter && <p><strong>VEN Class:</strong> {venFilter}</p>}
+                  {filterType === 'custom' && <p><strong>Selected Products:</strong> {selectedProducts.size}</p>}
+                  <p><strong>Period:</strong> {selectedGranularity}, {periodMonths} months</p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveForecast} disabled={!forecastName.trim()}>
+                    Save Forecast
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {savedForecasts.length > 0 && (
+            <Select onValueChange={(value) => {
+              const forecast = savedForecasts.find(f => f.id === value);
+              if (forecast) loadSavedForecast(forecast);
+            }}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Load..." />
+              </SelectTrigger>
+              <SelectContent>
+                {savedForecasts.map(forecast => (
+                  <SelectItem key={forecast.id} value={forecast.id}>
+                    {forecast.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-1 text-xs text-muted-foreground pt-2">
-        <div>{historicalData?.products?.length || 0} products</div>
+        <div>{combinedData.length} products</div>
         <div>{historicalData?.period_headers?.length || 0} periods</div>
       </div>
     </div>
@@ -221,6 +560,14 @@ const ForecastAnalysis: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {isSelectMode && (
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedProducts.size === combinedData.length && combinedData.length > 0}
+                            onCheckedChange={handleSelectAll}
+                          />
+                        </TableHead>
+                      )}
                       <TableHead className="min-w-[200px]">Product</TableHead>
                       <TableHead className="text-center">Unit</TableHead>
                       <TableHead className="text-center">VEN Class</TableHead>
@@ -240,17 +587,31 @@ const ForecastAnalysis: React.FC = () => {
                   <TableBody>
                     {combinedData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9 + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
-                          No consumption data available for the selected period
+                        <TableCell colSpan={(isSelectMode ? 10 : 9) + (historicalData?.period_headers?.length || 0)} className="text-center py-8 text-muted-foreground">
+                          {filterType !== 'all' ? 'No products match the selected filters' : 'No consumption data available for the selected period'}
                         </TableCell>
                       </TableRow>
                     ) : (
                       combinedData.map((product) => (
                         <TableRow 
                           key={product.product_id} 
-                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          className={`cursor-pointer transition-colors ${
+                            isSelectMode 
+                              ? selectedProducts.has(product.product_id) 
+                                ? 'bg-blue-50 hover:bg-blue-100' 
+                                : 'hover:bg-muted/50'
+                              : 'hover:bg-muted/50'
+                          }`}
                           onClick={() => handleRowClick(product)}
                         >
+                          {isSelectMode && (
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedProducts.has(product.product_id)}
+                                onChange={() => {}} // Handled by row click
+                              />
+                            </TableCell>
+                          )}
                           <TableCell className="font-medium">
                             {product.product_name}
                           </TableCell>

@@ -2284,6 +2284,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_forecasts: {
+        Row: {
+          created_at: string
+          description: string | null
+          facility_id: number
+          filter_criteria: Json | null
+          filter_type: string
+          forecast_parameters: Json
+          id: string
+          name: string
+          selected_products: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          facility_id: number
+          filter_criteria?: Json | null
+          filter_type: string
+          forecast_parameters?: Json
+          id?: string
+          name: string
+          selected_products?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          facility_id?: number
+          filter_criteria?: Json | null
+          filter_type?: string
+          forecast_parameters?: Json
+          id?: string
+          name?: string
+          selected_products?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       storage_locations: {
         Row: {
           active_status: boolean | null

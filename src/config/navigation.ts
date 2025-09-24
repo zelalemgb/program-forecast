@@ -98,6 +98,14 @@ export const navigationPages: Record<string, NavigationPage> = {
     breadcrumbLabel: 'Forecast Analysis',
     showInSidebar: true,
   },
+  '/saved-forecasts': {
+    path: '/saved-forecasts',
+    title: 'Saved Forecasts',
+    description: 'Manage your saved forecast configurations',
+    category: 'forecasting',
+    breadcrumbLabel: 'Saved Forecasts',
+    showInSidebar: true,
+  },
 
   // Supply Planning
   '/supply-planning': {
