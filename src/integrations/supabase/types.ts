@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_type_products: {
+        Row: {
+          account_type_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          account_type_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          account_type_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_type_products_account_type_id_fkey"
+            columns: ["account_type_id"]
+            isOneToOne: false
+            referencedRelation: "account_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_type_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_assignments: {
         Row: {
           created_at: string

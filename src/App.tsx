@@ -20,6 +20,7 @@ import MetadataOrganization from "./pages/settings/MetadataOrganization";
 import FacilitiesManagement from "./pages/settings/FacilitiesManagement";
 import ProductsManagement from "./pages/settings/ProductsManagement";
 import BulkImport from "./pages/settings/BulkImport";
+import AccountTypesManagement from "./pages/settings/AccountTypesManagement";
 import Requests from "./pages/Requests";
 import RequestWizard from "./pages/RequestWizard";
 import RequestDetail from "./pages/RequestDetail";
@@ -72,6 +73,7 @@ const AppShell: React.FC = () => {
               <Route path="/settings/metadata" element={<MetadataOrganization />} />
               <Route path="/settings/metadata/facilities" element={<FacilitiesManagement />} />
               <Route path="/settings/metadata/products" element={<ProductsManagement />} />
+              <Route path="/settings/metadata/account-types" element={<AccountTypesManagement />} />
               <Route path="/settings/metadata/bulk-import" element={<BulkImport />} />
               <Route path="/requests" element={<Requests />} />
               <Route path="/requests/new" element={<RequestWizard />} />

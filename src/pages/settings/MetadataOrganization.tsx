@@ -9,6 +9,7 @@ import {
   MapPin, 
   FileText, 
   Upload,
+  FolderOpen,
 } from "lucide-react";
 import PageLayout from "@/components/layout/PageLayout";
 
@@ -55,6 +56,14 @@ const MetadataOrganization: React.FC = () => {
       path: "/settings/metadata/suppliers",
       color: "text-indigo-600",
       bgColor: "bg-indigo-100"
+    },
+    {
+      title: "Account Types",
+      description: "Manage account types and their product lists",
+      icon: FolderOpen,
+      path: "/settings/metadata/account-types",
+      color: "text-teal-600",
+      bgColor: "bg-teal-100"
     },
     {
       title: "Bulk Import",
