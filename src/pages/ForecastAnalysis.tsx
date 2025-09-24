@@ -48,6 +48,7 @@ const ForecastAnalysis: React.FC = () => {
 
   const { toast } = useToast();
   const facilityId = 1; // This should come from context or user selection
+  const [facilityName, setFacilityName] = useState('Current Facility');
 
   const { data: historicalData, loading: historicalLoading, fetchHistoricalConsumption } = useHistoricalConsumption(facilityId);
   const { generateForecastFromInventory } = useForecastIntegration();
@@ -104,6 +105,28 @@ const ForecastAnalysis: React.FC = () => {
 
   // Initialize forecast summary hook
   const { getForecastSummaries, getForecastSummaryDetails } = useForecastSummary();
+
+  // Load facility name
+  useEffect(() => {
+    const fetchFacilityName = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('facilities')
+          .select('name')
+          .eq('id', facilityId.toString())
+          .single();
+        
+        if (error) throw error;
+        if (data?.name) {
+          setFacilityName(data.name);
+        }
+      } catch (error) {
+        console.error('Error fetching facility name:', error);
+      }
+    };
+
+    fetchFacilityName();
+  }, [facilityId]);
 
   // Fetch saved forecasts
   useEffect(() => {
@@ -479,7 +502,7 @@ const ForecastAnalysis: React.FC = () => {
 
   return (
     <PageLayout 
-      title={currentLoadedForecast ? `Forecast Analysis - ${currentLoadedForecast.name}` : "Forecast Analysis"} 
+      title={currentLoadedForecast ? `Forecast Analysis - ${facilityName} - ${currentLoadedForecast.name}` : `Forecast Analysis - ${facilityName}`} 
       actions={titleActions}
     >
       <div className="space-y-6">
@@ -792,7 +815,7 @@ const ForecastAnalysis: React.FC = () => {
           open={showSaveForecastModal}
           onOpenChange={setShowSaveForecastModal}
           forecastData={combinedData}
-          facilityName="Current Facility"
+          facilityName={facilityName}
           accountType={selectedAccountType}
           forecastDuration={forecastDuration}
           onSaved={async () => {
