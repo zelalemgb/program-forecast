@@ -8,6 +8,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
   SidebarRail,
   SidebarHeader,
@@ -33,13 +36,16 @@ import {
   Play,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface Item {
   title: string;
-  url: string;
+  url?: string;
   icon: React.ComponentType<{ className?: string }>;
+  items?: Item[];
 }
 
 const dashboardItems: Item[] = [
@@ -79,7 +85,14 @@ const aiAssistant: Item[] = [
 
 const admin: Item[] = [
   { title: "User Management", url: "/admin/users", icon: Users },
-  { title: "Settings", url: "/program-settings", icon: Settings },
+  { 
+    title: "Settings", 
+    url: "/program-settings", 
+    icon: Settings,
+    items: [
+      { title: "Metadata", url: "/settings/metadata", icon: Building2 }
+    ]
+  },
 ];
 
 const helpTraining: Item[] = [
@@ -117,11 +130,44 @@ function Group({ label, items }: { label: string; items: (Item | ItemWithComingS
                 </SidebarMenuItem>
               );
             }
+
+            // Handle items with subitems
+            if (item.items && item.items.length > 0) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url || "#"} className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {state !== "collapsed" && (
+                        <span className="flex items-center justify-between w-full">
+                          {item.title}
+                          <ChevronDown className="h-3 w-3" />
+                        </span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                  {state !== "collapsed" && (
+                    <SidebarMenuSub>
+                      {item.items.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink to={subItem.url || "#"} className={getNavCls}>
+                              <subItem.icon className="mr-2 h-3 w-3" />
+                              <span>{subItem.title}</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
+              );
+            }
             
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <NavLink to={item.url} end className={getNavCls}>
+                  <NavLink to={item.url || "#"} end className={getNavCls}>
                     <item.icon className="mr-2 h-4 w-4" />
                     {state !== "collapsed" && <span>{item.title}</span>}
                   </NavLink>
