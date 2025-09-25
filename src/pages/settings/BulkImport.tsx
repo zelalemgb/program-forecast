@@ -42,8 +42,10 @@ interface ImportJob {
 }
 
 interface ColumnMapping {
-  csvColumn: string;
   dbColumn: string;
+  csvColumn: string;
+  required: boolean;
+  label: string;
 }
 
 interface SheetData {
@@ -254,30 +256,33 @@ const BulkImport: React.FC = () => {
   };
 
   const autoMatchColumns = (csvHeaders: string[], dbFields: { value: string; label: string; required: boolean }[]) => {
-    return csvHeaders.map(csvHeader => {
-      const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
+    return dbFields.map(dbField => {
+      const normalizedDbField = dbField.value.toLowerCase().replace(/[_\s-]/g, '');
+      const normalizedDbLabel = dbField.label.toLowerCase().replace(/[_\s-]/g, '');
       
       // Try exact match first
-      let bestMatch = dbFields.find(field => 
-        field.value.toLowerCase().replace(/[_\s-]/g, '') === normalizedCsvHeader ||
-        field.label.toLowerCase().replace(/[_\s-]/g, '') === normalizedCsvHeader
-      );
+      let bestMatch = csvHeaders.find(csvHeader => {
+        const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
+        return normalizedCsvHeader === normalizedDbField || 
+               normalizedCsvHeader === normalizedDbLabel;
+      });
       
       // Try partial/similarity match if no exact match
       if (!bestMatch) {
-        bestMatch = dbFields.find(field => {
-          const normalizedField = field.value.toLowerCase().replace(/[_\s-]/g, '');
-          const normalizedLabel = field.label.toLowerCase().replace(/[_\s-]/g, '');
-          return normalizedField.includes(normalizedCsvHeader) || 
-                 normalizedCsvHeader.includes(normalizedField) ||
-                 normalizedLabel.includes(normalizedCsvHeader) ||
-                 normalizedCsvHeader.includes(normalizedLabel);
+        bestMatch = csvHeaders.find(csvHeader => {
+          const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
+          return normalizedDbField.includes(normalizedCsvHeader) || 
+                 normalizedCsvHeader.includes(normalizedDbField) ||
+                 normalizedDbLabel.includes(normalizedCsvHeader) ||
+                 normalizedCsvHeader.includes(normalizedDbLabel);
         });
       }
       
       return {
-        csvColumn: csvHeader,
-        dbColumn: bestMatch ? bestMatch.value : ""
+        dbColumn: dbField.value,
+        csvColumn: bestMatch || "",
+        required: dbField.required,
+        label: dbField.label
       };
     });
   };
@@ -289,11 +294,11 @@ const BulkImport: React.FC = () => {
     setDataQualityIssues([]);
   };
 
-  const handleMappingChange = (csvColumn: string, dbColumn: string) => {
+  const handleMappingChange = (dbColumn: string, csvColumn: string) => {
     setColumnMappings(prev => 
       prev.map(mapping => 
-        mapping.csvColumn === csvColumn 
-          ? { ...mapping, dbColumn } 
+        mapping.dbColumn === dbColumn 
+          ? { ...mapping, csvColumn } 
           : mapping
       )
     );
@@ -309,7 +314,7 @@ const BulkImport: React.FC = () => {
     const issues: { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[] = [];
     const selectedSheetData = fileData.sheets[fileData.selectedSheet];
     const requiredFields = databaseFields[selectedType as keyof typeof databaseFields]?.filter(f => f.required) || [];
-    const mappedColumns = columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__");
+    const mappedColumns = columnMappings.filter(m => m.csvColumn && m.csvColumn !== "__skip__");
 
     selectedSheetData.rows.forEach((row, rowIndex) => {
       const rowIssues: string[] = [];
@@ -329,7 +334,7 @@ const BulkImport: React.FC = () => {
       // Check for missing required fields
       requiredFields.forEach(field => {
         const mapping = mappedColumns.find(m => m.dbColumn === field.value);
-        if (mapping) {
+        if (mapping && mapping.csvColumn) {
           const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
           const cellValue = row[columnIndex];
           if (cellValue === null || cellValue === undefined || cellValue === '') {
@@ -342,6 +347,8 @@ const BulkImport: React.FC = () => {
 
         // Check for data type issues (basic validation)
         mappedColumns.forEach(mapping => {
+          if (!mapping.csvColumn || mapping.csvColumn === "__skip__") return;
+          
           const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
           const cellValue = row[columnIndex];
           
@@ -380,7 +387,7 @@ const BulkImport: React.FC = () => {
   const handleImport = async () => {
     if (!selectedType || !fileData) return;
 
-    const mappedColumns = columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__");
+    const mappedColumns = columnMappings.filter(m => m.csvColumn && m.csvColumn !== "__skip__");
     if (mappedColumns.length === 0) {
       toast({
         title: "Validation Error",
@@ -680,14 +687,19 @@ const BulkImport: React.FC = () => {
                   <div className="border rounded-lg p-4 bg-muted/20">
                     <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
-                      {columnMappings.map((mapping) => {
-                        const isMapped = mapping.dbColumn && mapping.dbColumn !== "__skip__";
-                        const mappedField = databaseFields[selectedType as keyof typeof databaseFields]?.find(f => f.value === mapping.dbColumn);
-                        const isRequired = mappedField?.required;
+                      {columnMappings
+                        .sort((a, b) => {
+                          // Sort required fields first
+                          if (a.required && !b.required) return -1;
+                          if (!a.required && b.required) return 1;
+                          return a.label.localeCompare(b.label);
+                        })
+                        .map((mapping) => {
+                        const isMapped = mapping.csvColumn && mapping.csvColumn !== "__skip__";
                         
                         return (
                           <div 
-                            key={mapping.csvColumn} 
+                            key={mapping.dbColumn} 
                             className={`flex items-center gap-3 p-2 rounded border transition-colors ${
                               !isMapped ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : 
                               'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
@@ -699,32 +711,34 @@ const BulkImport: React.FC = () => {
                               ) : (
                                 <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                               )}
-                              <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
+                              <div className="flex flex-col flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate flex items-center gap-1">
+                                  {mapping.label}
+                                  {mapping.required && <span className="text-red-500">*</span>}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {mapping.dbColumn}
+                                </div>
+                              </div>
                             </div>
-                            <div className="w-4 text-muted-foreground flex-shrink-0">→</div>
+                            <div className="w-4 text-muted-foreground flex-shrink-0">←</div>
                             <div className="flex-1 min-w-0">
                               <Select
-                                value={mapping.dbColumn}
-                                onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
+                                value={mapping.csvColumn}
+                                onValueChange={(value) => handleMappingChange(mapping.dbColumn, value)}
                               >
                                 <SelectTrigger className="h-8 text-sm">
-                                  <SelectValue placeholder="Select field" />
+                                  <SelectValue placeholder="Select CSV column" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="__skip__">Skip this column</SelectItem>
-                                  {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
-                                    <SelectItem key={field.value} value={field.value}>
-                                      <div className="flex items-center gap-2">
-                                        <span>{field.label}</span>
-                                        {field.required && <span className="text-red-500">*</span>}
-                                      </div>
+                                  <SelectItem value="__skip__">Skip this field</SelectItem>
+                                  {fileData && fileData.sheets[fileData.selectedSheet].headers.map((header) => (
+                                    <SelectItem key={header} value={header}>
+                                      {header}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {isRequired && (
-                                <Badge variant="secondary" className="text-xs mt-1">Required</Badge>
-                              )}
                             </div>
                           </div>
                         );
