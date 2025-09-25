@@ -79,6 +79,10 @@ export const performUpsert = async (
     errors: []
   };
 
+  if (!records || records.length === 0) {
+    return result;
+  }
+
   try {
     const uniqueFields = getUniqueFields(tableName);
     
@@ -157,13 +161,22 @@ export const performUpsert = async (
       upsertConfig.onConflict = conflictField;
     }
     
+    console.log(`Attempting upsert for ${tableName} with config:`, upsertConfig);
+    console.log(`Records to upsert:`, recordsWithTimestamp.slice(0, 2)); // Log first 2 records for debugging
+    
     const { data, error, count } = await supabase
       .from(tableName as any)
       .upsert(recordsWithTimestamp, upsertConfig);
     
     if (error) {
-      console.error(`Upsert failed for ${tableName}:`, error);
-      result.errors.push(`Upsert failed for ${tableName}: ${error.message}. Details: ${error.details || 'No additional details'}`);
+      console.error(`Upsert failed for ${tableName}:`, {
+        error: error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      result.errors.push(`Upsert failed for ${tableName}: ${error.message}${error.hint ? ` (Hint: ${error.hint})` : ''}${error.details ? ` (Details: ${error.details})` : ''}`);
       return result;
     }
     
