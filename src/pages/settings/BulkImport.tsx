@@ -279,6 +279,7 @@ const BulkImport: React.FC = () => {
       
       // Try exact match first
       let bestMatch = csvHeaders.find(csvHeader => {
+        if (!csvHeader || typeof csvHeader !== 'string') return false;
         const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
         return normalizedCsvHeader === normalizedDbField || 
                normalizedCsvHeader === normalizedDbLabel;
@@ -287,6 +288,7 @@ const BulkImport: React.FC = () => {
       // Try partial/similarity match if no exact match
       if (!bestMatch) {
         bestMatch = csvHeaders.find(csvHeader => {
+          if (!csvHeader || typeof csvHeader !== 'string') return false;
           const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
           return normalizedDbField.includes(normalizedCsvHeader) || 
                  normalizedCsvHeader.includes(normalizedDbField) ||
@@ -306,7 +308,9 @@ const BulkImport: React.FC = () => {
 
   const initializeColumnMappings = (headers: string[]) => {
     const dbFields = selectedType ? getDatabaseFields(selectedType) : [];
-    const mappings = autoMatchColumns(headers, dbFields);
+    // Filter out undefined/null headers and ensure they're strings
+    const validHeaders = headers.filter(header => header && typeof header === 'string');
+    const mappings = autoMatchColumns(validHeaders, dbFields);
     setColumnMappings(mappings);
     setDataQualityIssues([]);
   };
