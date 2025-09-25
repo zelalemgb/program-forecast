@@ -534,64 +534,6 @@ const ForecastAnalysis: React.FC = () => {
         )}
 
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Total Products</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{combinedData.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {selectedAccountType && selectedAccountType !== 'all' ? `In selected account type` : 'All products'}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Total Consumption</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatNumber(combinedData.reduce((sum, p) => sum + p.total_consumption, 0))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Last {periodMonths} months
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Avg Confidence</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {combinedData.length > 0 
-                  ? ((combinedData.reduce((sum, p) => sum + p.confidence, 0) / combinedData.length) * 100).toFixed(0)
-                  : 0}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Forecast confidence
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Trending Up</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {combinedData.filter(p => p.trend > 0).length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Products increasing
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Data Table */}
         <Card>
