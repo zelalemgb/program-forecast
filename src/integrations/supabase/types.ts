@@ -1894,6 +1894,7 @@ export type Database = {
           pack_size: number | null
           price_benchmark_high: number | null
           price_benchmark_low: number | null
+          product_type: string | null
           program: string | null
           recommended_formulation: string | null
           refrigeration_required: boolean | null
@@ -1936,6 +1937,7 @@ export type Database = {
           pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
+          product_type?: string | null
           program?: string | null
           recommended_formulation?: string | null
           refrigeration_required?: boolean | null
@@ -1978,6 +1980,7 @@ export type Database = {
           pack_size?: number | null
           price_benchmark_high?: number | null
           price_benchmark_low?: number | null
+          product_type?: string | null
           program?: string | null
           recommended_formulation?: string | null
           refrigeration_required?: boolean | null

@@ -59,6 +59,7 @@ export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
   products: [
     { value: "canonical_name", label: "Product Name", required: true, type: "string" },
     { value: "code", label: "Product Code", required: false, type: "string" },
+    { value: "product_type", label: "Product Type", required: false, type: "string" },
     { value: "program", label: "Program", required: false, type: "string" },
     { value: "atc_code", label: "ATC Code", required: false, type: "string" },
     { value: "strength", label: "Strength", required: false, type: "string" },
