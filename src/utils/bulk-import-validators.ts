@@ -25,7 +25,7 @@ export const validateFieldValue = (
   if (fieldConfig.required && (!value || stringValue === '')) {
     issues.push({
       field: dbColumn,
-      message: `Missing required field: ${fieldConfig.label}`,
+      message: `Required field "${fieldConfig.label}" is missing or empty. Please provide a value for this mandatory field.`,
       severity: 'error'
     });
     return issues;
@@ -42,7 +42,7 @@ export const validateFieldValue = (
       if (isNaN(Number(stringValue))) {
         issues.push({
           field: dbColumn,
-          message: `Invalid numeric value in ${fieldConfig.label}: ${stringValue}`,
+          message: `Field "${fieldConfig.label}" must be a number, but found "${stringValue}". Please enter a valid numeric value (e.g., 10, 15.5, 0).`,
           severity: 'error'
         });
       }
@@ -53,7 +53,7 @@ export const validateFieldValue = (
       if (!emailRegex.test(stringValue)) {
         issues.push({
           field: dbColumn,
-          message: `Invalid email format: ${stringValue}`,
+          message: `Field "${fieldConfig.label}" has invalid email format "${stringValue}". Please enter a valid email address (e.g., user@example.com).`,
           severity: 'error'
         });
       }
@@ -64,7 +64,7 @@ export const validateFieldValue = (
       if (!uuidRegex.test(stringValue)) {
         issues.push({
           field: dbColumn,
-          message: `Invalid UUID format in ${fieldConfig.label}: ${stringValue}`,
+          message: `Field "${fieldConfig.label}" has invalid UUID format "${stringValue}". Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (e.g., 123e4567-e89b-12d3-a456-426614174000).`,
           severity: 'warning' // UUIDs are often auto-generated, so warning instead of error
         });
       }
@@ -80,14 +80,14 @@ export const validateFieldValue = (
           if (!['public', 'private', 'ngo', 'government', 'non-profit'].includes(lowerValue)) {
             issues.push({
               field: dbColumn,
-              message: `Invalid ownership type: ${stringValue}. Must be Public, Private, or NGO`,
+              message: `Field "${fieldConfig.label}" has invalid value "${stringValue}". Must be one of: Public, Private, NGO, Government, or Non-profit.`,
               severity: 'warning'
             });
           }
         } else {
           issues.push({
             field: dbColumn,
-            message: `Invalid value for ${fieldConfig.label}: ${stringValue}. Valid values: ${fieldConfig.enumValues.join(', ')}`,
+            message: `Field "${fieldConfig.label}" has invalid value "${stringValue}". Must be one of: ${fieldConfig.enumValues.join(', ')}.`,
             severity: 'warning'
           });
         }
@@ -113,7 +113,7 @@ export const validateFieldValue = (
       if (fieldConfig.maxLength && stringValue.length > fieldConfig.maxLength) {
         issues.push({
           field: dbColumn,
-          message: `${fieldConfig.label} exceeds ${fieldConfig.maxLength} characters and will be truncated on import`,
+          message: `Field "${fieldConfig.label}" is too long (${stringValue.length} characters). Maximum allowed is ${fieldConfig.maxLength} characters. Text will be truncated during import.`,
           severity: 'warning'
         });
       }
