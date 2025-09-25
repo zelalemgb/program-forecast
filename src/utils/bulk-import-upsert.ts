@@ -96,7 +96,13 @@ export const performUpsert = async (
     // Special handling for administrative tables - resolve hierarchy
     let processedRecords = records;
     if (tableName === 'facility') {
+      const originalCount = records.length;
       processedRecords = await resolveFacilityHierarchy(records);
+      const validCount = processedRecords.length;
+      
+      if (validCount < originalCount) {
+        console.warn(`${originalCount - validCount} facilities skipped due to invalid woreda assignments`);
+      }
     } else if (tableName === 'region') {
       processedRecords = await resolveRegionHierarchy(records);
     } else if (tableName === 'zone') {
@@ -331,51 +337,93 @@ export const performUpsert = async (
 const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
   console.log(`Starting hierarchy resolution for ${records.length} facility records`);
 
-  const processedRecords = await Promise.all(
-    records.map(async (record) => {
-      let woreda_id = record.woreda_id ?? null;
+  // Get all woredas with their zone and region info for matching
+  const { data: allWoredas, error: woredaError } = await supabase
+    .from('woreda')
+    .select('woreda_id, woreda_name, zone_id');
 
-      // If woreda_id not provided, try to resolve by names
-      if (!woreda_id) {
-        const hasFullChain = record.region_name || record.zone_name;
+  if (woredaError) {
+    console.error('Failed to fetch woredas:', woredaError);
+    throw new Error('Failed to load woreda data for facility import');
+  }
 
-        if (hasFullChain) {
-          // Use existing resolver when we have more context
-          const [h] = await bulkResolveHierarchy([{ 
-            country_name: record.country_name, 
-            region_name: record.region_name, 
-            zone_name: record.zone_name, 
-            woreda_name: record.woreda_name 
-          }]);
-          woreda_id = h?.woreda_id ?? null;
-        } else if (record.woreda_name) {
-          // Fallback: resolve by unique woreda_name
-          const { data: matches, error } = await supabase
-            .from('woreda')
-            .select('woreda_id')
-            .eq('woreda_name', record.woreda_name)
-            .limit(2);
-          if (!error && matches && matches.length === 1) {
-            woreda_id = matches[0].woreda_id;
-          } else {
-            console.warn(`Ambiguous or missing woreda for name: ${record.woreda_name}. Provide zone/region to disambiguate.`);
-          }
+  // Get zone information if needed for disambiguation
+  const { data: allZones } = await supabase
+    .from('zone')
+    .select('zone_id, zone_name, region_id');
+
+  // Get region information if needed for disambiguation  
+  const { data: allRegions } = await supabase
+    .from('region')
+    .select('region_id, region_name');
+
+  const processedRecords = records.map((record) => {
+    let woreda_id = record.woreda_id ?? null;
+
+    // If woreda_id not provided, try to resolve by names
+    if (!woreda_id && record.woreda_name) {
+      const woreda_name = record.woreda_name.trim();
+      
+      // Try exact match first
+      let matchingWoredas = allWoredas?.filter(w => 
+        w.woreda_name?.toLowerCase() === woreda_name.toLowerCase()
+      ) || [];
+
+      // If multiple matches and we have zone/region info, filter further
+      if (matchingWoredas.length > 1 && (record.zone_name || record.region_name)) {
+        if (record.zone_name && allZones) {
+          const zone_name = record.zone_name.trim();
+          const matchingZones = allZones.filter(z => 
+            z.zone_name?.toLowerCase() === zone_name.toLowerCase()
+          );
+          const zoneIds = matchingZones.map(z => z.zone_id);
+          matchingWoredas = matchingWoredas.filter(w => zoneIds.includes(w.zone_id));
+        }
+        
+        if (matchingWoredas.length > 1 && record.region_name && allRegions && allZones) {
+          const region_name = record.region_name.trim();
+          const matchingRegions = allRegions.filter(r => 
+            r.region_name?.toLowerCase() === region_name.toLowerCase()
+          );
+          const regionIds = matchingRegions.map(r => r.region_id);
+          const validZoneIds = allZones.filter(z => regionIds.includes(z.region_id)).map(z => z.zone_id);
+          matchingWoredas = matchingWoredas.filter(w => validZoneIds.includes(w.zone_id));
         }
       }
 
-      const out: any = { ...record };
-      if (woreda_id) out.woreda_id = woreda_id;
+      if (matchingWoredas.length === 1) {
+        woreda_id = matchingWoredas[0].woreda_id;
+      } else if (matchingWoredas.length > 1) {
+        console.warn(`Multiple woredas found for "${woreda_name}". Provide zone/region to disambiguate. Skipping facility: ${record.facility_name || 'Unknown'}`);
+      } else {
+        console.warn(`No woreda found for "${woreda_name}". Skipping facility: ${record.facility_name || 'Unknown'}`);
+      }
+    }
 
-      // Ensure we never pass removed columns
-      delete out.country_id;
-      delete out.region_id;
-      delete out.zone_id;
+    // Only include facility if we have a valid woreda_id
+    if (!woreda_id) {
+      console.warn(`Facility "${record.facility_name || 'Unknown'}" skipped - no valid woreda assignment`);
+      return null;
+    }
 
-      return out;
-    })
-  );
+    const out: any = { ...record };
+    out.woreda_id = woreda_id;
 
-  console.log(`Completed hierarchy resolution for ${processedRecords.length} records`);
+    // Ensure we never pass removed columns
+    delete out.country_id;
+    delete out.region_id;
+    delete out.zone_id;
+    // Remove name fields that aren't database columns
+    delete out.country_name;
+    delete out.region_name;
+    delete out.zone_name;
+    delete out.woreda_name;
+
+    return out;
+  }).filter(record => record !== null); // Remove null records (facilities without valid woreda)
+
+  const skippedCount = records.length - processedRecords.length;
+  console.log(`Completed hierarchy resolution: ${processedRecords.length} valid facilities out of ${records.length} total${skippedCount > 0 ? ` (${skippedCount} skipped due to missing woreda)` : ''}`);
   return processedRecords;
 };
 
@@ -472,7 +520,7 @@ export const getUpsertSummary = (result: UpsertResult): string => {
   }
   
   if (result.skipped > 0) {
-    parts.push(`${result.skipped} record${result.skipped !== 1 ? 's' : ''} skipped (no changes)`);
+    parts.push(`${result.skipped} record${result.skipped !== 1 ? 's' : ''} skipped (invalid data or no changes)`);
   }
   
   if (parts.length === 0) {
