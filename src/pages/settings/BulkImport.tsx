@@ -358,6 +358,17 @@ const BulkImport: React.FC = () => {
     return stringValue;
   };
 
+  // Helper function to get column index from header or special column key
+  const getColumnIndex = (csvColumn: string, headers: string[]): number => {
+    if (csvColumn.startsWith('__column_')) {
+      // Extract index from special column key like "__column_0"
+      const index = parseInt(csvColumn.replace('__column_', ''), 10);
+      return isNaN(index) ? -1 : index;
+    }
+    // Regular header lookup
+    return headers.indexOf(csvColumn);
+  };
+
   const handleMappingChange = (dbColumn: string, csvColumn: string) => {
     setColumnMappings(prev => 
       prev.map(mapping => 
@@ -387,7 +398,7 @@ const BulkImport: React.FC = () => {
       // Check if row is completely empty for mapped columns only
       mappedColumns.forEach(mapping => {
         if (mapping.csvColumn && mapping.csvColumn !== "__skip__") {
-          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+          const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
           const cellValue = row[columnIndex];
           if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
             isEmpty = false;
@@ -403,7 +414,7 @@ const BulkImport: React.FC = () => {
       requiredFields.forEach(field => {
         const mapping = mappedColumns.find(m => m.dbColumn === field.value);
         if (mapping && mapping.csvColumn) {
-          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+          const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
           const cellValue = row[columnIndex];
           if (cellValue === null || cellValue === undefined || cellValue === '') {
             rowIssues.push(`Missing required field: ${field.label}`);
@@ -414,7 +425,7 @@ const BulkImport: React.FC = () => {
       // Check for data type issues (basic validation) on mapped columns only
       mappedColumns.forEach(mapping => {
         if (!mapping.csvColumn || mapping.csvColumn === "__skip__") return;
-        const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+        const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
         const cellValue = row[columnIndex];
 
         if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
@@ -510,7 +521,7 @@ const BulkImport: React.FC = () => {
           
           // Only process mapped columns (skip columns marked as "__skip__")
           mappedColumns.forEach(mapping => {
-            const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+            const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
             let cellValue = row[columnIndex];
             if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
               // Transform data based on field type
@@ -869,11 +880,18 @@ const BulkImport: React.FC = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="__skip__">Skip this field</SelectItem>
-                                  {fileData && fileData.sheets[fileData.selectedSheet].headers.map((header) => (
-                                    <SelectItem key={header} value={header}>
-                                      {header}
-                                    </SelectItem>
-                                  ))}
+                                  {fileData && fileData.sheets[fileData.selectedSheet].headers.map((header, index) => {
+                                    // Handle empty headers by providing a fallback value
+                                    const headerValue = header && header.trim() !== '' ? header : `Column ${index + 1}`;
+                                    const headerKey = header && header.trim() !== '' ? header : `__column_${index}`;
+                                    
+                                    return (
+                                      <SelectItem key={headerKey} value={headerKey}>
+                                        {headerValue}
+                                        {header !== headerKey && <span className="text-muted-foreground ml-1">(unnamed)</span>}
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                             </div>
