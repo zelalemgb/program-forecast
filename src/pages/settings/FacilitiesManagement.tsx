@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Building2, Plus, Edit, Trash2, Upload, Download, Eye } from "lucide-react";
@@ -13,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/layout/PageLayout";
+import { DataTable, TableColumn, TableAction } from "@/components/ui/data-table";
 
 interface Facility {
   facility_id: number;
@@ -243,6 +243,167 @@ const FacilitiesManagement: React.FC = () => {
     navigate('/settings/metadata/bulk-import?type=facilities');
   };
 
+  const handleExport = (data: Facility[]) => {
+    const csvContent = [
+      ['Name', 'Code', 'Type', 'Level', 'Ownership', 'Region', 'Zone', 'Woreda', 'Latitude', 'Longitude'],
+      ...data.map(facility => {
+        const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
+        const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
+        const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
+        
+        return [
+          facility.facility_name,
+          facility.facility_code || '',
+          facility.facility_type || '',
+          facility.level || '',
+          facility.ownership || '',
+          region?.region_name || '',
+          zone?.zone_name || '',
+          woreda?.woreda_name || '',
+          facility.latitude?.toString() || '',
+          facility.longitude?.toString() || ''
+        ];
+      })
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'facilities.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const getLocationDisplay = (facility: Facility) => {
+    const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
+    const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
+    const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
+    
+    const parts = [];
+    if (region) parts.push(region.region_name);
+    if (zone) parts.push(zone.zone_name);
+    if (woreda) parts.push(woreda.woreda_name);
+    
+    return parts.join(', ') || '-';
+  };
+
+  const columns: TableColumn<Facility>[] = [
+    {
+      key: 'facility_name',
+      title: 'Name',
+      sortable: true,
+      filterable: true,
+      render: (value) => <span className="font-medium">{value}</span>
+    },
+    {
+      key: 'facility_code',
+      title: 'Code',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'facility_type',
+      title: 'Type',
+      sortable: true,
+      filterable: true,
+      render: (value) => value ? <Badge variant="outline">{value}</Badge> : '-'
+    },
+    {
+      key: 'level',
+      title: 'Level',
+      sortable: true,
+      filterable: true,
+      render: (value) => value ? <Badge variant="secondary">{value}</Badge> : '-'
+    },
+    {
+      key: 'ownership',
+      title: 'Ownership',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'location',
+      title: 'Location',
+      sortable: false,
+      filterable: false,
+      render: (_, row) => (
+        <div className="text-sm max-w-48">
+          {getLocationDisplay(row)}
+        </div>
+      )
+    }
+  ];
+
+  const tableActions: TableAction<Facility>[] = [
+    {
+      label: 'View',
+      onClick: (facility) => {
+        setViewingFacility(facility);
+        setIsViewModalOpen(true);
+      },
+      icon: <Eye className="h-4 w-4" />
+    },
+    {
+      label: 'Edit',
+      onClick: (facility) => {
+        setEditingFacility(facility);
+        setFormData({
+          facility_name: facility.facility_name,
+          facility_code: facility.facility_code || '',
+          facility_type: facility.facility_type || '',
+          level: facility.level || '',
+          ownership: facility.ownership || '',
+          latitude: facility.latitude?.toString() || '',
+          longitude: facility.longitude?.toString() || '',
+          region_id: '',
+          zone_id: '',
+          woreda_id: facility.woreda_id?.toString() || ''
+        });
+        setIsAddModalOpen(true);
+      },
+      icon: <Edit className="h-4 w-4" />
+    },
+    {
+      label: 'Delete',
+      onClick: (facility) => handleDelete(facility.facility_id),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive'
+    }
+  ];
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      onClick: async (selectedFacilities: Facility[]) => {
+        if (confirm(`Are you sure you want to delete ${selectedFacilities.length} facilities?`)) {
+          const ids = selectedFacilities.map(f => f.facility_id);
+          const { error } = await supabase
+            .from('facility')
+            .delete()
+            .in('facility_id', ids);
+
+          if (error) {
+            toast({
+              title: "Error",
+              description: "Failed to delete selected facilities",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: `Deleted ${selectedFacilities.length} facilities`
+            });
+            loadData();
+          }
+        }
+      },
+      variant: 'destructive' as const
+    }
+  ];
+
   const facilityTypes = ['Hospital', 'Health Center', 'Health Post', 'Clinic', 'Pharmacy'];
   const facilityLevels = ['Primary', 'Secondary', 'Tertiary', 'Specialized'];
   const ownershipTypes = ['Public', 'Private', 'NGO', 'Faith-based'];
@@ -459,83 +620,38 @@ const FacilitiesManagement: React.FC = () => {
       </Helmet>
 
       {/* Facilities List */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Ownership</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {facilities.map((facility) => (
-                  <TableRow key={facility.facility_id}>
-                    <TableCell className="font-medium">{facility.facility_name}</TableCell>
-                    <TableCell>{facility.facility_code || '-'}</TableCell>
-                    <TableCell>
-                      {facility.facility_type && (
-                        <Badge variant="outline">{facility.facility_type}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {facility.level && (
-                        <Badge variant="secondary">{facility.level}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{facility.ownership || '-'}</TableCell>
-                    <TableCell>
-                      {(() => {
-                        const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
-                        const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
-                        const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
-                        return (
-                          <div className="text-sm">
-                            {region && <div>{region.region_name}</div>}
-                            {zone && <div className="text-muted-foreground">{zone.zone_name}</div>}
-                            {woreda && <div className="text-muted-foreground">{woreda.woreda_name}</div>}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleView(facility)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(facility)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(facility.facility_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <DataTable
+        data={facilities}
+        columns={columns}
+        loading={loading}
+        actions={tableActions}
+        bulkActions={bulkActions}
+        onExport={handleExport}
+        title="Health Facilities"
+        description="Manage hospitals, health centers, clinics, and other healthcare facilities"
+        searchPlaceholder="Search facilities by name, code, or type..."
+        emptyState={
+          <div className="text-center py-8">
+            <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">No facilities found</h3>
+            <p className="text-muted-foreground">Get started by adding your first facility.</p>
           </div>
-        </CardContent>
-      </Card>
+        }
+        customSummary={
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Badge variant="outline">Total: {facilities.length}</Badge>
+            <Badge variant="outline">
+              Hospitals: {facilities.filter(f => f.facility_type === 'Hospital').length}
+            </Badge>
+            <Badge variant="outline">
+              Health Centers: {facilities.filter(f => f.facility_type === 'Health Center').length}
+            </Badge>
+            <Badge variant="outline">
+              Health Posts: {facilities.filter(f => f.facility_type === 'Health Post').length}
+            </Badge>
+          </div>
+        }
+      />
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

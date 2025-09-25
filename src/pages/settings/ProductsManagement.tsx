@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/layout/PageLayout";
+import { DataTable, TableColumn, TableAction } from "@/components/ui/data-table";
 
 interface Product {
   id: string;
@@ -274,6 +274,222 @@ const ProductsManagement: React.FC = () => {
   const handleBulkImport = () => {
     navigate('/settings/metadata/bulk-import?type=products');
   };
+
+  const handleExport = (data: Product[]) => {
+    const csvContent = [
+      ['Name', 'Code', 'Program', 'ATC Code', 'Strength', 'Form', 'Base Unit', 'Pack Size', 'Status', 'Tracer'],
+      ...data.map(product => [
+        product.canonical_name,
+        product.code || '',
+        product.program || '',
+        product.atc_code || '',
+        product.strength || '',
+        product.form || '',
+        product.base_unit,
+        product.pack_size?.toString() || '',
+        product.active !== false ? 'Active' : 'Inactive',
+        product.tracer_flag ? 'Yes' : 'No'
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'products.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const columns: TableColumn<Product>[] = [
+    {
+      key: 'canonical_name',
+      title: 'Product Name',
+      sortable: true,
+      filterable: true,
+      render: (value) => <span className="font-medium">{value}</span>
+    },
+    {
+      key: 'code',
+      title: 'Code',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'program',
+      title: 'Program',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'base_unit',
+      title: 'Base Unit',
+      sortable: true,
+      filterable: true,
+      render: (value) => <Badge variant="outline">{value}</Badge>
+    },
+    {
+      key: 'pack_size',
+      title: 'Pack Size',
+      sortable: true,
+      filterable: false,
+      render: (value) => value?.toString() || '-'
+    },
+    {
+      key: 'active',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <Badge variant={value !== false ? "default" : "secondary"}>
+          {value !== false ? "Active" : "Inactive"}
+        </Badge>
+      )
+    },
+    {
+      key: 'tracer_flag',
+      title: 'Tracer',
+      sortable: true,
+      filterable: false,
+      render: (value) => (
+        <Badge variant={value ? "default" : "outline"}>
+          {value ? "Yes" : "No"}
+        </Badge>
+      )
+    }
+  ];
+
+  const tableActions: TableAction<Product>[] = [
+    {
+      label: 'View',
+      onClick: (product) => {
+        setViewingProduct(product);
+        setIsViewModalOpen(true);
+      },
+      icon: <Eye className="h-4 w-4" />
+    },
+    {
+      label: 'Edit',
+      onClick: (product) => {
+        setEditingProduct(product);
+        setFormData({
+          canonical_name: product.canonical_name,
+          code: product.code || '',
+          base_unit: product.base_unit,
+          program: product.program || '',
+          atc_code: product.atc_code || '',
+          strength: product.strength || '',
+          form: product.form || '',
+          pack_size: product.pack_size?.toString() || '',
+          tracer_flag: product.tracer_flag || false,
+          active: product.active !== false,
+          minimum_order_quantity: product.minimum_order_quantity?.toString() || '',
+          buffer_stock_level: product.buffer_stock_level?.toString() || '',
+          maximum_stock_level: product.maximum_stock_level?.toString() || '',
+          reorder_point: product.reorder_point?.toString() || '',
+          lead_time_days: product.lead_time_days?.toString() || '',
+          storage_temperature_min: product.storage_temperature_min?.toString() || '',
+          storage_temperature_max: product.storage_temperature_max?.toString() || '',
+          storage_humidity_min: product.storage_humidity_min?.toString() || '',
+          storage_humidity_max: product.storage_humidity_max?.toString() || '',
+          shelf_life_months: product.shelf_life_months?.toString() || '',
+          abc_classification: product.abc_classification || '',
+          criticality_level: product.criticality_level || '',
+          controlled_substance: product.controlled_substance || false,
+          refrigeration_required: product.refrigeration_required || false,
+          narcotics_classification: product.narcotics_classification || ''
+        });
+        setIsAddModalOpen(true);
+      },
+      icon: <Edit className="h-4 w-4" />
+    },
+    {
+      label: 'Delete',
+      onClick: (product) => handleDelete(product.id),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive'
+    }
+  ];
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      onClick: async (selectedProducts: Product[]) => {
+        if (confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
+          const ids = selectedProducts.map(p => p.id);
+          const { error } = await supabase
+            .from('product_reference')
+            .delete()
+            .in('id', ids);
+
+          if (error) {
+            toast({
+              title: "Error",
+              description: "Failed to delete selected products",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: `Deleted ${selectedProducts.length} products`
+            });
+            loadProducts();
+          }
+        }
+      },
+      variant: 'destructive' as const
+    },
+    {
+      label: 'Activate Selected',
+      onClick: async (selectedProducts: Product[]) => {
+        const ids = selectedProducts.map(p => p.id);
+        const { error } = await supabase
+          .from('product_reference')
+          .update({ active: true })
+          .in('id', ids);
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to activate selected products",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: `Activated ${selectedProducts.length} products`
+          });
+          loadProducts();
+        }
+      }
+    },
+    {
+      label: 'Deactivate Selected',
+      onClick: async (selectedProducts: Product[]) => {
+        const ids = selectedProducts.map(p => p.id);
+        const { error } = await supabase
+          .from('product_reference')
+          .update({ active: false })
+          .in('id', ids);
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to deactivate selected products",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: `Deactivated ${selectedProducts.length} products`
+          });
+          loadProducts();
+        }
+      }
+    }
+  ];
 
   const programs = ['Essential Medicines', 'TB Program', 'HIV/AIDS Program', 'Malaria Program', 'Maternal Health'];
   const dosageForms = ['Tablet', 'Capsule', 'Injection', 'Syrup', 'Ointment', 'Drops', 'Powder'];
@@ -618,66 +834,38 @@ const ProductsManagement: React.FC = () => {
       </Helmet>
 
       {/* Products List */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Program</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.canonical_name}</TableCell>
-                    <TableCell>{product.code || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{product.base_unit}</Badge>
-                    </TableCell>
-                    <TableCell>{product.program || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={product.active !== false ? "default" : "secondary"}>
-                        {product.active !== false ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleView(product)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <DataTable
+        data={products}
+        columns={columns}
+        loading={loading}
+        actions={tableActions}
+        bulkActions={bulkActions}
+        onExport={handleExport}
+        title="Products & Medicines"
+        description="Manage pharmaceutical products, medical supplies, and equipment"
+        searchPlaceholder="Search products by name, code, program, or ATC code..."
+        emptyState={
+          <div className="text-center py-8">
+            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">No products found</h3>
+            <p className="text-muted-foreground">Get started by adding your first product.</p>
           </div>
-        </CardContent>
-      </Card>
+        }
+        customSummary={
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Badge variant="outline">Total: {products.length}</Badge>
+            <Badge variant="outline">
+              Active: {products.filter(p => p.active !== false).length}
+            </Badge>
+            <Badge variant="outline">
+              Tracers: {products.filter(p => p.tracer_flag).length}
+            </Badge>
+            <Badge variant="outline">
+              Essential Medicines: {products.filter(p => p.program === 'Essential Medicines').length}
+            </Badge>
+          </div>
+        }
+      />
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
