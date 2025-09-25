@@ -110,6 +110,7 @@ const RoleBasedRegistration: React.FC = () => {
 
   useEffect(() => {
     if (selectedRoleInfo) {
+      console.log('Role changed to:', selectedRole, 'with level:', selectedRoleInfo.level);
       // Clear previous selections when role changes
       setSelectedFacility('');
       setSelectedWoreda('');
@@ -198,6 +199,8 @@ const RoleBasedRegistration: React.FC = () => {
       if (level === 'facility') {
         // First, try to load facilities with a simple query
         console.log('Loading facilities...');
+        console.log('Current user:', (await supabase.auth.getUser()).data.user?.email || 'No user');
+        
         const { data: simpleData, error: simpleError } = await supabase
           .from('facility')
           .select('facility_id, facility_name, facility_type, woreda_id')
@@ -205,11 +208,13 @@ const RoleBasedRegistration: React.FC = () => {
         
         if (simpleError) {
           console.error('Error loading facilities (simple query):', simpleError);
+          console.error('Error details:', simpleError.message, simpleError.code);
           setFacilities([]);
           return;
         }
         
         console.log('Simple facilities loaded:', simpleData?.length || 0);
+        console.log('Sample facilities:', simpleData?.slice(0, 3));
         
         // If we have facilities, try to enrich them with location data
         if (simpleData && simpleData.length > 0) {
