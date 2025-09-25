@@ -124,26 +124,73 @@ const BulkImport: React.FC = () => {
     const fileName = file.name.toLowerCase();
     
     if (fileName.endsWith('.csv')) {
-      // Handle CSV files
-      Papa.parse(file, {
-        complete: (results) => {
-          if (results.data && results.data.length > 0) {
-            const headers = results.data[0] as string[];
-            const rows = results.data.slice(1) as any[][];
-            
-            const sheetData = {
-              sheets: { 'Sheet1': { headers, rows } },
-              selectedSheet: 'Sheet1'
-            };
-            
-            setFileData(sheetData);
-            initializeColumnMappings(headers);
+      // Handle CSV files - first parse to detect if there are multiple sections/tabs
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        
+        // Check if CSV has multiple sections separated by empty lines or special markers
+        // Split by empty lines to detect multiple "tabs" or sections
+        const sections = text.split(/\n\s*\n/).filter(section => section.trim());
+        
+        if (sections.length > 1) {
+          // Multiple sections detected - treat each as a separate "tab"
+          const sheets: { [key: string]: SheetData } = {};
+          
+          sections.forEach((section, index) => {
+            Papa.parse(section, {
+              complete: (results) => {
+                if (results.data && results.data.length > 0) {
+                  const headers = results.data[0] as string[];
+                  const rows = results.data.slice(1) as any[][];
+                  const sheetName = `Section ${index + 1}`;
+                  sheets[sheetName] = { headers, rows };
+                }
+              },
+              header: false,
+              skipEmptyLines: true
+            });
+          });
+          
+          const firstSheet = Object.keys(sheets)[0];
+          setFileData({
+            sheets,
+            selectedSheet: firstSheet
+          });
+          
+          console.log(`Found ${Object.keys(sheets).length} sections in CSV:`, Object.keys(sheets));
+          if (Object.keys(sheets).length > 1) {
+            console.log('Multiple sections detected, showing sheet selection');
+            setCurrentStep('sheet');
+          } else {
+            console.log('Single section detected, going to mapping');
+            initializeColumnMappings(sheets[firstSheet].headers);
             setCurrentStep('mapping');
           }
-        },
-        header: false,
-        skipEmptyLines: true
-      });
+        } else {
+          // Single section - parse normally
+          Papa.parse(file, {
+            complete: (results) => {
+              if (results.data && results.data.length > 0) {
+                const headers = results.data[0] as string[];
+                const rows = results.data.slice(1) as any[][];
+                
+                const sheetData = {
+                  sheets: { 'Sheet1': { headers, rows } },
+                  selectedSheet: 'Sheet1'
+                };
+                
+                setFileData(sheetData);
+                initializeColumnMappings(headers);
+                setCurrentStep('mapping');
+              }
+            },
+            header: false,
+            skipEmptyLines: true
+          });
+        }
+      };
+      reader.readAsText(file);
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
       // Handle Excel files
       const reader = new FileReader();
