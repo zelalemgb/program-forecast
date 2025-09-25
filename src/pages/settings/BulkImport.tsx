@@ -815,7 +815,6 @@ const BulkImport: React.FC = () => {
                   <DataPreviewTable 
                     currentSheetData={currentSheetData}
                     dataQualityIssues={dataQualityIssues}
-                    maxPreviewRows={50}
                   />
                 </div>
               )}
