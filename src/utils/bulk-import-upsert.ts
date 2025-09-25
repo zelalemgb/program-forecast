@@ -101,7 +101,8 @@ export const performUpsert = async (
       const validCount = processedRecords.length;
       
       if (validCount < originalCount) {
-        console.warn(`${originalCount - validCount} facilities skipped due to invalid woreda assignments`);
+        const skippedCount = originalCount - validCount;
+        console.warn(`Facility import: ${validCount} valid facilities processed, ${skippedCount} skipped due to data quality issues or missing woreda assignments`);
       }
     } else if (tableName === 'region') {
       processedRecords = await resolveRegionHierarchy(records);
@@ -357,7 +358,37 @@ const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
     .from('region')
     .select('region_id, region_name');
 
+  // Track facility codes to detect duplicates in the import batch
+  const facilityCodesSeen = new Set<string>();
+  const duplicateCodeWarnings = new Set<string>();
+
   const processedRecords = records.map((record) => {
+    // Data quality check - validate required fields
+    const facility_name = record.facility_name?.toString().trim();
+    const facility_code = record.facility_code?.toString().trim();
+    const woreda_name = record.woreda_name?.toString().trim();
+
+    if (!facility_name || !facility_code || !woreda_name || 
+        facility_name.length < 2 || facility_code.length < 2) {
+      const missing = [];
+      if (!facility_name || facility_name.length < 2) missing.push('facility_name (must be at least 2 characters)');
+      if (!facility_code || facility_code.length < 2) missing.push('facility_code (must be at least 2 characters)'); 
+      if (!woreda_name) missing.push('woreda_name');
+      
+      console.warn(`Facility skipped - invalid required fields: ${missing.join(', ')}. Row: ${facility_name || 'unnamed'} | ${facility_code || 'no-code'}`);
+      return null;
+    }
+
+    // Check for duplicate facility codes in the import batch
+    if (facilityCodesSeen.has(facility_code)) {
+      if (!duplicateCodeWarnings.has(facility_code)) {
+        console.warn(`Duplicate facility code found in import: ${facility_code}. Only the first occurrence will be processed.`);
+        duplicateCodeWarnings.add(facility_code);
+      }
+      return null;
+    }
+    facilityCodesSeen.add(facility_code);
+
     let woreda_id = record.woreda_id ?? null;
 
     // If woreda_id not provided, try to resolve by names
