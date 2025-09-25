@@ -415,6 +415,62 @@ export type Database = {
         }
         Relationships: []
       }
+      epss_regional_hubs: {
+        Row: {
+          active_status: boolean
+          address: string | null
+          contact_email: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string
+          hub_code: string
+          hub_name: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          region_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_status?: boolean
+          address?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          hub_code: string
+          hub_name: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          region_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_status?: boolean
+          address?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          hub_code?: string
+          hub_name?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          region_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epss_regional_hubs_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
+        ]
+      }
       ethiopia_2025_2026: {
         Row: {
           cost: number | null
@@ -515,6 +571,7 @@ export type Database = {
           level: string | null
           longitude: number | null
           ownership: string | null
+          regional_hub_id: string | null
           updated_at: string | null
           woreda_id: number | null
         }
@@ -528,6 +585,7 @@ export type Database = {
           level?: string | null
           longitude?: number | null
           ownership?: string | null
+          regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
         }
@@ -541,10 +599,18 @@ export type Database = {
           level?: string | null
           longitude?: number | null
           ownership?: string | null
+          regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "facility_regional_hub_id_fkey"
+            columns: ["regional_hub_id"]
+            isOneToOne: false
+            referencedRelation: "epss_regional_hubs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "facility_woreda_id_fkey"
             columns: ["woreda_id"]
