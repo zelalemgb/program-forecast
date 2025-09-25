@@ -187,13 +187,20 @@ export const bulkResolveHierarchy = async (records: LocationNames[]): Promise<Hi
     recordToKeyMap.set(index, key);
   });
 
-  // Resolve unique location combinations
+  // Resolve unique location combinations in parallel for speed
   const resolutions = new Map<string, HierarchyResolutionResult>();
-  
-  for (const [key, location] of uniqueLocations) {
-    const resolution = await resolveHierarchy(location);
+  const entries = Array.from(uniqueLocations.entries());
+
+  const resolvedList = await Promise.all(
+    entries.map(async ([key, location]) => {
+      const resolution = await resolveHierarchy(location);
+      return { key, resolution };
+    })
+  );
+
+  resolvedList.forEach(({ key, resolution }) => {
     resolutions.set(key, resolution);
-  }
+  });
 
   // Map results back to original record order
   return records.map((_, index) => {
