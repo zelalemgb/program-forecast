@@ -86,11 +86,22 @@ export const performUpsert = async (
   try {
     const uniqueFields = getUniqueFields(tableName);
     
-    // Add updated_at to all records
-    const recordsWithTimestamp = records.map(record => ({
-      ...record,
-      updated_at: new Date().toISOString()
-    }));
+    // Clean records - remove null values to prevent overwriting existing data
+    const recordsWithTimestamp = records.map(record => {
+      const cleanRecord = { ...record, updated_at: new Date().toISOString() };
+      
+      // For facility table, don't overwrite existing location data with nulls
+      if (tableName === 'facility') {
+        Object.keys(cleanRecord).forEach(key => {
+          if (['region_id', 'zone_id', 'woreda_id', 'latitude', 'longitude', 'regional_hub_id'].includes(key) && 
+              (cleanRecord[key] === null || cleanRecord[key] === undefined || cleanRecord[key] === '')) {
+            delete cleanRecord[key];
+          }
+        });
+      }
+      
+      return cleanRecord;
+    });
     
     // Special handling for product_reference - handle duplicates within batch
     if (tableName === 'product_reference') {
@@ -182,8 +193,11 @@ export const performUpsert = async (
     
     console.log(`Upsert successful for ${tableName}:`, { count, recordCount: records.length });
     
-    // Report all as updated since we can't easily distinguish with upsert
+    // Since we can't distinguish inserts from updates with upsert, report all as updated
+    // In the future, we could implement a more sophisticated tracking mechanism
     result.updated = records.length;
+    
+    console.log(`Upsert completed - reported ${result.updated} records as updated for ${tableName}`);
     
   } catch (error: any) {
     result.errors.push(`Unexpected error: ${error.message}`);
