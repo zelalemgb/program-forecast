@@ -305,6 +305,46 @@ const BulkImport: React.FC = () => {
     setDataQualityIssues([]);
   };
 
+  // Transform field values based on database requirements
+  const transformFieldValue = (dbColumn: string, value: any, importType: string): any => {
+    const stringValue = String(value).trim();
+    
+    // Handle facility-specific transformations
+    if (importType === 'facilities') {
+      if (dbColumn === 'ownership_type') {
+        // Convert to lowercase and map to valid enum values
+        const lowerValue = stringValue.toLowerCase();
+        if (lowerValue === 'public' || lowerValue === 'government') return 'public';
+        if (lowerValue === 'private') return 'private';
+        if (lowerValue === 'ngo' || lowerValue === 'non-profit') return 'ngo';
+        return 'public'; // default fallback
+      }
+      
+      // Convert numeric fields
+      if (dbColumn === 'latitude' || dbColumn === 'longitude') {
+        const numValue = Number(stringValue);
+        return isNaN(numValue) ? null : numValue;
+      }
+      
+      // Convert region_id, zone_id, woreda_id to integers if they are numeric
+      if (['region_id', 'zone_id', 'woreda_id'].includes(dbColumn)) {
+        const numValue = Number(stringValue);
+        return isNaN(numValue) ? stringValue : numValue; // Keep as string if not numeric
+      }
+    }
+    
+    // Handle other import types...
+    if (importType === 'regional_hubs') {
+      if (dbColumn === 'region_id') {
+        const numValue = Number(stringValue);
+        return isNaN(numValue) ? null : numValue;
+      }
+    }
+    
+    // Default: return trimmed string
+    return stringValue;
+  };
+
   const handleMappingChange = (dbColumn: string, csvColumn: string) => {
     setColumnMappings(prev => 
       prev.map(mapping => 
@@ -371,22 +411,33 @@ const BulkImport: React.FC = () => {
           const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
           const cellValue = row[columnIndex];
           
-          if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
-            // Check latitude/longitude numeric fields
-            if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
-              if (isNaN(Number(cellValue))) {
-                rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
-              }
-            }
-            
-            // Check email format
-            if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (!emailRegex.test(String(cellValue))) {
-                rowIssues.push(`Invalid email format: ${cellValue}`);
-              }
-            }
-          }
+           if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+             // Check facility-specific validations
+             if (selectedType === 'facilities') {
+               // Check ownership_type enum values
+               if (mapping.dbColumn === 'ownership_type') {
+                 const lowerValue = String(cellValue).toLowerCase();
+                 if (!['public', 'private', 'ngo', 'government', 'non-profit'].includes(lowerValue)) {
+                   rowIssues.push(`Invalid ownership type: ${cellValue}. Must be Public, Private, or NGO`);
+                 }
+               }
+               
+               // Check latitude/longitude numeric fields
+               if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
+                 if (isNaN(Number(cellValue))) {
+                   rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
+                 }
+               }
+             }
+             
+             // Check email format
+             if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
+               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+               if (!emailRegex.test(String(cellValue))) {
+                 rowIssues.push(`Invalid email format: ${cellValue}`);
+               }
+             }
+           }
         });
 
       if (rowIssues.length > 0) {
@@ -442,8 +493,10 @@ const BulkImport: React.FC = () => {
           // Only process mapped columns (skip columns marked as "__skip__")
           mappedColumns.forEach(mapping => {
             const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
-            const cellValue = row[columnIndex];
+            let cellValue = row[columnIndex];
             if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+              // Transform data based on field type
+              cellValue = transformFieldValue(mapping.dbColumn, cellValue, selectedType);
               item[mapping.dbColumn] = cellValue;
               hasData = true;
             }
