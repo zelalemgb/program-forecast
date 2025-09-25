@@ -9,6 +9,7 @@ import {
   MapPin, 
   FileText, 
   Upload,
+  Factory,
   FolderOpen,
 } from "lucide-react";
 import PageLayout from "@/components/layout/PageLayout";
@@ -24,6 +25,14 @@ const MetadataOrganization: React.FC = () => {
       path: "/settings/metadata/facilities",
       color: "text-blue-600",
       bgColor: "bg-blue-100"
+    },
+    {
+      title: "EPSS Regional Hubs",
+      description: "Manage EPSS regional distribution hubs",
+      icon: Factory,
+      path: "/settings/metadata/regional-hubs",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100"
     },
     {
       title: "Products & Medicines",

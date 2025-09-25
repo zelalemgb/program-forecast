@@ -69,6 +69,7 @@ const BulkImport: React.FC = () => {
 
   const importTypes = [
     { value: "facilities", label: "Health Facilities", icon: "🏥", table: "facility" as const },
+    { value: "regional_hubs", label: "EPSS Regional Hubs", icon: "🏭", table: "epss_regional_hubs" as const },
     { value: "products", label: "Products & Medicines", icon: "💊", table: "product_reference" as const },
     { value: "users", label: "Users & Staff", icon: "👥", table: "profiles" as const },
     { value: "areas", label: "Administrative Areas", icon: "🗺️", table: "woreda" as const },
@@ -82,8 +83,21 @@ const BulkImport: React.FC = () => {
       { value: "facility_code", label: "Facility Code", required: false },
       { value: "facility_type", label: "Facility Type", required: false },
       { value: "woreda_id", label: "Woreda ID", required: false },
+      { value: "regional_hub_id", label: "Regional Hub ID", required: false },
+      { value: "ownership_type", label: "Ownership Type (public/private/ngo)", required: false },
       { value: "level", label: "Level", required: false },
       { value: "ownership", label: "Ownership", required: false },
+      { value: "latitude", label: "Latitude", required: false },
+      { value: "longitude", label: "Longitude", required: false }
+    ],
+    regional_hubs: [
+      { value: "hub_code", label: "Hub Code", required: true },
+      { value: "hub_name", label: "Hub Name", required: true },
+      { value: "region_id", label: "Region ID", required: false },
+      { value: "contact_person", label: "Contact Person", required: false },
+      { value: "contact_phone", label: "Contact Phone", required: false },
+      { value: "contact_email", label: "Contact Email", required: false },
+      { value: "address", label: "Address", required: false },
       { value: "latitude", label: "Latitude", required: false },
       { value: "longitude", label: "Longitude", required: false }
     ],

@@ -186,6 +186,15 @@ export const navigationPages: Record<string, NavigationPage> = {
     breadcrumbLabel: 'Products',
     showInSidebar: false,
   },
+  '/settings/metadata/regional-hubs': {
+    path: '/settings/metadata/regional-hubs',
+    title: 'EPSS Regional Hubs',
+    description: 'Manage EPSS regional distribution hubs',
+    parent: '/settings/metadata',
+    category: 'settings',
+    breadcrumbLabel: 'Regional Hubs',
+    showInSidebar: false,
+  },
   '/settings/metadata/bulk-import': {
     path: '/settings/metadata/bulk-import',
     title: 'Bulk Import',
