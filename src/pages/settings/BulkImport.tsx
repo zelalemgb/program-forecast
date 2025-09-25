@@ -359,8 +359,8 @@ const BulkImport: React.FC = () => {
     }
   };
 
-  const checkDataQuality = () => {
-    if (!fileData || !selectedType) return;
+  const computeDataQualityIssues = () => {
+    if (!fileData || !selectedType) return [] as { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[];
 
     const issues: { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[] = [];
     const selectedSheetData = fileData.sheets[fileData.selectedSheet];
@@ -386,7 +386,7 @@ const BulkImport: React.FC = () => {
         rowIssues.push("Empty record - will be skipped");
       }
 
-      // Check for missing required fields - only for mapped required fields
+      // Check for missing required fields - ONLY for required fields that are mapped
       requiredFields.forEach(field => {
         const mapping = mappedColumns.find(m => m.dbColumn === field.value);
         if (mapping && mapping.csvColumn) {
@@ -395,50 +395,37 @@ const BulkImport: React.FC = () => {
           if (cellValue === null || cellValue === undefined || cellValue === '') {
             rowIssues.push(`Missing required field: ${field.label}`);
           }
-        } else if (columnMappings.some(m => m.dbColumn === field.value)) {
-          // Only flag as unmapped if the field exists in mappings but is not mapped
-          const fieldMapping = columnMappings.find(m => m.dbColumn === field.value);
-          if (!fieldMapping?.csvColumn || fieldMapping.csvColumn === "__skip__") {
-            rowIssues.push(`Required field "${field.label}" not mapped`);
-          }
         }
       });
 
-        // Check for data type issues (basic validation)
-        mappedColumns.forEach(mapping => {
-          if (!mapping.csvColumn || mapping.csvColumn === "__skip__") return;
-          
-          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
-          const cellValue = row[columnIndex];
-          
-           if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
-             // Check facility-specific validations
-             if (selectedType === 'facilities') {
-               // Check ownership_type enum values
-               if (mapping.dbColumn === 'ownership_type') {
-                 const lowerValue = String(cellValue).toLowerCase();
-                 if (!['public', 'private', 'ngo', 'government', 'non-profit'].includes(lowerValue)) {
-                   rowIssues.push(`Invalid ownership type: ${cellValue}. Must be Public, Private, or NGO`);
-                 }
-               }
-               
-               // Check latitude/longitude numeric fields
-               if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
-                 if (isNaN(Number(cellValue))) {
-                   rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
-                 }
-               }
-             }
-             
-             // Check email format
-             if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
-               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-               if (!emailRegex.test(String(cellValue))) {
-                 rowIssues.push(`Invalid email format: ${cellValue}`);
-               }
-             }
-           }
-        });
+      // Check for data type issues (basic validation) on mapped columns only
+      mappedColumns.forEach(mapping => {
+        if (!mapping.csvColumn || mapping.csvColumn === "__skip__") return;
+        const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+        const cellValue = row[columnIndex];
+
+        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+          if (selectedType === 'facilities') {
+            if (mapping.dbColumn === 'ownership_type') {
+              const lowerValue = String(cellValue).toLowerCase();
+              if (!['public', 'private', 'ngo', 'government', 'non-profit'].includes(lowerValue)) {
+                rowIssues.push(`Invalid ownership type: ${cellValue}. Must be Public, Private, or NGO`);
+              }
+            }
+            if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
+              if (isNaN(Number(cellValue))) {
+                rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
+              }
+            }
+          }
+          if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(String(cellValue))) {
+              rowIssues.push(`Invalid email format: ${cellValue}`);
+            }
+          }
+        }
+      });
 
       if (rowIssues.length > 0) {
         const severity = rowIssues.some(issue => 
@@ -446,12 +433,16 @@ const BulkImport: React.FC = () => {
           issue.includes('Required field') ||
           issue.includes('Empty record')
         ) ? 'error' : 'warning';
-        
         issues.push({ rowIndex, issues: rowIssues, severity });
       }
     });
 
-    setDataQualityIssues(issues);
+    return issues;
+  };
+
+  const checkDataQuality = () => {
+    const result = computeDataQualityIssues();
+    setDataQualityIssues(result);
   };
 
   const handleImport = async () => {
@@ -478,7 +469,10 @@ const BulkImport: React.FC = () => {
 
       // Transform data according to mappings, skipping problematic rows
       const validRowIndices = new Set();
-      const errorRows = dataQualityIssues.filter(issue => issue.severity === 'error').map(issue => issue.rowIndex);
+      // Recompute issues now to avoid stale state and validate only mapped columns
+      const issues = computeDataQualityIssues();
+      setDataQualityIssues(issues);
+      const errorRows = issues.filter(issue => issue.severity === 'error').map(issue => issue.rowIndex);
       
       const transformedData = selectedSheetData.rows
         .map((row, rowIndex) => {
