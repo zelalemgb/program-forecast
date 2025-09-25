@@ -1867,6 +1867,47 @@ export type Database = {
           },
         ]
       }
+      product_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          id: string
+          notes: string | null
+          price: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          notes?: string | null
+          price: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reference: {
         Row: {
           abc_classification: string | null
@@ -3116,6 +3157,15 @@ export type Database = {
         Args: { _request_id: string; _user_id: string }
         Returns: boolean
       }
+      get_current_product_price: {
+        Args: { p_product_id: string }
+        Returns: {
+          effective_date: string
+          id: string
+          notes: string
+          price: number
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -3133,6 +3183,17 @@ export type Database = {
           total_products: number
           total_records: number
           total_value: number
+        }[]
+      }
+      get_product_price_history: {
+        Args: { p_product_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          effective_date: string
+          id: string
+          notes: string
+          price: number
         }[]
       }
       has_admin_scope_for_national: {
