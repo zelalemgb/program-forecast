@@ -12,11 +12,8 @@ import {
   AlertCircle, 
   XCircle,
   FileSpreadsheet,
-  Database,
-  X
+  Database
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import PageLayout from "@/components/layout/PageLayout";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import {
@@ -27,6 +24,17 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import DataPreviewTable from "@/components/bulk-import/DataPreviewTable";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  IMPORT_TYPES, 
+  DATABASE_FIELD_CONFIG, 
+  getImportTypeConfig,
+  getDatabaseFields,
+  type DatabaseField 
+} from "@/config/bulk-import-config";
+import { transformFieldValue, getFieldConfig } from "@/utils/bulk-import-transformers";
+import { validateRowData, type ValidationIssue } from "@/utils/bulk-import-validators";
 
 interface ImportJob {
   id: string;
@@ -59,6 +67,12 @@ interface FileData {
   selectedSheet: string;
 }
 
+interface DataQualityIssue {
+  rowIndex: number;
+  issues: string[];
+  severity: 'error' | 'warning';
+}
+
 const BulkImport: React.FC = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -71,89 +85,16 @@ const BulkImport: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'sheet' | 'mapping'>('upload');
   const [isImporting, setIsImporting] = useState(false);
   const [importJobs, setImportJobs] = useState<ImportJob[]>([]);
-  const [dataQualityIssues, setDataQualityIssues] = useState<{
-    rowIndex: number;
-    issues: string[];
-    severity: 'error' | 'warning';
-  }[]>([]);
+  const [dataQualityIssues, setDataQualityIssues] = useState<DataQualityIssue[]>([]);
 
   // Auto-detect import type from URL params and open modal
   useEffect(() => {
     const typeParam = searchParams.get('type');
-    if (typeParam && importTypes.some(type => type.value === typeParam)) {
+    if (typeParam && IMPORT_TYPES.some(type => type.value === typeParam)) {
       setSelectedType(typeParam);
       setIsModalOpen(true);
     }
   }, [searchParams]);
-
-  const importTypes = [
-    { value: "facilities", label: "Health Facilities", icon: "🏥", table: "facility" as const },
-    { value: "regional_hubs", label: "EPSS Regional Hubs", icon: "🏭", table: "epss_regional_hubs" as const },
-    { value: "products", label: "Products & Medicines", icon: "💊", table: "product_reference" as const },
-    { value: "users", label: "Users & Staff", icon: "👥", table: "profiles" as const },
-    { value: "areas", label: "Administrative Areas", icon: "🗺️", table: "woreda" as const },
-    { value: "suppliers", label: "Suppliers & Vendors", icon: "🏢", table: "suppliers" as const },
-    { value: "inventory", label: "Inventory Balances", icon: "📦", table: "inventory_balances" as const }
-  ];
-
-  const databaseFields = {
-    facilities: [
-      { value: "facility_name", label: "Facility Name", required: true },
-      { value: "facility_code", label: "Facility Code", required: false },
-      { value: "facility_type", label: "Facility Type", required: false },
-      { value: "region_id", label: "Region ID", required: false },
-      { value: "zone_id", label: "Zone ID", required: false },
-      { value: "woreda_id", label: "Woreda ID", required: false },
-      { value: "regional_hub_id", label: "Regional Hub ID", required: false },
-      { value: "ownership_type", label: "Ownership Type (public/private/ngo)", required: false },
-      { value: "level", label: "Level", required: false },
-      { value: "ownership", label: "Ownership", required: false },
-      { value: "latitude", label: "Latitude", required: false },
-      { value: "longitude", label: "Longitude", required: false }
-    ],
-    regional_hubs: [
-      { value: "hub_code", label: "Hub Code", required: true },
-      { value: "hub_name", label: "Hub Name", required: true },
-      { value: "region_id", label: "Region ID", required: false },
-      { value: "contact_person", label: "Contact Person", required: false },
-      { value: "contact_phone", label: "Contact Phone", required: false },
-      { value: "contact_email", label: "Contact Email", required: false },
-      { value: "address", label: "Address", required: false },
-      { value: "latitude", label: "Latitude", required: false },
-      { value: "longitude", label: "Longitude", required: false }
-    ],
-    products: [
-      { value: "canonical_name", label: "Product Name", required: true },
-      { value: "code", label: "Product Code", required: false },
-      { value: "program", label: "Program", required: false },
-      { value: "atc_code", label: "ATC Code", required: false },
-      { value: "strength", label: "Strength", required: false },
-      { value: "form", label: "Form", required: false },
-      { value: "pack_size", label: "Pack Size", required: false },
-      { value: "base_unit", label: "Base Unit", required: true },
-      { value: "default_unit", label: "Default Unit", required: false }
-    ],
-    users: [
-      { value: "full_name", label: "Full Name", required: true },
-      { value: "email", label: "Email", required: true },
-      { value: "phone_number", label: "Phone Number", required: false }
-    ],
-    areas: [
-      { value: "woreda_name", label: "Woreda Name", required: true },
-      { value: "zone_id", label: "Zone ID", required: true }
-    ],
-    suppliers: [
-      { value: "name", label: "Supplier Name", required: true },
-      { value: "contact_info", label: "Contact Info", required: false }
-    ],
-    inventory: [
-      { value: "facility_id", label: "Facility ID", required: true },
-      { value: "product_id", label: "Product ID", required: true },
-      { value: "current_stock", label: "Current Stock", required: true },
-      { value: "reorder_level", label: "Reorder Level", required: false },
-      { value: "max_level", label: "Max Level", required: false }
-    ]
-  };
 
   const openImportModal = () => {
     setIsModalOpen(true);
@@ -268,7 +209,7 @@ const BulkImport: React.FC = () => {
     setCurrentStep('mapping');
   };
 
-  const autoMatchColumns = (csvHeaders: string[], dbFields: { value: string; label: string; required: boolean }[]) => {
+  const autoMatchColumns = (csvHeaders: string[], dbFields: DatabaseField[]) => {
     return dbFields.map(dbField => {
       const normalizedDbField = dbField.value.toLowerCase().replace(/[_\s-]/g, '');
       const normalizedDbLabel = dbField.label.toLowerCase().replace(/[_\s-]/g, '');
@@ -301,61 +242,10 @@ const BulkImport: React.FC = () => {
   };
 
   const initializeColumnMappings = (headers: string[]) => {
-    const dbFields = selectedType ? databaseFields[selectedType as keyof typeof databaseFields] || [] : [];
+    const dbFields = selectedType ? getDatabaseFields(selectedType) : [];
     const mappings = autoMatchColumns(headers, dbFields);
     setColumnMappings(mappings);
     setDataQualityIssues([]);
-  };
-
-  // Transform field values based on database requirements
-  const transformFieldValue = (dbColumn: string, value: any, importType: string): any => {
-    const stringValue = String(value).trim();
-    
-    // Handle facility-specific transformations
-    if (importType === 'facilities') {
-      if (dbColumn === 'ownership_type') {
-        // Convert to lowercase and map to valid enum values
-        const lowerValue = stringValue.toLowerCase();
-        if (lowerValue === 'public' || lowerValue === 'government') return 'public';
-        if (lowerValue === 'private') return 'private';
-        if (lowerValue === 'ngo' || lowerValue === 'non-profit') return 'ngo';
-        return 'public'; // default fallback
-      }
-      
-      // Convert numeric fields
-      if (dbColumn === 'latitude' || dbColumn === 'longitude') {
-        const numValue = Number(stringValue);
-        return isNaN(numValue) ? null : numValue;
-      }
-      
-      if (['region_id', 'zone_id', 'woreda_id'].includes(dbColumn)) {
-        const intValue = parseInt(stringValue, 10);
-        return isNaN(intValue) ? null : intValue;
-      }
-
-      // Validate regional_hub_id as UUID, else set null
-      if (dbColumn === 'regional_hub_id') {
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        return uuidRegex.test(stringValue) ? stringValue : null;
-      }
-
-      // Enforce DB field length limits to prevent insert failures (DB has varchar(20) constraints)
-      if (['facility_name', 'facility_code', 'facility_type'].includes(dbColumn)) {
-        const maxLen = 20; // matches DB constraint causing failures
-        return stringValue.length > maxLen ? stringValue.slice(0, maxLen) : stringValue;
-      }
-    }
-    
-    // Handle other import types...
-    if (importType === 'regional_hubs') {
-      if (dbColumn === 'region_id') {
-        const numValue = Number(stringValue);
-        return isNaN(numValue) ? null : numValue;
-      }
-    }
-    
-    // Default: return trimmed string
-    return stringValue;
   };
 
   // Helper function to get column index from header or special column key
@@ -383,92 +273,54 @@ const BulkImport: React.FC = () => {
     }
   };
 
-  const computeDataQualityIssues = () => {
-    if (!fileData || !selectedType) return [] as { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[];
+  const computeDataQualityIssues = (): DataQualityIssue[] => {
+    if (!fileData || !selectedType) return [];
 
-    const issues: { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[] = [];
+    const issues: DataQualityIssue[] = [];
     const selectedSheetData = fileData.sheets[fileData.selectedSheet];
-    const requiredFields = databaseFields[selectedType as keyof typeof databaseFields]?.filter(f => f.required) || [];
+    const databaseFields = getDatabaseFields(selectedType);
     const mappedColumns = columnMappings.filter(m => m.csvColumn && m.csvColumn !== "__skip__");
 
     selectedSheetData.rows.forEach((row, rowIndex) => {
-      const rowIssues: string[] = [];
-      let isEmpty = true;
+      const rowData: { [key: string]: any } = {};
+      let hasData = false;
 
-      // Check if row is completely empty for mapped columns only
+      // Build row data object for mapped columns only
       mappedColumns.forEach(mapping => {
         if (mapping.csvColumn && mapping.csvColumn !== "__skip__") {
           const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
           const cellValue = row[columnIndex];
+          rowData[mapping.dbColumn] = cellValue;
           if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
-            isEmpty = false;
+            hasData = true;
           }
         }
       });
 
-      if (isEmpty && mappedColumns.length > 0) {
-        rowIssues.push("Empty record - will be skipped");
+      // Skip completely empty rows
+      if (!hasData && mappedColumns.length > 0) {
+        issues.push({
+          rowIndex,
+          issues: ["Empty record - will be skipped"],
+          severity: 'error'
+        });
+        return;
       }
 
-      // Check for missing required fields - ONLY for required fields that are mapped
-      requiredFields.forEach(field => {
-        const mapping = mappedColumns.find(m => m.dbColumn === field.value);
-        if (mapping && mapping.csvColumn) {
-          const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
-          const cellValue = row[columnIndex];
-          if (cellValue === null || cellValue === undefined || cellValue === '') {
-            rowIssues.push(`Missing required field: ${field.label}`);
-          }
-        }
-      });
+      // Use generic validation
+      const validationIssues = validateRowData(rowData, databaseFields.filter(field => 
+        mappedColumns.some(mapping => mapping.dbColumn === field.value)
+      ));
 
-      // Check for data type issues (basic validation) on mapped columns only
-      mappedColumns.forEach(mapping => {
-        if (!mapping.csvColumn || mapping.csvColumn === "__skip__") return;
-        const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
-        const cellValue = row[columnIndex];
-
-        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
-          if (selectedType === 'facilities') {
-            if (mapping.dbColumn === 'ownership_type') {
-              const lowerValue = String(cellValue).toLowerCase();
-              if (!['public', 'private', 'ngo', 'government', 'non-profit'].includes(lowerValue)) {
-                rowIssues.push(`Invalid ownership type: ${cellValue}. Must be Public, Private, or NGO`);
-              }
-            }
-            if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
-              if (isNaN(Number(cellValue))) {
-                rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
-              }
-            }
-          }
-
-          // Generic format checks
-          if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(String(cellValue))) {
-              rowIssues.push(`Invalid email format: ${cellValue}`);
-            }
-          }
-
-          // Length limit warnings for facilities (DB has varchar(20))
-          if (selectedType === 'facilities' && ['facility_name','facility_code','facility_type'].includes(mapping.dbColumn)) {
-            const maxLen = 20;
-            const str = String(cellValue);
-            if (str.length > maxLen) {
-              const label = mapping.dbColumn.replace(/_/g, ' ');
-              rowIssues.push(`${label} exceeds ${maxLen} characters and will be truncated on import`);
-            }
-          }
-        }
-      });
-      if (rowIssues.length > 0) {
-        const severity = rowIssues.some(issue => 
-          issue.includes('Missing required field') || 
-          issue.includes('Required field') ||
-          issue.includes('Empty record')
-        ) ? 'error' : 'warning';
-        issues.push({ rowIndex, issues: rowIssues, severity });
+      if (validationIssues.length > 0) {
+        const rowIssues = validationIssues.map(issue => issue.message);
+        const severity = validationIssues.some(issue => issue.severity === 'error') ? 'error' : 'warning';
+        
+        issues.push({
+          rowIndex,
+          issues: rowIssues,
+          severity
+        });
       }
     });
 
@@ -497,10 +349,7 @@ const BulkImport: React.FC = () => {
 
     try {
       const selectedSheetData = fileData.sheets[fileData.selectedSheet];
-      const mappingObj = mappedColumns.reduce((acc, mapping) => {
-        acc[mapping.csvColumn] = mapping.dbColumn;
-        return acc;
-      }, {} as { [key: string]: string });
+      const databaseFields = getDatabaseFields(selectedType);
 
       // Transform data according to mappings, skipping problematic rows
       const validRowIndices = new Set();
@@ -524,8 +373,10 @@ const BulkImport: React.FC = () => {
             const columnIndex = getColumnIndex(mapping.csvColumn, selectedSheetData.headers);
             let cellValue = row[columnIndex];
             if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+              // Get field configuration for transformation
+              const fieldConfig = getFieldConfig(mapping.dbColumn, databaseFields);
               // Transform data based on field type
-              cellValue = transformFieldValue(mapping.dbColumn, cellValue, selectedType);
+              cellValue = transformFieldValue(mapping.dbColumn, cellValue, fieldConfig);
               item[mapping.dbColumn] = cellValue;
               hasData = true;
             }
@@ -546,13 +397,12 @@ const BulkImport: React.FC = () => {
       }
 
       // Get the table name for the selected import type
-      const importConfig = importTypes.find(type => type.value === selectedType);
+      const importConfig = getImportTypeConfig(selectedType);
       if (!importConfig) {
         throw new Error("Invalid import type");
       }
 
-      // Insert data into Supabase
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from(importConfig.table)
         .insert(transformedData);
 
@@ -652,7 +502,7 @@ const BulkImport: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Bulk Import</h1>
-            <p className="text-muted-foreground">Import data from Excel or CSV files</p>
+            <p className="text-muted-foreground">Import data from Excel or CSV files for all metadata types</p>
           </div>
           <Button onClick={openImportModal} className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
@@ -672,7 +522,7 @@ const BulkImport: React.FC = () => {
                     <div>
                       <div className="font-medium">{job.filename}</div>
                       <div className="text-sm text-muted-foreground">
-                        {importTypes.find(t => t.value === job.type)?.label} • {new Date(job.createdAt).toLocaleDateString()}
+                        {IMPORT_TYPES.find(t => t.value === job.type)?.label} • {new Date(job.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
@@ -710,7 +560,7 @@ const BulkImport: React.FC = () => {
                           <SelectValue placeholder="Select what you want to import" />
                         </SelectTrigger>
                         <SelectContent>
-                          {importTypes.map(type => (
+                          {IMPORT_TYPES.map(type => (
                             <SelectItem key={type.value} value={type.value}>
                               <div className="flex items-center gap-2">
                                 <span>{type.icon}</span>
@@ -728,11 +578,11 @@ const BulkImport: React.FC = () => {
                     <div className="bg-muted/50 rounded-lg p-4">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">
-                          {importTypes.find(t => t.value === selectedType)?.icon}
+                          {IMPORT_TYPES.find(t => t.value === selectedType)?.icon}
                         </span>
                         <div>
                           <h3 className="font-medium">
-                            Import {importTypes.find(t => t.value === selectedType)?.label}
+                            Import {IMPORT_TYPES.find(t => t.value === selectedType)?.label}
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             Upload your file to begin importing data
@@ -748,7 +598,10 @@ const BulkImport: React.FC = () => {
                       <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <div className="space-y-2">
                         <label htmlFor="file-upload" className="cursor-pointer">
-                          <span className="text-primary underline">Browse files</span>
+                          <span className="text-primary font-medium hover:underline">
+                            Choose a file
+                          </span>
+                          <span className="text-muted-foreground"> or drag and drop</span>
                           <input
                             id="file-upload"
                             type="file"
@@ -827,7 +680,7 @@ const BulkImport: React.FC = () => {
                   <div>
                     <h3 className="font-medium">Map Columns & Preview Data</h3>
                     <p className="text-sm text-muted-foreground">
-                      Match your file columns to database fields for {importTypes.find(t => t.value === selectedType)?.label}
+                      Match your file columns to database fields for {IMPORT_TYPES.find(t => t.value === selectedType)?.label}
                     </p>
                   </div>
 
@@ -901,7 +754,6 @@ const BulkImport: React.FC = () => {
                     </div>
                   </div>
 
-
                   {/* Data Preview Section - Bottom */}
                   <DataPreviewTable 
                     currentSheetData={currentSheetData}
@@ -947,8 +799,14 @@ const BulkImport: React.FC = () => {
 
             {/* Bottom Action Bar for other steps */}
             {currentStep !== 'mapping' && (
-              <div className="border-t bg-background p-4 flex gap-3 justify-end">
-                <Button variant="outline" onClick={closeModal}>
+              <div className="border-t bg-background p-4 flex gap-3">
+                <Button 
+                  onClick={() => setCurrentStep('upload')}
+                  variant="outline"
+                >
+                  Back
+                </Button>
+                <Button onClick={closeModal}>
                   Cancel
                 </Button>
               </div>
@@ -959,4 +817,5 @@ const BulkImport: React.FC = () => {
     </PageLayout>
   );
 };
+
 export default BulkImport;
