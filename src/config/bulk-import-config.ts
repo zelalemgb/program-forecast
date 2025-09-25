@@ -25,7 +25,10 @@ export const IMPORT_TYPES: ImportType[] = [
   { value: "regional_hubs", label: "EPSS Regional Hubs", icon: "🏭", table: "epss_regional_hubs" },
   { value: "products", label: "Products & Medicines", icon: "💊", table: "product_reference" },
   { value: "users", label: "Users & Staff", icon: "👥", table: "profiles" },
-  { value: "areas", label: "Administrative Areas", icon: "🗺️", table: "woreda" },
+  { value: "countries", label: "Countries", icon: "🌍", table: "countries" },
+  { value: "regions", label: "Regions", icon: "🗺️", table: "region" },
+  { value: "zones", label: "Zones", icon: "📍", table: "zone" },
+  { value: "woredas", label: "Woredas", icon: "📌", table: "woreda" },
   { value: "suppliers", label: "Suppliers & Vendors", icon: "🏢", table: "suppliers" },
   { value: "inventory", label: "Inventory Balances", icon: "📦", table: "inventory_balances" }
 ];
@@ -80,14 +83,27 @@ export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
     { value: "email", label: "Email", required: true, type: "email" },
     { value: "phone_number", label: "Phone Number", required: false, type: "string" }
   ],
-  areas: [
-    { value: "country_name", label: "Country Name", required: false, type: "string" },
+  countries: [
+    { value: "country_name", label: "Country Name", required: true, type: "string" },
+    { value: "country_code", label: "Country Code", required: false, type: "string" }
+  ],
+  regions: [
     { value: "region_name", label: "Region Name", required: true, type: "string" },
+    { value: "region_code", label: "Region Code", required: false, type: "string" },
+    { value: "country_name", label: "Country Name", required: false, type: "string" }
+  ],
+  zones: [
     { value: "zone_name", label: "Zone Name", required: true, type: "string" },
+    { value: "zone_code", label: "Zone Code", required: false, type: "string" },
+    { value: "region_name", label: "Region Name", required: true, type: "string" },
+    { value: "country_name", label: "Country Name", required: false, type: "string" }
+  ],
+  woredas: [
     { value: "woreda_name", label: "Woreda Name", required: true, type: "string" },
     { value: "woreda_code", label: "Woreda Code", required: false, type: "string" },
-    { value: "zone_code", label: "Zone Code", required: false, type: "string" },
-    { value: "region_code", label: "Region Code", required: false, type: "string" }
+    { value: "zone_name", label: "Zone Name", required: true, type: "string" },
+    { value: "region_name", label: "Region Name", required: true, type: "string" },
+    { value: "country_name", label: "Country Name", required: false, type: "string" }
   ],
   suppliers: [
     { value: "name", label: "Supplier Name", required: true, type: "string" },

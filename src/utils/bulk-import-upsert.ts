@@ -18,6 +18,9 @@ const getUniqueFields = (tableName: string): string[] => {
     'product_reference': ['canonical_name'], // Use canonical_name as unique key
     'epss_regional_hubs': ['hub_code'],
     'profiles': ['email'],
+    'countries': ['country_name'],
+    'region': ['region_name', 'country_id'],
+    'zone': ['zone_name', 'region_id'],
     'woreda': ['woreda_name', 'zone_id'],
     'suppliers': ['name'],
     'inventory_balances': ['facility_id', 'product_id']
@@ -32,6 +35,9 @@ const getConflictField = (tableName: string): string => {
     'product_reference': 'canonical_name',
     'epss_regional_hubs': 'hub_code',
     'profiles': 'email',
+    'countries': 'country_name',
+    'region': 'region_name,country_id',
+    'zone': 'zone_name,region_id',
     'woreda': 'woreda_name,zone_id',
     'suppliers': 'name',
     'inventory_balances': 'facility_id,product_id'
@@ -87,10 +93,14 @@ export const performUpsert = async (
   try {
     const uniqueFields = getUniqueFields(tableName);
     
-    // Special handling for facility and woreda tables - resolve administrative hierarchy
+    // Special handling for administrative tables - resolve hierarchy
     let processedRecords = records;
     if (tableName === 'facility') {
       processedRecords = await resolveFacilityHierarchy(records);
+    } else if (tableName === 'region') {
+      processedRecords = await resolveRegionHierarchy(records);
+    } else if (tableName === 'zone') {
+      processedRecords = await resolveZoneHierarchy(records);
     } else if (tableName === 'woreda') {
       processedRecords = await resolveWoredaHierarchy(records);
     }
@@ -113,8 +123,22 @@ export const performUpsert = async (
         });
       }
       
-      // For woreda table, remove hierarchy name fields that don't exist in the database
-      if (tableName === 'woreda') {
+      // Clean up fields for administrative tables
+      if (tableName === 'countries') {
+        // Countries table is simple - no cleanup needed
+      } else if (tableName === 'region') {
+        Object.keys(cleanRecord).forEach(key => {
+          if (['country_name', 'region_id'].includes(key)) {
+            delete cleanRecord[key];
+          }
+        });
+      } else if (tableName === 'zone') {
+        Object.keys(cleanRecord).forEach(key => {
+          if (['country_name', 'region_name', 'zone_id'].includes(key)) {
+            delete cleanRecord[key];
+          }
+        });
+      } else if (tableName === 'woreda') {
         Object.keys(cleanRecord).forEach(key => {
           // Remove name/code fields and disallow passing woreda_id for inserts
           if (['country_name', 'country_code', 'region_name', 'region_code', 'zone_name', 'zone_code', 'woreda_id'].includes(key)) {
@@ -257,6 +281,56 @@ const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
   });
   
   console.log(`Completed hierarchy resolution for ${processedRecords.length} records`);
+  return processedRecords;
+};
+
+// Resolve country for region imports
+const resolveRegionHierarchy = async (records: any[]): Promise<any[]> => {
+  console.log(`Resolving hierarchy for ${records.length} region records`);
+
+  const locationNames = records.map(record => ({
+    country_name: record.country_name || 'Ethiopia'
+  }));
+
+  const hierarchyResults = await bulkResolveHierarchy(locationNames);
+
+  const processedRecords = records.map((record, index) => {
+    const h = hierarchyResults[index] || {} as any;
+    const merged = {
+      ...record,
+      country_id: h.country_id ?? record.country_id ?? null
+    };
+    if ('region_id' in merged) delete (merged as any).region_id;
+    return merged;
+  });
+
+  console.log(`Completed resolving parents for region: ${processedRecords.length}`);
+  return processedRecords;
+};
+
+// Resolve country/region for zone imports
+const resolveZoneHierarchy = async (records: any[]): Promise<any[]> => {
+  console.log(`Resolving hierarchy for ${records.length} zone records`);
+
+  const locationNames = records.map(record => ({
+    country_name: record.country_name || 'Ethiopia',
+    region_name: record.region_name
+  }));
+
+  const hierarchyResults = await bulkResolveHierarchy(locationNames);
+
+  const processedRecords = records.map((record, index) => {
+    const h = hierarchyResults[index] || {} as any;
+    const merged = {
+      ...record,
+      country_id: h.country_id ?? record.country_id ?? null,
+      region_id: h.region_id ?? record.region_id ?? null
+    };
+    if ('zone_id' in merged) delete (merged as any).zone_id;
+    return merged;
+  });
+
+  console.log(`Completed resolving parents for zone: ${processedRecords.length}`);
   return processedRecords;
 };
 // Resolve parent hierarchy (country/region/zone) for woreda imports
