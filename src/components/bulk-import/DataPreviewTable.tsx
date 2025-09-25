@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,9 @@ import {
   XCircle, 
   Info,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import {
   Tooltip,
@@ -114,6 +116,16 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
   const endIndex = startIndex + rowsPerPage;
   const currentRows = processedRows.slice(startIndex, endIndex);
 
+  // Reset/clamp pagination when data set changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterView, currentSheetData.rows]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [totalPages]);
   const toggleRowExpanded = (originalIndex: number) => {
     setExpandedRows(prev => {
       const newSet = new Set(prev);
@@ -230,8 +242,8 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
         </div>
 
         {/* Data table */}
-        <div className="flex-1 overflow-auto min-h-0">
-          <Table>
+        <div className="flex-1 min-h-0 overflow-x-auto">
+          <Table className="min-w-max">
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
                 <TableHead className="w-12 text-xs">#</TableHead>
@@ -297,10 +309,8 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
                     </TableCell>
                     
                     {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex} className="text-xs max-w-32">
-                        <div className="truncate" title={cell?.toString() || ''}>
-                          {cell?.toString() || <span className="text-muted-foreground italic">empty</span>}
-                        </div>
+                      <TableCell key={cellIndex} className="text-xs whitespace-nowrap">
+                        {cell?.toString() || <span className="text-muted-foreground italic">empty</span>}
                       </TableCell>
                     ))}
                     
@@ -369,6 +379,20 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage !== 1) goToPage(1);
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                    <span className="sr-only">First page</span>
+                  </PaginationLink>
+                </PaginationItem>
+
+                <PaginationItem>
                   <PaginationPrevious 
                     href="#"
                     onClick={(e) => {
@@ -423,6 +447,20 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
                     }}
                     className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage !== totalPages) goToPage(totalPages);
+                    }}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                    <span className="sr-only">Last page</span>
+                  </PaginationLink>
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
