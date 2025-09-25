@@ -74,7 +74,35 @@ export const performUpsert = async (
       updated_at: new Date().toISOString()
     }));
     
-    // Use upsert with onConflict parameter for each table type
+    // Special handling for product_reference to avoid partial unique index conflicts on code
+    if (tableName === 'product_reference') {
+      const withCode = recordsWithTimestamp.filter(r => r.code && String(r.code).trim() !== '');
+      const withoutCode = recordsWithTimestamp.filter(r => !r.code || String(r.code).trim() === '');
+
+      if (withCode.length > 0) {
+        const { error } = await supabase
+          .from('product_reference')
+          .upsert(withCode, { onConflict: 'code', ignoreDuplicates: false, count: 'exact' });
+        if (error) {
+          result.errors.push(`Upsert (by code) failed: ${error.message}`);
+        }
+      }
+
+      if (withoutCode.length > 0) {
+        const { error } = await supabase
+          .from('product_reference')
+          .upsert(withoutCode, { onConflict: 'canonical_name', ignoreDuplicates: false, count: 'exact' });
+        if (error) {
+          result.errors.push(`Upsert (by canonical_name) failed: ${error.message}`);
+        }
+      }
+
+      // Best-effort summary
+      result.updated = records.length - (result.errors.length > 0 ? 0 : 0);
+      return result;
+    }
+
+    // Generic upsert with onConflict parameter for other tables
     let upsertConfig: any = { 
       ignoreDuplicates: false,
       count: 'exact'
@@ -83,8 +111,6 @@ export const performUpsert = async (
     // Set onConflict based on table type for proper upsert behavior
     if (tableName === 'facility') {
       upsertConfig.onConflict = 'facility_code';
-    } else if (tableName === 'product_reference') {
-      upsertConfig.onConflict = 'canonical_name'; // Use unique index on canonical_name
     } else if (tableName === 'epss_regional_hubs') {
       upsertConfig.onConflict = 'hub_code';
     } else if (tableName === 'profiles') {
