@@ -136,6 +136,12 @@ const RoleBasedRegistration: React.FC = () => {
       setSelectedZoneFilter('');
       setSelectedWoredaFilter('');
     }
+    
+    // Clear facility selection and reload facilities when region filter changes
+    if (selectedRoleInfo?.level === 'facility') {
+      setSelectedFacility('');
+      loadLocationData('facility');
+    }
   }, [selectedRegionFilter]);
 
   useEffect(() => {
@@ -145,14 +151,29 @@ const RoleBasedRegistration: React.FC = () => {
       setWoredas([]);
       setSelectedWoredaFilter('');
     }
+    
+    // Clear facility selection and reload facilities when zone filter changes
+    if (selectedRoleInfo?.level === 'facility') {
+      setSelectedFacility('');
+      loadLocationData('facility');
+    }
   }, [selectedZoneFilter]);
+
+  // Add effect for woreda filter changes
+  useEffect(() => {
+    // Clear facility selection and reload facilities when woreda filter changes
+    if (selectedRoleInfo?.level === 'facility') {
+      setSelectedFacility('');
+      loadLocationData('facility');
+    }
+  }, [selectedWoredaFilter]);
 
   // Trigger data loading when search terms change
   useEffect(() => {
     if (selectedRoleInfo) {
       loadLocationData(selectedRoleInfo.level);
     }
-  }, [selectedRole, selectedRegionFilter, selectedZoneFilter, selectedWoredaFilter, facilitySearch, woredaSearch, zoneSearch, regionSearch]);
+  }, [selectedRole, facilitySearch, woredaSearch, zoneSearch, regionSearch]);
 
   const loadRegions = async () => {
     try {
@@ -197,58 +218,55 @@ const RoleBasedRegistration: React.FC = () => {
     console.log('Loading location data for level:', level);
     try {
       if (level === 'facility') {
-        // First, try to load facilities with a simple query
+        // Load facilities with hierarchical filtering
         console.log('Loading facilities...');
         console.log('Current user:', (await supabase.auth.getUser()).data.user?.email || 'No user');
+        console.log('Filters - Region:', selectedRegionFilter, 'Zone:', selectedZoneFilter, 'Woreda:', selectedWoredaFilter);
         
-        const { data: simpleData, error: simpleError } = await supabase
+        let query = supabase
           .from('facility')
-          .select('facility_id, facility_name, facility_type, woreda_id')
-          .limit(100);
+          .select(`
+            facility_id, 
+            facility_name, 
+            facility_type,
+            woreda_id,
+            zone_id,
+            region_id,
+            woreda(
+              woreda_name,
+              zone(
+                zone_name,
+                region(region_name)
+              )
+            )
+          `);
+
+        // Apply hierarchical filters
+        if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
+          query = query.eq('woreda_id', parseInt(selectedWoredaFilter));
+        } else if (selectedZoneFilter && selectedZoneFilter !== 'all') {
+          query = query.eq('zone_id', parseInt(selectedZoneFilter));
+        } else if (selectedRegionFilter && selectedRegionFilter !== 'all') {
+          query = query.eq('region_id', parseInt(selectedRegionFilter));
+        }
+
+        // Apply facility search filter
+        if (facilitySearch) {
+          query = query.ilike('facility_name', `%${facilitySearch}%`);
+        }
+
+        const { data: facilityData, error: facilityError } = await query.limit(100);
         
-        if (simpleError) {
-          console.error('Error loading facilities (simple query):', simpleError);
-          console.error('Error details:', simpleError.message, simpleError.code);
+        if (facilityError) {
+          console.error('Error loading facilities:', facilityError);
+          console.error('Error details:', facilityError.message, facilityError.code);
           setFacilities([]);
           return;
         }
         
-        console.log('Simple facilities loaded:', simpleData?.length || 0);
-        console.log('Sample facilities:', simpleData?.slice(0, 3));
-        
-        // If we have facilities, try to enrich them with location data
-        if (simpleData && simpleData.length > 0) {
-          try {
-            const { data: enrichedData, error: enrichedError } = await supabase
-              .from('facility')
-              .select(`
-                facility_id, 
-                facility_name, 
-                facility_type,
-                woreda(
-                  woreda_name,
-                  zone(
-                    zone_name,
-                    region(region_name)
-                  )
-                )
-              `)
-              .limit(100);
-            
-            if (enrichedError) {
-              console.warn('Could not load enriched facility data, using simple data:', enrichedError);
-              setFacilities(simpleData as any);
-            } else {
-              console.log('Enriched facilities loaded:', enrichedData?.length || 0);
-              setFacilities((enrichedData as any) || []);
-            }
-          } catch (enrichError) {
-            console.warn('Enrichment failed, using simple data:', enrichError);
-            setFacilities(simpleData as any);
-          }
-        } else {
-          setFacilities([]);
-        }
+        console.log('Facilities loaded:', facilityData?.length || 0);
+        console.log('Sample facilities:', facilityData?.slice(0, 3));
+        setFacilities((facilityData as any) || []);
         
       } else if (level === 'woreda') {
         let query = supabase
@@ -633,7 +651,7 @@ const RoleBasedRegistration: React.FC = () => {
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All regions" />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
+                           <SelectContent className="bg-background border z-[60] shadow-lg">
                             <SelectItem value="all" className="hover:bg-muted">All regions</SelectItem>
                             {regions.map(region => (
                               <SelectItem key={region.region_id} value={region.region_id.toString()} className="hover:bg-muted">
@@ -650,7 +668,7 @@ const RoleBasedRegistration: React.FC = () => {
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All zones" />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
+                           <SelectContent className="bg-background border z-[60] shadow-lg">
                             <SelectItem value="all" className="hover:bg-muted">All zones</SelectItem>
                             {zones.map(zone => (
                               <SelectItem key={zone.zone_id} value={zone.zone_id.toString()} className="hover:bg-muted">
@@ -667,7 +685,7 @@ const RoleBasedRegistration: React.FC = () => {
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="All woredas" />
                           </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
+                           <SelectContent className="bg-background border z-[60] shadow-lg">
                             <SelectItem value="all" className="hover:bg-muted">All woredas</SelectItem>
                             {woredas.map(woreda => (
                               <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()} className="hover:bg-muted">
@@ -700,29 +718,31 @@ const RoleBasedRegistration: React.FC = () => {
                           {facilities.length} facilities available
                         </Badge>
                       </div>
-                      <Select value={selectedFacility} onValueChange={setSelectedFacility}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Choose the facility where you work" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border z-[60] max-h-60 overflow-auto shadow-lg">
-                          {facilities.length === 0 ? (
-                            <SelectItem value="no-facilities" disabled className="text-muted-foreground">
-                              No facilities found. Try adjusting your filters or check if data is loaded.
-                            </SelectItem>
-                          ) : (
-                            facilities.map(facility => (
-                              <SelectItem key={facility.facility_id} value={facility.facility_id.toString()} className="hover:bg-muted bg-background">
-                                <div>
-                                  <div className="font-medium">{facility.facility_name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {facility.facility_type} • {getLocationDisplay(facility)}
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                       <Select value={selectedFacility} onValueChange={setSelectedFacility}>
+                         <SelectTrigger className="bg-background border">
+                           <SelectValue placeholder="Choose the facility where you work" />
+                         </SelectTrigger>
+                         <SelectContent className="bg-background border z-[70] max-h-60 overflow-auto shadow-lg">
+                           {facilities.length === 0 ? (
+                             <SelectItem value="no-facilities" disabled className="text-muted-foreground bg-background">
+                               {selectedRegionFilter || selectedZoneFilter || selectedWoredaFilter || facilitySearch 
+                                 ? "No facilities found matching your filters. Try adjusting the filters above." 
+                                 : "No facilities found. Loading..."}
+                             </SelectItem>
+                           ) : (
+                             facilities.map(facility => (
+                               <SelectItem key={facility.facility_id} value={facility.facility_id.toString()} className="hover:bg-muted bg-background">
+                                 <div>
+                                   <div className="font-medium">{facility.facility_name}</div>
+                                   <div className="text-sm text-muted-foreground">
+                                     {facility.facility_type} • {getLocationDisplay(facility)}
+                                   </div>
+                                 </div>
+                               </SelectItem>
+                             ))
+                           )}
+                         </SelectContent>
+                       </Select>
                       <p className="text-xs text-muted-foreground">
                         Select the health facility where you work and will be managing operations.
                       </p>
