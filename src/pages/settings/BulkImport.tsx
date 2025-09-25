@@ -331,18 +331,22 @@ const BulkImport: React.FC = () => {
       const rowIssues: string[] = [];
       let isEmpty = true;
 
-      // Check if row is completely empty
-      row.forEach(cell => {
-        if (cell !== null && cell !== undefined && cell !== '') {
-          isEmpty = false;
+      // Check if row is completely empty for mapped columns only
+      mappedColumns.forEach(mapping => {
+        if (mapping.csvColumn && mapping.csvColumn !== "__skip__") {
+          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+          const cellValue = row[columnIndex];
+          if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+            isEmpty = false;
+          }
         }
       });
 
-      if (isEmpty) {
+      if (isEmpty && mappedColumns.length > 0) {
         rowIssues.push("Empty record - will be skipped");
       }
 
-      // Check for missing required fields
+      // Check for missing required fields - only for mapped required fields
       requiredFields.forEach(field => {
         const mapping = mappedColumns.find(m => m.dbColumn === field.value);
         if (mapping && mapping.csvColumn) {
@@ -351,8 +355,12 @@ const BulkImport: React.FC = () => {
           if (cellValue === null || cellValue === undefined || cellValue === '') {
             rowIssues.push(`Missing required field: ${field.label}`);
           }
-        } else {
-          rowIssues.push(`Required field "${field.label}" not mapped`);
+        } else if (columnMappings.some(m => m.dbColumn === field.value)) {
+          // Only flag as unmapped if the field exists in mappings but is not mapped
+          const fieldMapping = columnMappings.find(m => m.dbColumn === field.value);
+          if (!fieldMapping?.csvColumn || fieldMapping.csvColumn === "__skip__") {
+            rowIssues.push(`Required field "${field.label}" not mapped`);
+          }
         }
       });
 
@@ -431,10 +439,12 @@ const BulkImport: React.FC = () => {
           const item: any = {};
           let hasData = false;
           
-          selectedSheetData.headers.forEach((header, index) => {
-            const dbColumn = mappingObj[header];
-            if (dbColumn && dbColumn !== "__skip__" && row[index] !== undefined && row[index] !== null && row[index] !== '') {
-              item[dbColumn] = row[index];
+          // Only process mapped columns (skip columns marked as "__skip__")
+          mappedColumns.forEach(mapping => {
+            const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+            const cellValue = row[columnIndex];
+            if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+              item[mapping.dbColumn] = cellValue;
               hasData = true;
             }
           });
@@ -806,7 +816,7 @@ const BulkImport: React.FC = () => {
                         )}
                       </div>
                       <div className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-                        <strong>Note:</strong> Rows with errors will be automatically skipped during import.
+                        <strong>Note:</strong> Validation is applied only to mapped columns. Rows with errors will be automatically skipped during import.
                       </div>
                     </div>
                   )}
