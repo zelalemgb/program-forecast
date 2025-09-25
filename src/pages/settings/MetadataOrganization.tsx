@@ -52,7 +52,7 @@ const MetadataOrganization: React.FC = () => {
     },
     {
       title: "Administrative Areas",
-      description: "Manage regions, zones, and woredas",
+      description: "Manage countries, regions, zones, and woredas",
       icon: MapPin,
       path: "/settings/metadata/areas",
       color: "text-orange-600",
