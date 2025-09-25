@@ -35,6 +35,7 @@ import ForecastAnalysis from "./pages/ForecastAnalysis";
 import SavedForecasts from "./pages/SavedForecasts";
 import UserManagement from "./pages/UserManagement";
 import RoleBasedRegistration from "./pages/RoleBasedRegistration";
+import FacilityDashboard from "./pages/FacilityDashboard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
@@ -56,6 +57,7 @@ const AppShell: React.FC = () => {
           <main className="flex-1 overflow-x-auto">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/facility-dashboard" element={<FacilityDashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
               <Route path="/forecast" element={<RunForecast />} />

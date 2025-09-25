@@ -32,10 +32,18 @@ export const navigationPages: Record<string, NavigationPage> = {
   // Dashboard pages
   '/': {
     path: '/',
-    title: 'Facility Dashboard',
+    title: 'Home',
     description: 'Overview of facility operations and key metrics',
     category: 'dashboard',
     breadcrumbLabel: 'Home',
+    showInSidebar: true,
+  },
+  '/facility-dashboard': {
+    path: '/facility-dashboard',
+    title: 'Facility Dashboard',
+    description: 'Unified health facility commodity management dashboard',
+    category: 'dashboard',
+    breadcrumbLabel: 'Facility Dashboard',
     showInSidebar: true,
   },
   '/cdss-dashboard': {
