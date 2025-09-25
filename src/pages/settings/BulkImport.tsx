@@ -124,73 +124,89 @@ const BulkImport: React.FC = () => {
     const fileName = file.name.toLowerCase();
     
     if (fileName.endsWith('.csv')) {
-      // Handle CSV files - first parse to detect if there are multiple sections/tabs
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        
-        // Check if CSV has multiple sections separated by empty lines or special markers
-        // Split by empty lines to detect multiple "tabs" or sections
-        const sections = text.split(/\n\s*\n/).filter(section => section.trim());
-        
-        if (sections.length > 1) {
-          // Multiple sections detected - treat each as a separate "tab"
-          const sheets: { [key: string]: SheetData } = {};
-          
-          sections.forEach((section, index) => {
-            Papa.parse(section, {
-              complete: (results) => {
-                if (results.data && results.data.length > 0) {
-                  const headers = results.data[0] as string[];
-                  const rows = results.data.slice(1) as any[][];
-                  const sheetName = `Section ${index + 1}`;
-                  sheets[sheetName] = { headers, rows };
+      // Handle CSV files - parse and create sections that user can select from
+      Papa.parse(file, {
+        complete: (results) => {
+          if (results.data && results.data.length > 0) {
+            const allData = results.data as any[][];
+            const sheets: { [key: string]: SheetData } = {};
+            
+            // Create default "Full Dataset" sheet with all data
+            const headers = allData[0] as string[];
+            const rows = allData.slice(1) as any[][];
+            sheets['Full Dataset'] = { headers, rows };
+            
+            // Try to detect potential sections based on empty rows or header patterns
+            let currentSection: any[] = [];
+            let sectionIndex = 1;
+            let lastWasEmpty = false;
+            
+            for (let i = 0; i < allData.length; i++) {
+              const row = allData[i];
+              const isEmpty = !row || row.every(cell => !cell || cell.toString().trim() === '');
+              
+              if (isEmpty) {
+                // Empty row detected
+                if (!lastWasEmpty && currentSection.length > 1) {
+                  // End current section if it has content
+                  const sectionHeaders = currentSection[0] as string[];
+                  const sectionRows = currentSection.slice(1);
+                  if (sectionRows.length > 0) {
+                    sheets[`Section ${sectionIndex}`] = { 
+                      headers: sectionHeaders, 
+                      rows: sectionRows 
+                    };
+                    sectionIndex++;
+                  }
+                  currentSection = [];
                 }
-              },
-              header: false,
-              skipEmptyLines: true
-            });
-          });
-          
-          const firstSheet = Object.keys(sheets)[0];
-          setFileData({
-            sheets,
-            selectedSheet: firstSheet
-          });
-          
-          console.log(`Found ${Object.keys(sheets).length} sections in CSV:`, Object.keys(sheets));
-          if (Object.keys(sheets).length > 1) {
-            console.log('Multiple sections detected, showing sheet selection');
-            setCurrentStep('sheet');
-          } else {
-            console.log('Single section detected, going to mapping');
-            initializeColumnMappings(sheets[firstSheet].headers);
-            setCurrentStep('mapping');
-          }
-        } else {
-          // Single section - parse normally
-          Papa.parse(file, {
-            complete: (results) => {
-              if (results.data && results.data.length > 0) {
-                const headers = results.data[0] as string[];
-                const rows = results.data.slice(1) as any[][];
-                
-                const sheetData = {
-                  sheets: { 'Sheet1': { headers, rows } },
-                  selectedSheet: 'Sheet1'
-                };
-                
-                setFileData(sheetData);
-                initializeColumnMappings(headers);
-                setCurrentStep('mapping');
+                lastWasEmpty = true;
+              } else {
+                // Non-empty row
+                if (lastWasEmpty && currentSection.length === 0) {
+                  // Starting a new section after empty rows
+                  currentSection = [row];
+                } else {
+                  currentSection.push(row);
+                }
+                lastWasEmpty = false;
               }
-            },
-            header: false,
-            skipEmptyLines: true
-          });
-        }
-      };
-      reader.readAsText(file);
+            }
+            
+            // Handle remaining section
+            if (currentSection.length > 1) {
+              const sectionHeaders = currentSection[0] as string[];
+              const sectionRows = currentSection.slice(1);
+              if (sectionRows.length > 0) {
+                sheets[`Section ${sectionIndex}`] = { 
+                  headers: sectionHeaders, 
+                  rows: sectionRows 
+                };
+              }
+            }
+            
+            const firstSheet = Object.keys(sheets)[0];
+            setFileData({
+              sheets,
+              selectedSheet: firstSheet
+            });
+            
+            console.log(`Found ${Object.keys(sheets).length} potential sections in CSV:`, Object.keys(sheets));
+            
+            // Always show sheet selection for CSV to let users choose their preferred section
+            if (Object.keys(sheets).length > 1) {
+              console.log('Multiple sections detected, showing sheet selection');
+              setCurrentStep('sheet');
+            } else {
+              console.log('Single section detected, going to mapping');
+              initializeColumnMappings(sheets[firstSheet].headers);
+              setCurrentStep('mapping');
+            }
+          }
+        },
+        header: false,
+        skipEmptyLines: false // Keep empty lines for section detection
+      });
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
       // Handle Excel files
       const reader = new FileReader();
