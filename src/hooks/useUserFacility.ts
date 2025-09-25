@@ -46,14 +46,71 @@ export const useUserFacility = (): UserFacilityInfo => {
         }
 
         if (!userRoles || userRoles.length === 0) {
-          // Check if user has pending role requests
-          const { data: pendingRequests } = await supabase
-            .from('user_role_requests')
-            .select('requested_role, admin_level, status')
-            .eq('user_id', user.id)
-            .eq('status', 'pending')
-            .limit(1);
+          // Check pending requests and preferred facility in profile concurrently
+          const [pendingReqRes, profileRes] = await Promise.all([
+            supabase
+              .from('user_role_requests')
+              .select('requested_role, admin_level, status')
+              .eq('user_id', user.id)
+              .eq('status', 'pending')
+              .limit(1),
+            supabase
+              .from('profiles')
+              .select('preferred_facility_id')
+              .eq('user_id', user.id)
+              .maybeSingle()
+          ]);
 
+          const pendingRequests = pendingReqRes.data || [];
+          const preferredFacilityId = profileRes.data?.preferred_facility_id as number | null | undefined;
+
+          // If user saved a preferred facility in profile, use it for display
+          if (preferredFacilityId) {
+            // Fetch facility basic info
+            const { data: fac, error: facErr } = await supabase
+              .from('facility')
+              .select('facility_name, facility_type, woreda_id')
+              .eq('facility_id', preferredFacilityId)
+              .maybeSingle();
+
+            let locationDisplay = 'Preferred Facility';
+            let facilityName: string | null = null;
+            let facilityType: string | null = null;
+
+            if (!facErr && fac) {
+              facilityName = fac.facility_name;
+              facilityType = fac.facility_type;
+
+              // Resolve hierarchy
+              let parts: string[] = [];
+              if (fac.woreda_id) {
+                const { data: w } = await supabase.from('woreda').select('woreda_name, zone_id').eq('woreda_id', fac.woreda_id).maybeSingle();
+                if (w) {
+                  parts.push(w.woreda_name);
+                  const { data: z } = await supabase.from('zone').select('zone_name, region_id').eq('zone_id', w.zone_id).maybeSingle();
+                  if (z) {
+                    parts.push(z.zone_name);
+                    const { data: r } = await supabase.from('region').select('region_name').eq('region_id', z.region_id).maybeSingle();
+                    if (r) parts.push(r.region_name);
+                  }
+                }
+              }
+              locationDisplay = `${facilityName}${facilityType ? ` (${facilityType})` : ''}${parts.length ? ` – ${parts.join(', ')}` : ''}`;
+            }
+
+            setFacilityInfo({
+              facilityName,
+              facilityType,
+              role: pendingRequests.length ? 'Pending Approval' : 'No Role Assigned',
+              adminLevel: pendingRequests[0]?.admin_level ?? null,
+              locationDisplay: pendingRequests.length ? `${locationDisplay} – awaiting approval` : locationDisplay,
+              loading: false,
+              error: null,
+            });
+            return;
+          }
+
+          // Fall back to pending/no role messages
           if (pendingRequests && pendingRequests.length > 0) {
             setFacilityInfo(prev => ({
               ...prev,
@@ -84,29 +141,36 @@ export const useUserFacility = (): UserFacilityInfo => {
 
         // Get facility info if user is assigned to a facility
         if (primaryRole.facility_id) {
-          const { data: facilityData, error: facilityError } = await supabase
+          // Fetch facility and resolve hierarchy step-by-step to avoid ambiguous FK embeds
+          const { data: fac, error: facErr } = await supabase
             .from('facility')
-            .select(`
-              facility_name,
-              facility_type,
-              woreda(
-                woreda_name,
-                zone(
-                  zone_name,
-                  region(region_name)
-                )
-              )
-            `)
+            .select('facility_name, facility_type, woreda_id')
             .eq('facility_id', primaryRole.facility_id)
-            .single();
+            .maybeSingle();
 
-          if (facilityError) {
-            console.error('Error fetching facility data:', facilityError);
-            // Don't throw, just continue without facility data
-          } else if (facilityData) {
-            facilityName = facilityData.facility_name;
-            facilityType = facilityData.facility_type;
-            locationInfo = facilityData;
+          if (!facErr && fac) {
+            facilityName = fac.facility_name;
+            facilityType = fac.facility_type;
+            
+            // Resolve hierarchy
+            let resolved: any = {};
+            if (fac.woreda_id) {
+              const { data: w } = await supabase.from('woreda').select('woreda_name, zone_id').eq('woreda_id', fac.woreda_id).maybeSingle();
+              if (w) {
+                resolved.woreda = { woreda_name: w.woreda_name } as any;
+                const { data: z } = await supabase.from('zone').select('zone_name, region_id').eq('zone_id', w.zone_id).maybeSingle();
+                if (z) {
+                  resolved.woreda.zone = { zone_name: z.zone_name } as any;
+                  const { data: r } = await supabase.from('region').select('region_name').eq('region_id', z.region_id).maybeSingle();
+                  if (r) {
+                    resolved.woreda.zone.region = { region_name: r.region_name } as any;
+                  }
+                }
+              }
+            }
+            locationInfo = resolved;
+          } else if (facErr) {
+            console.error('Error fetching facility data:', facErr);
           }
         }
         // Get woreda info if user is assigned to woreda level

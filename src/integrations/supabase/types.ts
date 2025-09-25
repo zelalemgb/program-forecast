@@ -2165,6 +2165,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone_number: string | null
+          preferred_facility_id: number | null
           updated_at: string | null
           user_id: string | null
         }
@@ -2174,6 +2175,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone_number?: string | null
+          preferred_facility_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2183,10 +2185,19 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone_number?: string | null
+          preferred_facility_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_preferred_facility_fk"
+            columns: ["preferred_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+        ]
       }
       program_funding_allocations: {
         Row: {

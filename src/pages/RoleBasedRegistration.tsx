@@ -472,6 +472,7 @@ const RoleBasedRegistration: React.FC = () => {
           full_name: fullName,
           email: email,
           phone_number: phoneNumber,
+          preferred_facility_id: (selectedRoleInfo?.level === 'facility' && selectedFacility) ? parseInt(selectedFacility) : null,
         });
 
       if (profileError) {
