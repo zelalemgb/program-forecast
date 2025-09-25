@@ -251,7 +251,7 @@ const BulkImport: React.FC = () => {
   const handleImport = async () => {
     if (!selectedType || !fileData) return;
 
-    const mappedColumns = columnMappings.filter(m => m.dbColumn);
+    const mappedColumns = columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__");
     if (mappedColumns.length === 0) {
       toast({
         title: "Validation Error",
@@ -275,7 +275,7 @@ const BulkImport: React.FC = () => {
         const item: any = {};
         selectedSheetData.headers.forEach((header, index) => {
           const dbColumn = mappingObj[header];
-          if (dbColumn && row[index] !== undefined && row[index] !== null && row[index] !== '') {
+          if (dbColumn && dbColumn !== "__skip__" && row[index] !== undefined && row[index] !== null && row[index] !== '') {
             item[dbColumn] = row[index];
           }
         });
@@ -581,7 +581,7 @@ const BulkImport: React.FC = () => {
                                   <SelectValue placeholder="Select field" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="">Skip this column</SelectItem>
+                                  <SelectItem value="__skip__">Skip this column</SelectItem>
                                   {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
                                     <SelectItem key={field.value} value={field.value}>
                                       <div className="flex items-center gap-2">
@@ -602,7 +602,7 @@ const BulkImport: React.FC = () => {
                   <div className="flex gap-3 pt-4 border-t">
                     <Button
                       onClick={handleImport}
-                      disabled={isImporting || columnMappings.filter(m => m.dbColumn).length === 0}
+                      disabled={isImporting || columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__").length === 0}
                       className="flex-1"
                     >
                       {isImporting ? (
