@@ -323,9 +323,10 @@ const resolveZoneHierarchy = async (records: any[]): Promise<any[]> => {
     const h = hierarchyResults[index] || {} as any;
     const merged = {
       ...record,
-      country_id: h.country_id ?? record.country_id ?? null,
       region_id: h.region_id ?? record.region_id ?? null
     };
+    // Remove fields that shouldn't be in the zone table
+    if ('country_id' in merged) delete (merged as any).country_id;
     if ('zone_id' in merged) delete (merged as any).zone_id;
     return merged;
   });
