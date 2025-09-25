@@ -66,6 +66,11 @@ const BulkImport: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'sheet' | 'mapping'>('upload');
   const [isImporting, setIsImporting] = useState(false);
   const [importJobs, setImportJobs] = useState<ImportJob[]>([]);
+  const [dataQualityIssues, setDataQualityIssues] = useState<{
+    rowIndex: number;
+    issues: string[];
+    severity: 'error' | 'warning';
+  }[]>([]);
 
   const importTypes = [
     { value: "facilities", label: "Health Facilities", icon: "🏥", table: "facility" as const },
@@ -152,6 +157,7 @@ const BulkImport: React.FC = () => {
     setUploadedFile(null);
     setFileData(null);
     setColumnMappings([]);
+    setDataQualityIssues([]);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,6 +258,7 @@ const BulkImport: React.FC = () => {
       dbColumn: ""
     }));
     setColumnMappings(mappings);
+    setDataQualityIssues([]);
   };
 
   const handleMappingChange = (csvColumn: string, dbColumn: string) => {
@@ -262,6 +269,84 @@ const BulkImport: React.FC = () => {
           : mapping
       )
     );
+    // Trigger data quality check when mappings change
+    if (fileData && selectedType) {
+      checkDataQuality();
+    }
+  };
+
+  const checkDataQuality = () => {
+    if (!fileData || !selectedType) return;
+
+    const issues: { rowIndex: number; issues: string[]; severity: 'error' | 'warning' }[] = [];
+    const selectedSheetData = fileData.sheets[fileData.selectedSheet];
+    const requiredFields = databaseFields[selectedType as keyof typeof databaseFields]?.filter(f => f.required) || [];
+    const mappedColumns = columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__");
+
+    selectedSheetData.rows.forEach((row, rowIndex) => {
+      const rowIssues: string[] = [];
+      let isEmpty = true;
+
+      // Check if row is completely empty
+      row.forEach(cell => {
+        if (cell !== null && cell !== undefined && cell !== '') {
+          isEmpty = false;
+        }
+      });
+
+      if (isEmpty) {
+        rowIssues.push("Empty record - will be skipped");
+      }
+
+      // Check for missing required fields
+      requiredFields.forEach(field => {
+        const mapping = mappedColumns.find(m => m.dbColumn === field.value);
+        if (mapping) {
+          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+          const cellValue = row[columnIndex];
+          if (cellValue === null || cellValue === undefined || cellValue === '') {
+            rowIssues.push(`Missing required field: ${field.label}`);
+          }
+        } else {
+          rowIssues.push(`Required field "${field.label}" not mapped`);
+        }
+      });
+
+      // Check for data type issues (basic validation)
+      mappedColumns.forEach(mapping => {
+        const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+        const cellValue = row[columnIndex];
+        
+        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+          // Check numeric fields
+          if (mapping.dbColumn.includes('_id') || mapping.dbColumn.includes('latitude') || mapping.dbColumn.includes('longitude')) {
+            if (isNaN(Number(cellValue))) {
+              rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
+            }
+          }
+          
+          // Check email format
+          if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(String(cellValue))) {
+              rowIssues.push(`Invalid email format: ${cellValue}`);
+            }
+          }
+        }
+      });
+
+      if (rowIssues.length > 0) {
+        const severity = rowIssues.some(issue => 
+          issue.includes('Missing required field') || 
+          issue.includes('Required field') ||
+          issue.includes('Empty record')
+        ) ? 'error' : 'warning';
+        
+        issues.push({ rowIndex, issues: rowIssues, severity });
+      }
+    });
+
+    setDataQualityIssues(issues);
   };
 
   const handleImport = async () => {
@@ -286,17 +371,37 @@ const BulkImport: React.FC = () => {
         return acc;
       }, {} as { [key: string]: string });
 
-      // Transform data according to mappings
-      const transformedData = selectedSheetData.rows.map(row => {
-        const item: any = {};
-        selectedSheetData.headers.forEach((header, index) => {
-          const dbColumn = mappingObj[header];
-          if (dbColumn && dbColumn !== "__skip__" && row[index] !== undefined && row[index] !== null && row[index] !== '') {
-            item[dbColumn] = row[index];
+      // Transform data according to mappings, skipping problematic rows
+      const validRowIndices = new Set();
+      const errorRows = dataQualityIssues.filter(issue => issue.severity === 'error').map(issue => issue.rowIndex);
+      
+      const transformedData = selectedSheetData.rows
+        .map((row, rowIndex) => {
+          // Skip rows with errors
+          if (errorRows.includes(rowIndex)) {
+            return null;
           }
-        });
-        return item;
-      }).filter(item => Object.keys(item).length > 0);
+
+          const item: any = {};
+          let hasData = false;
+          
+          selectedSheetData.headers.forEach((header, index) => {
+            const dbColumn = mappingObj[header];
+            if (dbColumn && dbColumn !== "__skip__" && row[index] !== undefined && row[index] !== null && row[index] !== '') {
+              item[dbColumn] = row[index];
+              hasData = true;
+            }
+          });
+          
+          if (hasData) {
+            validRowIndices.add(rowIndex);
+            return item;
+          }
+          return null;
+        })
+        .filter(item => item !== null);
+
+      const skippedRows = selectedSheetData.rows.length - transformedData.length;
 
       if (transformedData.length === 0) {
         throw new Error("No valid data rows found after mapping");
@@ -336,7 +441,7 @@ const BulkImport: React.FC = () => {
 
       toast({
         title: "Import Successful",
-        description: `Successfully imported ${transformedData.length} records`,
+        description: `Successfully imported ${transformedData.length} records${skippedRows > 0 ? `, ${skippedRows} rows skipped due to data quality issues` : ''}`,
       });
 
       closeModal();
@@ -449,7 +554,7 @@ const BulkImport: React.FC = () => {
 
         {/* Import Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <div className="flex items-center justify-between">
                 <DialogTitle>Import Data</DialogTitle>
@@ -540,84 +645,146 @@ const BulkImport: React.FC = () => {
 
               {/* Step 3: Column Mapping */}
               {currentStep === 'mapping' && currentSheetData && selectedType && (
-                <div className="space-y-6">
+                <div className="flex flex-col h-full space-y-4">
                   <div>
-                    <h3 className="font-medium">Map Columns</h3>
+                    <h3 className="font-medium">Map Columns & Preview Data</h3>
                     <p className="text-sm text-muted-foreground">
                       Match your file columns to database fields for {importTypes.find(t => t.value === selectedType)?.label}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* File Preview */}
-                    <div>
-                      <h4 className="font-medium text-sm mb-3">File Preview</h4>
-                      <div className="border rounded-lg p-4 max-h-96 overflow-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              {currentSheetData.headers.map((header, index) => (
-                                <TableHead key={index} className="text-xs">
-                                  {header}
-                                </TableHead>
-                              ))}
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {currentSheetData.rows.slice(0, 3).map((row, rowIndex) => (
-                              <TableRow key={rowIndex}>
+                  {/* Column Mapping Section - Top */}
+                  <div className="border rounded-lg p-4 bg-muted/20">
+                    <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+                      {columnMappings.map((mapping) => (
+                        <div key={mapping.csvColumn} className="flex items-center gap-3 p-2 bg-background rounded border">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
+                          </div>
+                          <div className="w-4 text-muted-foreground">→</div>
+                          <div className="flex-1">
+                            <Select
+                              value={mapping.dbColumn}
+                              onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
+                            >
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Select field" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__skip__">Skip this column</SelectItem>
+                                {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
+                                  <SelectItem key={field.value} value={field.value}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{field.label}</span>
+                                      {field.required && <span className="text-red-500">*</span>}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Data Quality Issues */}
+                  {dataQualityIssues.length > 0 && (
+                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-900/20">
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <h4 className="font-medium text-sm text-amber-800 dark:text-amber-200">
+                          Data Quality Issues Found ({dataQualityIssues.length} rows affected)
+                        </h4>
+                      </div>
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        {dataQualityIssues.slice(0, 10).map(({ rowIndex, issues, severity }) => (
+                          <div key={rowIndex} className={`text-xs p-2 rounded border-l-2 ${
+                            severity === 'error' 
+                              ? 'bg-red-50 border-red-500 text-red-700 dark:bg-red-900/20 dark:text-red-300' 
+                              : 'bg-yellow-50 border-yellow-500 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300'
+                          }`}>
+                            <div className="font-medium">Row {rowIndex + 1}:</div>
+                            <div>{issues.join(', ')}</div>
+                          </div>
+                        ))}
+                        {dataQualityIssues.length > 10 && (
+                          <div className="text-xs text-muted-foreground text-center">
+                            ... and {dataQualityIssues.length - 10} more issues
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-3 text-xs text-amber-700 dark:text-amber-300">
+                        <strong>Note:</strong> Rows with errors will be automatically skipped during import.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Data Preview Section - Bottom */}
+                  <div className="flex-1 border rounded-lg p-4 min-h-0">
+                    <h4 className="font-medium text-sm mb-3">Data Preview ({currentSheetData.rows.length} rows)</h4>
+                    <div className="overflow-auto h-full">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-background">
+                          <TableRow>
+                            <TableHead className="w-12 text-xs">#</TableHead>
+                            {currentSheetData.headers.map((header, index) => (
+                              <TableHead key={index} className="text-xs min-w-20">
+                                {header}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentSheetData.rows.slice(0, 50).map((row, rowIndex) => {
+                            const hasIssues = dataQualityIssues.some(issue => issue.rowIndex === rowIndex);
+                            const isError = dataQualityIssues.some(issue => issue.rowIndex === rowIndex && issue.severity === 'error');
+                            
+                            return (
+                              <TableRow 
+                                key={rowIndex} 
+                                className={hasIssues ? (isError ? 'bg-red-50 dark:bg-red-900/10' : 'bg-yellow-50 dark:bg-yellow-900/10') : ''}
+                              >
+                                <TableCell className="text-xs font-mono">
+                                  <div className="flex items-center gap-1">
+                                    {rowIndex + 1}
+                                    {hasIssues && (
+                                      <div className="flex items-center">
+                                        {isError ? (
+                                          <XCircle className="h-3 w-3 text-red-500" />
+                                        ) : (
+                                          <AlertCircle className="h-3 w-3 text-yellow-500" />
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
                                 {row.map((cell, cellIndex) => (
-                                  <TableCell key={cellIndex} className="text-xs">
+                                  <TableCell key={cellIndex} className="text-xs max-w-32 truncate">
                                     {cell?.toString() || ''}
                                   </TableCell>
                                 ))}
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-
-                    {/* Column Mapping */}
-                    <div>
-                      <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
-                      <div className="space-y-3 max-h-96 overflow-auto">
-                        {columnMappings.map((mapping) => (
-                          <div key={mapping.csvColumn} className="flex items-center gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
-                            </div>
-                            <div className="w-4 text-muted-foreground">→</div>
-                            <div className="flex-1">
-                              <Select
-                                value={mapping.dbColumn}
-                                onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
-                              >
-                                <SelectTrigger className="h-8 text-sm">
-                                  <SelectValue placeholder="Select field" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="__skip__">Skip this column</SelectItem>
-                                  {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
-                                    <SelectItem key={field.value} value={field.value}>
-                                      <div className="flex items-center gap-2">
-                                        <span>{field.label}</span>
-                                        {field.required && <span className="text-red-500">*</span>}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                      {currentSheetData.rows.length > 50 && (
+                        <div className="text-center text-xs text-muted-foreground py-2">
+                          Showing first 50 rows of {currentSheetData.rows.length} total rows
+                        </div>
+                      )}
                     </div>
                   </div>
 
+                  {/* Import Actions */}
                   <div className="flex gap-3 pt-4 border-t">
                     <Button
-                      onClick={handleImport}
+                      onClick={() => {
+                        checkDataQuality();
+                        handleImport();
+                      }}
                       disabled={isImporting || columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__").length === 0}
                       className="flex-1"
                     >
@@ -629,7 +796,12 @@ const BulkImport: React.FC = () => {
                       ) : (
                         <>
                           <Upload className="h-4 w-4 mr-2" />
-                          Import {currentSheetData.rows.length} rows
+                          Import {currentSheetData.rows.length - dataQualityIssues.filter(i => i.severity === 'error').length} rows
+                          {dataQualityIssues.filter(i => i.severity === 'error').length > 0 && (
+                            <span className="ml-1 text-xs">
+                              ({dataQualityIssues.filter(i => i.severity === 'error').length} skipped)
+                            </span>
+                          )}
                         </>
                       )}
                     </Button>
