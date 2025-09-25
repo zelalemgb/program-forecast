@@ -415,7 +415,7 @@ const RoleBasedRegistration: React.FC = () => {
     setLoading(true);
     try {
       // Create user account
-      const { error: signUpError } = await signUp(email, password);
+      const { error: signUpError, userId } = await signUp(email, password);
       if (signUpError) {
         console.error('Sign up error:', signUpError);
         
@@ -451,24 +451,28 @@ const RoleBasedRegistration: React.FC = () => {
         throw signUpError;
       }
 
-      // Get the user ID after successful signup
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error('Error getting user after signup:', userError);
-        toast({
-          title: "Registration Partially Failed",
-          description: "Account created but there was an issue retrieving user information. Please try signing in.",
-          variant: "destructive",
-        });
-        return;
+      // Determine created user id even if session not active yet
+      let createdUserId = userId;
+      if (!createdUserId) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.error('Error getting user after signup:', userError);
+          toast({
+            title: "Registration Partially Failed",
+            description: "Account created but there was an issue retrieving user information. Please check your email to confirm, then sign in.",
+            variant: "destructive",
+          });
+          return;
+        }
+        createdUserId = user.id;
       }
 
       // Create profile
-      console.log('Creating profile for user:', user.id);
+      console.log('Creating profile for user:', createdUserId);
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          user_id: user.id,
+          user_id: createdUserId,
           full_name: fullName,
           email: email,
           phone_number: phoneNumber,
@@ -485,11 +489,11 @@ const RoleBasedRegistration: React.FC = () => {
       }
 
       // Create role request
-      console.log('Creating role request for user:', user.id, 'role:', selectedRole);
+      console.log('Creating role request for user:', createdUserId, 'role:', selectedRole);
       console.log('Selected locations - facility:', selectedFacility, 'woreda:', selectedWoreda, 'zone:', selectedZone, 'region:', selectedRegion);
       
       const roleRequestData = {
-        user_id: user.id,
+        user_id: createdUserId,
         requested_role: selectedRole as any,
         admin_level: selectedRoleInfo?.level as any,
         facility_id: selectedFacility ? parseInt(selectedFacility) : null,

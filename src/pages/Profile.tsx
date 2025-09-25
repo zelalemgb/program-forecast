@@ -78,13 +78,46 @@ const Profile: React.FC = () => {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, phone_number')
+          .select('full_name, phone_number, preferred_facility_id')
           .eq('user_id', user.id)
           .maybeSingle();
         
         if (profile) {
           setFullName(profile.full_name || "");
           setPhoneNumber(profile.phone_number || "");
+
+          // Preload facility selection from preferred_facility_id
+          if (profile.preferred_facility_id) {
+            const pfid = profile.preferred_facility_id as number;
+            // Resolve hierarchy
+            const { data: fac } = await supabase
+              .from('facility')
+              .select('facility_id, woreda_id')
+              .eq('facility_id', pfid)
+              .maybeSingle();
+            if (fac?.woreda_id) {
+              const { data: w } = await supabase.from('woreda').select('woreda_id, zone_id').eq('woreda_id', fac.woreda_id).maybeSingle();
+              if (w) {
+                const { data: z } = await supabase.from('zone').select('zone_id, region_id, zone_name').eq('zone_id', w.zone_id).maybeSingle();
+                if (z) {
+                  const { data: r } = await supabase.from('region').select('region_id, region_name').eq('region_id', z.region_id).maybeSingle();
+                  // Populate dropdown datasets
+                  if (r) {
+                    setSelectedRegion(r.region_id.toString());
+                    const { data: zonesData } = await supabase.from('zone').select('zone_id, zone_name, region_id').eq('region_id', r.region_id).order('zone_name');
+                    setZones(zonesData || []);
+                  }
+                  setSelectedZone(z.zone_id.toString());
+                  const { data: woredasData } = await supabase.from('woreda').select('woreda_id, woreda_name, zone_id').eq('zone_id', z.zone_id).order('woreda_name');
+                  setWoredas(woredasData || []);
+                  setSelectedWoreda(w.woreda_id.toString());
+                  const { data: facsData } = await supabase.from('facility').select('facility_id, facility_name, facility_type, woreda_id').eq('woreda_id', w.woreda_id).order('facility_name');
+                  setFacilities(facsData || []);
+                  setSelectedFacility(pfid.toString());
+                }
+              }
+            }
+          }
         } else {
           // Fallback to auth metadata
           setFullName((user.user_metadata?.full_name as string) || "");
@@ -300,6 +333,11 @@ const Profile: React.FC = () => {
         description: "Your facility access has been updated. The page will refresh to show your new assignment."
       });
       
+      // Persist preferred facility in profile as well
+      await supabase
+        .from('profiles')
+        .upsert({ user_id: user!.id, preferred_facility_id: parseInt(selectedFacility) });
+      
       // Reset selections
       setSelectedRegion("");
       setSelectedZone("");
@@ -335,6 +373,9 @@ const Profile: React.FC = () => {
       <section className="container py-10">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Profile</h1>
         <p className="text-muted-foreground mt-2">Update your account information.</p>
+        {facilityName && (
+          <p className="mt-2 text-sm">Current facility: <span className="font-medium">{facilityName}</span></p>
+        )}
       </section>
 
       <section className="container pb-16 space-y-6">

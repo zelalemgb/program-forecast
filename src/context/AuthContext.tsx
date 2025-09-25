@@ -7,7 +7,7 @@ interface AuthContextValue {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>; 
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string) => Promise<{ error: any; userId?: string }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -46,12 +46,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp: AuthContextValue["signUp"] = async (email, password) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: redirectUrl }
       });
-      return { error };
+      return { error, userId: data?.user?.id };
     } catch (networkError) {
       console.error("Network error during sign up:", networkError);
       return { error: { message: "Network connection failed. Please check your internet connection or try again later." } };
