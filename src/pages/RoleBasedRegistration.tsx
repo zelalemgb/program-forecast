@@ -230,24 +230,26 @@ const RoleBasedRegistration: React.FC = () => {
             facility_name, 
             facility_type,
             woreda_id,
-            zone_id,
-            region_id,
             woreda(
               woreda_name,
               zone(
                 zone_name,
-                region(region_name)
+                zone_id,
+                region(
+                  region_name,
+                  region_id
+                )
               )
             )
           `);
 
-        // Apply hierarchical filters
+        // Apply hierarchical filters through woreda relationship
         if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
           query = query.eq('woreda_id', parseInt(selectedWoredaFilter));
         } else if (selectedZoneFilter && selectedZoneFilter !== 'all') {
-          query = query.eq('zone_id', parseInt(selectedZoneFilter));
+          query = query.eq('woreda.zone_id', parseInt(selectedZoneFilter));
         } else if (selectedRegionFilter && selectedRegionFilter !== 'all') {
-          query = query.eq('region_id', parseInt(selectedRegionFilter));
+          query = query.eq('woreda.zone.region_id', parseInt(selectedRegionFilter));
         }
 
         // Apply facility search filter
