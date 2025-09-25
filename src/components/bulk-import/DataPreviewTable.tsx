@@ -58,9 +58,9 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [filterView, setFilterView] = useState<'all' | 'issues' | 'clean'>('all');
 
-  // Helper function to categorize issues
+  // Helper function to categorize issues with better explanations
   const categorizeIssue = (issue: string) => {
-    if (issue.includes('Missing required field') || issue.includes('Required field')) {
+    if (issue.includes('Required field') || issue.includes('missing')) {
       return { type: 'missing', icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50 dark:bg-red-900/10' };
     }
     if (issue.includes('Invalid') || issue.includes('format')) {
@@ -272,47 +272,127 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
                     
                     <TableCell className="text-xs">
                       {hasIssues ? (
-                        <div className="flex items-center gap-1">
-                          {isError ? (
-                            <Tooltip>
-                              <TooltipTrigger>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 cursor-help">
+                              {isError ? (
                                 <XCircle className="h-4 w-4 text-red-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Critical errors - row will be skipped</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger>
+                              ) : (
                                 <AlertCircle className="h-4 w-4 text-yellow-500" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Warnings - row can be imported</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          <Badge variant="outline" className="text-xs">
-                            {issues.length}
-                          </Badge>
-                        </div>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {issues.length}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-sm">
+                            <div className="space-y-2">
+                              <div className="font-semibold text-sm">Row Quality Status</div>
+                              {isError ? (
+                                <div className="text-xs">
+                                  <div className="text-red-600 font-medium">❌ Critical Errors Found</div>
+                                  <div className="text-muted-foreground mt-1">
+                                    This row contains {issues.length} critical error{issues.length > 1 ? 's' : ''} that prevent import. 
+                                    The row will be automatically skipped unless these issues are resolved.
+                                  </div>
+                                  <div className="mt-2 font-medium">Required action:</div>
+                                  <div className="text-muted-foreground">Fix all required field issues to proceed with import.</div>
+                                </div>
+                              ) : (
+                                <div className="text-xs">
+                                  <div className="text-yellow-600 font-medium">⚠️ Warnings Detected</div>
+                                  <div className="text-muted-foreground mt-1">
+                                    This row has {issues.length} warning{issues.length > 1 ? 's' : ''} but can still be imported successfully. 
+                                    Consider reviewing these issues for better data quality.
+                                  </div>
+                                  <div className="mt-2 font-medium">Action needed:</div>
+                                  <div className="text-muted-foreground">Optional - review warnings to improve data quality.</div>
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       ) : (
                         <Tooltip>
-                          <TooltipTrigger>
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          <TooltipTrigger asChild>
+                            <CheckCircle className="h-4 w-4 text-green-500 cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p>No issues found</p>
+                          <TooltipContent side="right">
+                            <div className="text-xs">
+                              <div className="text-green-600 font-medium">✅ Ready for Import</div>
+                              <div className="text-muted-foreground mt-1">
+                                No data quality issues detected. This row can be imported successfully.
+                              </div>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       )}
                     </TableCell>
                     
-                    {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex} className="text-xs whitespace-nowrap">
-                        {cell?.toString() || <span className="text-muted-foreground italic">empty</span>}
-                      </TableCell>
-                    ))}
+                    {row.map((cell, cellIndex) => {
+                      // Check if this specific cell has any validation issues
+                      const cellHeader = currentSheetData.headers[cellIndex];
+                      const cellIssues = categorizedIssues.filter(issue => 
+                        issue.text.toLowerCase().includes(cellHeader?.toLowerCase() || '')
+                      );
+                      
+                      return (
+                        <TableCell key={cellIndex} className="text-xs whitespace-nowrap">
+                          {cellIssues.length > 0 ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className={`cursor-help rounded px-1 ${cellIssues[0].bgColor} border`}>
+                                  {cell?.toString() || <span className="text-muted-foreground italic">empty</span>}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-md">
+                                <div className="space-y-2">
+                                  <div className="font-semibold text-sm">Data Quality Issue</div>
+                                  {cellIssues.map((issue, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      <div className="font-medium">{issue.text}</div>
+                                      <div className="text-muted-foreground mt-1">
+                                        {issue.type === 'missing' && (
+                                          <>
+                                            <strong>Why this matters:</strong> This field is required for importing {currentSheetData.headers[0] || 'records'}. 
+                                            Without this information, the entire row will be skipped.
+                                            <br /><br />
+                                            <strong>How to fix:</strong> Add the missing {cellHeader} value in your source file and re-upload.
+                                          </>
+                                        )}
+                                        {issue.type === 'invalid' && (
+                                          <>
+                                            <strong>Why this matters:</strong> The current value format may cause import errors or data corruption.
+                                            <br /><br />
+                                            <strong>How to fix:</strong> Check the expected format for {cellHeader} and correct the value in your source file.
+                                          </>
+                                        )}
+                                        {issue.type === 'empty' && (
+                                          <>
+                                            <strong>Why this matters:</strong> This entire row appears to have no data in any mapped fields.
+                                            <br /><br />
+                                            <strong>How to fix:</strong> Either remove this empty row or add the required data.
+                                          </>
+                                        )}
+                                        {issue.type === 'other' && (
+                                          <>
+                                            <strong>Why this matters:</strong> This issue may affect data quality or import success.
+                                            <br /><br />
+                                            <strong>How to fix:</strong> Review and correct the data based on the specific issue mentioned above.
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span>{cell?.toString() || <span className="text-muted-foreground italic">empty</span>}</span>
+                          )}
+                        </TableCell>
+                      );
+                    })}
                     
                     <TableCell className="text-xs">
                       {hasIssues && (
@@ -343,25 +423,51 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
                                 <div className="flex-1">
                                   <div className="font-medium">{issue.text}</div>
                                   <div className="text-muted-foreground mt-1">
-                                    {issue.type === 'missing' && 'This field is required for successful import. Please provide a value.'}
-                                    {issue.type === 'invalid' && 'The value format is incorrect. Please check the expected format.'}
-                                    {issue.type === 'empty' && 'This entire row appears to be empty and will be skipped during import.'}
-                                    {issue.type === 'other' && 'Please review this issue before proceeding with import.'}
+                                    {issue.type === 'missing' && (
+                                      <div>
+                                        <strong>Impact:</strong> Missing required data will cause this row to be skipped during import.
+                                        <br />
+                                        <strong>Solution:</strong> Add the missing information to proceed with import.
+                                      </div>
+                                    )}
+                                    {issue.type === 'invalid' && (
+                                      <div>
+                                        <strong>Impact:</strong> Invalid format may cause import errors or data corruption.
+                                        <br />
+                                        <strong>Solution:</strong> Correct the format according to system requirements.
+                                      </div>
+                                    )}
+                                    {issue.type === 'empty' && (
+                                      <div>
+                                        <strong>Impact:</strong> Empty rows are automatically skipped during import.
+                                        <br />
+                                        <strong>Solution:</strong> Remove empty rows or add the required data.
+                                      </div>
+                                    )}
+                                    {issue.type === 'other' && (
+                                      <div>
+                                        <strong>Impact:</strong> May affect data quality or import success.
+                                        <br />
+                                        <strong>Solution:</strong> Review and address the specific issue mentioned.
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
                             ))}
                           </div>
-                          <div className="mt-3 text-xs text-muted-foreground">
-                            {isError ? (
-                              <span className="text-red-600 font-medium">
-                                ⚠️ This row will be automatically skipped during import due to critical errors.
-                              </span>
-                            ) : (
-                              <span className="text-yellow-600">
-                                ℹ️ This row can still be imported, but consider fixing these warnings for better data quality.
-                              </span>
-                            )}
+                            <div className="mt-3 text-xs">
+                              {isError ? (
+                                <div className="text-red-600 font-medium bg-red-50 p-2 rounded border-l-4 border-red-500">
+                                  🚫 <strong>Critical Error:</strong> This row will be automatically skipped during import. 
+                                  All required fields must be filled to proceed with import.
+                                </div>
+                              ) : (
+                                <div className="text-blue-600 bg-blue-50 p-2 rounded border-l-4 border-blue-500">
+                                  ✅ <strong>Import Ready:</strong> This row can be imported successfully. 
+                                  The warnings above are recommendations for better data quality.
+                                </div>
+                              )}
                           </div>
                         </div>
                       </TableCell>
