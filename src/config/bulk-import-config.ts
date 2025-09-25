@@ -42,7 +42,6 @@ export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
     { value: "regional_hub_id", label: "Regional Hub ID", required: false, type: "uuid" },
     { value: "ownership_type", label: "Ownership Type", required: false, type: "enum", enumValues: ["public", "private", "ngo"] },
     { value: "level", label: "Level", required: false, type: "string" },
-    { value: "ownership", label: "Ownership", required: false, type: "string" },
     { value: "latitude", label: "Latitude", required: false, type: "number" },
     { value: "longitude", label: "Longitude", required: false, type: "number" }
   ],

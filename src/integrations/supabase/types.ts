@@ -562,7 +562,6 @@ export type Database = {
       }
       facility: {
         Row: {
-          country_id: number | null
           created_at: string | null
           facility_code: string
           facility_id: number
@@ -571,18 +570,14 @@ export type Database = {
           latitude: number | null
           level: string | null
           longitude: number | null
-          ownership: string | null
           ownership_type:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
-          region_id: number | null
           regional_hub_id: string | null
           updated_at: string | null
           woreda_id: number | null
-          zone_id: number | null
         }
         Insert: {
-          country_id?: number | null
           created_at?: string | null
           facility_code: string
           facility_id?: number
@@ -591,18 +586,14 @@ export type Database = {
           latitude?: number | null
           level?: string | null
           longitude?: number | null
-          ownership?: string | null
           ownership_type?:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
-          region_id?: number | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
-          zone_id?: number | null
         }
         Update: {
-          country_id?: number | null
           created_at?: string | null
           facility_code?: string
           facility_id?: number
@@ -611,24 +602,14 @@ export type Database = {
           latitude?: number | null
           level?: string | null
           longitude?: number | null
-          ownership?: string | null
           ownership_type?:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
-          region_id?: number | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
-          zone_id?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "facility_region_id_fkey"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "region"
-            referencedColumns: ["region_id"]
-          },
           {
             foreignKeyName: "facility_regional_hub_id_fkey"
             columns: ["regional_hub_id"]
@@ -644,39 +625,11 @@ export type Database = {
             referencedColumns: ["woreda_id"]
           },
           {
-            foreignKeyName: "facility_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zone"
-            referencedColumns: ["zone_id"]
-          },
-          {
-            foreignKeyName: "fk_facility_country"
-            columns: ["country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["country_id"]
-          },
-          {
-            foreignKeyName: "fk_facility_region"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "region"
-            referencedColumns: ["region_id"]
-          },
-          {
             foreignKeyName: "fk_facility_woreda"
             columns: ["woreda_id"]
             isOneToOne: false
             referencedRelation: "woreda"
             referencedColumns: ["woreda_id"]
-          },
-          {
-            foreignKeyName: "fk_facility_zone"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zone"
-            referencedColumns: ["zone_id"]
           },
         ]
       }

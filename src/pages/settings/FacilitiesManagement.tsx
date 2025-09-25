@@ -20,18 +20,14 @@ interface Facility {
   facility_code?: string;
   facility_type?: string;
   level?: string;
-  ownership?: string;
   ownership_type?: string;
   latitude?: number;
   longitude?: number;
   woreda_id?: number;
-  zone_id?: number;
-  region_id?: number;
-  country_id?: number;
   regional_hub_id?: string;
   created_at?: string;
   updated_at?: string;
-  // Hierarchical data
+  // Hierarchical data from woreda relationship
   woreda?: {
     woreda_name: string;
     zone: {
@@ -82,11 +78,9 @@ const FacilitiesManagement: React.FC = () => {
     facility_code: '',
     facility_type: '',
     level: '',
-    ownership: '',
+    ownership_type: '',
     latitude: '',
     longitude: '',
-    region_id: '',
-    zone_id: '',
     woreda_id: ''
   });
 
@@ -162,9 +156,8 @@ const FacilitiesManagement: React.FC = () => {
         facility_name: formData.facility_name.trim(),
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        region_id: formData.region_id ? parseInt(formData.region_id) : null,
-        zone_id: formData.zone_id ? parseInt(formData.zone_id) : null,
         woreda_id: formData.woreda_id ? parseInt(formData.woreda_id) : null,
+        ownership_type: formData.ownership_type as 'public' | 'private' | 'ngo' | null,
       };
 
       let result;
@@ -206,11 +199,9 @@ const FacilitiesManagement: React.FC = () => {
       facility_code: '',
       facility_type: '',
       level: '',
-      ownership: '',
+      ownership_type: '',
       latitude: '',
       longitude: '',
-      region_id: '',
-      zone_id: '',
       woreda_id: ''
     });
     setEditingFacility(null);
@@ -229,11 +220,9 @@ const FacilitiesManagement: React.FC = () => {
       facility_code: facility.facility_code || '',
       facility_type: facility.facility_type || '',
       level: facility.level || '',
-      ownership: facility.ownership || '',
+      ownership_type: facility.ownership_type || '',
       latitude: facility.latitude?.toString() || '',
       longitude: facility.longitude?.toString() || '',
-      region_id: region?.region_id.toString() || '',
-      zone_id: zone?.zone_id.toString() || '',
       woreda_id: facility.woreda_id?.toString() || ''
     });
 
@@ -291,7 +280,7 @@ const FacilitiesManagement: React.FC = () => {
         facility.facility_code || '',
         facility.facility_type || '',
         facility.level || '',
-        facility.ownership || '',
+        facility.ownership_type || '',
         facility.woreda?.zone?.region?.region_name || '',
         facility.woreda?.zone?.zone_name || '',
         facility.woreda?.woreda_name || '',
@@ -434,11 +423,9 @@ const FacilitiesManagement: React.FC = () => {
           facility_code: facility.facility_code || '',
           facility_type: facility.facility_type || '',
           level: facility.level || '',
-          ownership: facility.ownership || '',
+          ownership_type: facility.ownership_type || '',
           latitude: facility.latitude?.toString() || '',
           longitude: facility.longitude?.toString() || '',
-          region_id: '',
-          zone_id: '',
           woreda_id: facility.woreda_id?.toString() || ''
         });
         setIsAddModalOpen(true);
@@ -485,19 +472,7 @@ const FacilitiesManagement: React.FC = () => {
 
   const facilityTypes = ['Hospital', 'Health Center', 'Health Post', 'Clinic', 'Pharmacy'];
   const facilityLevels = ['Primary', 'Secondary', 'Tertiary', 'Specialized'];
-  const ownershipTypes = ['Public', 'Private', 'NGO', 'Faith-based'];
-
-  // Handle cascading dropdowns
-  const handleRegionChange = (regionId: string) => {
-    setFormData({ ...formData, region_id: regionId, zone_id: '', woreda_id: '' });
-    setFilteredZones(zones.filter(z => z.region_id === parseInt(regionId)));
-    setFilteredWoredas([]);
-  };
-
-  const handleZoneChange = (zoneId: string) => {
-    setFormData({ ...formData, zone_id: zoneId, woreda_id: '' });
-    setFilteredWoredas(woredas.filter(w => w.zone_id === parseInt(zoneId)));
-  };
+  const ownershipTypes = ['public', 'private', 'ngo'];
 
   const handleWoredaChange = (woredaId: string) => {
     setFormData({ ...formData, woreda_id: woredaId });
@@ -573,10 +548,10 @@ const FacilitiesManagement: React.FC = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ownership">Ownership</Label>
+                      <Label htmlFor="ownership_type">Ownership Type</Label>
                       <Select 
-                        value={formData.ownership} 
-                        onValueChange={(value) => setFormData({ ...formData, ownership: value })}
+                        value={formData.ownership_type} 
+                        onValueChange={(value) => setFormData({ ...formData, ownership_type: value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select ownership type" />
@@ -589,54 +564,16 @@ const FacilitiesManagement: React.FC = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="region_id">Region *</Label>
-                      <Select 
-                        value={formData.region_id} 
-                        onValueChange={handleRegionChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select region" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {regions.map(region => (
-                            <SelectItem key={region.region_id} value={region.region_id.toString()}>
-                              {region.region_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="zone_id">Zone *</Label>
-                      <Select 
-                        value={formData.zone_id} 
-                        onValueChange={handleZoneChange}
-                        disabled={!formData.region_id}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select zone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredZones.map(zone => (
-                            <SelectItem key={zone.zone_id} value={zone.zone_id.toString()}>
-                              {zone.zone_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
                       <Label htmlFor="woreda_id">Woreda *</Label>
                       <Select 
                         value={formData.woreda_id} 
                         onValueChange={handleWoredaChange}
-                        disabled={!formData.zone_id}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select woreda" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filteredWoredas.map(woreda => (
+                          {woredas.map(woreda => (
                             <SelectItem key={woreda.woreda_id} value={woreda.woreda_id.toString()}>
                               {woreda.woreda_name}
                             </SelectItem>
@@ -768,7 +705,7 @@ const FacilitiesManagement: React.FC = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Ownership</Label>
-                  <p className="text-sm">{viewingFacility.ownership || '-'}</p>
+                  <p className="text-sm">{viewingFacility.ownership_type || '-'}</p>
                 </div>
               </div>
 
