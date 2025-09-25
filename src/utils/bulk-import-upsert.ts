@@ -14,7 +14,7 @@ interface UpsertResult {
 const getUniqueFields = (tableName: string): string[] => {
   const uniqueFieldMap: { [key: string]: string[] } = {
     'facility': ['facility_code'],
-    'product_reference': ['code'], // Use product code as unique key
+    'product_reference': ['canonical_name'], // Use canonical_name as unique key
     'epss_regional_hubs': ['hub_code'],
     'profiles': ['email'],
     'woreda': ['woreda_name', 'zone_id'],
@@ -84,7 +84,7 @@ export const performUpsert = async (
     if (tableName === 'facility') {
       upsertConfig.onConflict = 'facility_code';
     } else if (tableName === 'product_reference') {
-      upsertConfig.onConflict = 'code'; // Use unique index on code
+      upsertConfig.onConflict = 'canonical_name'; // Use unique index on canonical_name
     } else if (tableName === 'epss_regional_hubs') {
       upsertConfig.onConflict = 'hub_code';
     } else if (tableName === 'profiles') {
