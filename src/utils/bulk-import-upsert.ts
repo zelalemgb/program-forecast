@@ -111,6 +111,16 @@ export const performUpsert = async (
         });
       }
       
+      // For woreda table, remove hierarchy name fields that don't exist in the database
+      if (tableName === 'woreda') {
+        Object.keys(cleanRecord).forEach(key => {
+          // Remove name and code fields that don't exist in woreda table
+          if (['country_name', 'country_code', 'region_name', 'region_code', 'zone_name', 'zone_code'].includes(key)) {
+            delete cleanRecord[key];
+          }
+        });
+      }
+      
       return cleanRecord;
     });
     
