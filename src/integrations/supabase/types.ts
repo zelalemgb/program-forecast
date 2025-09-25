@@ -562,6 +562,7 @@ export type Database = {
       }
       facility: {
         Row: {
+          country_id: number | null
           created_at: string | null
           facility_code: string | null
           facility_id: number
@@ -581,6 +582,7 @@ export type Database = {
           zone_id: number | null
         }
         Insert: {
+          country_id?: number | null
           created_at?: string | null
           facility_code?: string | null
           facility_id?: number
@@ -600,6 +602,7 @@ export type Database = {
           zone_id?: number | null
         }
         Update: {
+          country_id?: number | null
           created_at?: string | null
           facility_code?: string | null
           facility_id?: number
@@ -2318,6 +2321,7 @@ export type Database = {
         Row: {
           country_id: number
           created_at: string | null
+          region_code: string | null
           region_id: number
           region_name: string
           updated_at: string | null
@@ -2325,6 +2329,7 @@ export type Database = {
         Insert: {
           country_id: number
           created_at?: string | null
+          region_code?: string | null
           region_id?: number
           region_name: string
           updated_at?: string | null
@@ -2332,19 +2337,12 @@ export type Database = {
         Update: {
           country_id?: number
           created_at?: string | null
+          region_code?: string | null
           region_id?: number
           region_name?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "region_country_id_fkey"
-            columns: ["country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["country_id"]
-          },
-        ]
+        Relationships: []
       }
       registration_requests: {
         Row: {
@@ -3018,22 +3016,31 @@ export type Database = {
       }
       woreda: {
         Row: {
+          country_id: number | null
           created_at: string | null
+          region_id: number | null
           updated_at: string | null
+          woreda_code: string | null
           woreda_id: number
           woreda_name: string
           zone_id: number
         }
         Insert: {
+          country_id?: number | null
           created_at?: string | null
+          region_id?: number | null
           updated_at?: string | null
+          woreda_code?: string | null
           woreda_id?: number
           woreda_name: string
           zone_id: number
         }
         Update: {
+          country_id?: number | null
           created_at?: string | null
+          region_id?: number | null
           updated_at?: string | null
+          woreda_code?: string | null
           woreda_id?: number
           woreda_name?: string
           zone_id?: number
@@ -3053,6 +3060,7 @@ export type Database = {
           created_at: string | null
           region_id: number
           updated_at: string | null
+          zone_code: string | null
           zone_id: number
           zone_name: string
         }
@@ -3060,6 +3068,7 @@ export type Database = {
           created_at?: string | null
           region_id: number
           updated_at?: string | null
+          zone_code?: string | null
           zone_id?: number
           zone_name: string
         }
@@ -3067,6 +3076,7 @@ export type Database = {
           created_at?: string | null
           region_id?: number
           updated_at?: string | null
+          zone_code?: string | null
           zone_id?: number
           zone_name?: string
         }
