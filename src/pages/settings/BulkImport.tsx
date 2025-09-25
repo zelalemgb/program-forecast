@@ -253,11 +253,38 @@ const BulkImport: React.FC = () => {
     setCurrentStep('mapping');
   };
 
+  const autoMatchColumns = (csvHeaders: string[], dbFields: { value: string; label: string; required: boolean }[]) => {
+    return csvHeaders.map(csvHeader => {
+      const normalizedCsvHeader = csvHeader.toLowerCase().replace(/[_\s-]/g, '');
+      
+      // Try exact match first
+      let bestMatch = dbFields.find(field => 
+        field.value.toLowerCase().replace(/[_\s-]/g, '') === normalizedCsvHeader ||
+        field.label.toLowerCase().replace(/[_\s-]/g, '') === normalizedCsvHeader
+      );
+      
+      // Try partial/similarity match if no exact match
+      if (!bestMatch) {
+        bestMatch = dbFields.find(field => {
+          const normalizedField = field.value.toLowerCase().replace(/[_\s-]/g, '');
+          const normalizedLabel = field.label.toLowerCase().replace(/[_\s-]/g, '');
+          return normalizedField.includes(normalizedCsvHeader) || 
+                 normalizedCsvHeader.includes(normalizedField) ||
+                 normalizedLabel.includes(normalizedCsvHeader) ||
+                 normalizedCsvHeader.includes(normalizedLabel);
+        });
+      }
+      
+      return {
+        csvColumn: csvHeader,
+        dbColumn: bestMatch ? bestMatch.value : ""
+      };
+    });
+  };
+
   const initializeColumnMappings = (headers: string[]) => {
-    const mappings = headers.map(header => ({
-      csvColumn: header,
-      dbColumn: ""
-    }));
+    const dbFields = selectedType ? databaseFields[selectedType as keyof typeof databaseFields] || [] : [];
+    const mappings = autoMatchColumns(headers, dbFields);
     setColumnMappings(mappings);
     setDataQualityIssues([]);
   };
@@ -554,15 +581,10 @@ const BulkImport: React.FC = () => {
         )}
 
         {/* Import Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={closeModal}>
           <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle>Import Data</DialogTitle>
-                <Button variant="ghost" size="sm" onClick={closeModal}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <DialogTitle>Import Data</DialogTitle>
             </DialogHeader>
 
             <div className="flex-1 overflow-hidden space-y-6">
@@ -658,35 +680,55 @@ const BulkImport: React.FC = () => {
                   <div className="border rounded-lg p-4 bg-muted/20">
                     <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
-                      {columnMappings.map((mapping) => (
-                        <div key={mapping.csvColumn} className="flex items-center gap-3 p-2 bg-background rounded border">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
+                      {columnMappings.map((mapping) => {
+                        const isMapped = mapping.dbColumn && mapping.dbColumn !== "__skip__";
+                        const mappedField = databaseFields[selectedType as keyof typeof databaseFields]?.find(f => f.value === mapping.dbColumn);
+                        const isRequired = mappedField?.required;
+                        
+                        return (
+                          <div 
+                            key={mapping.csvColumn} 
+                            className={`flex items-center gap-3 p-2 rounded border transition-colors ${
+                              !isMapped ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : 
+                              'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              {isMapped ? (
+                                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                              )}
+                              <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
+                            </div>
+                            <div className="w-4 text-muted-foreground flex-shrink-0">→</div>
+                            <div className="flex-1 min-w-0">
+                              <Select
+                                value={mapping.dbColumn}
+                                onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue placeholder="Select field" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__skip__">Skip this column</SelectItem>
+                                  {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
+                                    <SelectItem key={field.value} value={field.value}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{field.label}</span>
+                                        {field.required && <span className="text-red-500">*</span>}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {isRequired && (
+                                <Badge variant="secondary" className="text-xs mt-1">Required</Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="w-4 text-muted-foreground">→</div>
-                          <div className="flex-1">
-                            <Select
-                              value={mapping.dbColumn}
-                              onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
-                            >
-                              <SelectTrigger className="h-8 text-sm">
-                                <SelectValue placeholder="Select field" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__skip__">Skip this column</SelectItem>
-                                {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
-                                  <SelectItem key={field.value} value={field.value}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{field.label}</span>
-                                      {field.required && <span className="text-red-500">*</span>}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
