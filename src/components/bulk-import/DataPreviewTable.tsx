@@ -74,7 +74,7 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
         )}
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto min-h-0">
         <Table>
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>
@@ -121,7 +121,7 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-3 border-t">
+        <div className="flex items-center justify-between pt-3 border-t bg-background">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

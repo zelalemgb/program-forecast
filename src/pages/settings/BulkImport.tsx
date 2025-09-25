@@ -719,7 +719,7 @@ const BulkImport: React.FC = () => {
                   {/* Column Mapping Section - Top */}
                   <div className="border rounded-lg p-4 bg-muted/20">
                     <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {columnMappings
                         .sort((a, b) => {
                           // Sort required fields first
