@@ -14,6 +14,9 @@ import {
   ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import DataQualityPanel from "@/components/dashboard/DataQualityPanel";
+import BudgetSimulator from "@/components/dashboard/BudgetSimulator";
+import MultiFacilitySwitcher from "@/components/dashboard/MultiFacilitySwitcher";
 
 // Types
 interface IdName {
@@ -551,6 +554,9 @@ export default function FacilityDashboard() {
           </div>
         </div>
 
+        {/* Multi-Facility Switcher - For district/regional managers */}
+        <MultiFacilitySwitcher />
+
         <TodayStrip
           data={exampleToday}
           onOpenStockouts={() => handleAction('Open stockouts list')}
@@ -559,27 +565,38 @@ export default function FacilityDashboard() {
           onOpenAlert={(chip) => handleAction('Open alert', chip)}
         />
 
-        <RefillStrip
-          onGenerateRRF={(params) => handleAction('Generate RRF', params)}
-          onCommittedDemand={(cfg) => handleAction('Committed-demand refill', cfg)}
-          onTransferWizard={() => handleAction('Open transfer wizard')}
-          lastPreview={exampleRrfPreview}
-        />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Main content area */}
+          <div className="xl:col-span-2 space-y-6">
+            <RefillStrip
+              onGenerateRRF={(params) => handleAction('Generate RRF', params)}
+              onCommittedDemand={(cfg) => handleAction('Committed-demand refill', cfg)}
+              onTransferWizard={() => handleAction('Open transfer wizard')}
+              lastPreview={exampleRrfPreview}
+            />
 
-        <ForecastStrip
-          inventory={exampleInventoryForecast}
-          morbidity={exampleMorbidity}
-          quickStarts={exampleQuickStarts}
-          onUseForRRF={(ids) => handleAction('Use products for RRF', ids)}
-          onEditAssumptions={() => handleAction('Edit assumptions')}
-        />
+            <ForecastStrip
+              inventory={exampleInventoryForecast}
+              morbidity={exampleMorbidity}
+              quickStarts={exampleQuickStarts}
+              onUseForRRF={(ids) => handleAction('Use products for RRF', ids)}
+              onEditAssumptions={() => handleAction('Edit assumptions')}
+            />
 
-        <SupplyHealth score={exampleScore} />
+            <SupplyHealth score={exampleScore} />
 
-        <AssistantStrip
-          onAsk={(query) => handleAction('Ask Forlab.ai', query)}
-          suggestions={exampleSuggestions}
-        />
+            <AssistantStrip
+              onAsk={(query) => handleAction('Ask Forlab.ai', query)}
+              suggestions={exampleSuggestions}
+            />
+          </div>
+
+          {/* Side panel */}
+          <div className="space-y-6">
+            <DataQualityPanel />
+            <BudgetSimulator />
+          </div>
+        </div>
       </div>
     </div>
   );
