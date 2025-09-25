@@ -336,6 +336,12 @@ const BulkImport: React.FC = () => {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         return uuidRegex.test(stringValue) ? stringValue : null;
       }
+
+      // Enforce DB field length limits to prevent insert failures (DB has varchar(20) constraints)
+      if (['facility_name', 'facility_code', 'facility_type'].includes(dbColumn)) {
+        const maxLen = 20; // matches DB constraint causing failures
+        return stringValue.length > maxLen ? stringValue.slice(0, maxLen) : stringValue;
+      }
     }
     
     // Handle other import types...
@@ -423,15 +429,26 @@ const BulkImport: React.FC = () => {
               }
             }
           }
+
+          // Generic format checks
           if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(String(cellValue))) {
               rowIssues.push(`Invalid email format: ${cellValue}`);
             }
           }
+
+          // Length limit warnings for facilities (DB has varchar(20))
+          if (selectedType === 'facilities' && ['facility_name','facility_code','facility_type'].includes(mapping.dbColumn)) {
+            const maxLen = 20;
+            const str = String(cellValue);
+            if (str.length > maxLen) {
+              const label = mapping.dbColumn.replace(/_/g, ' ');
+              rowIssues.push(`${label} exceeds ${maxLen} characters and will be truncated on import`);
+            }
+          }
         }
       });
-
       if (rowIssues.length > 0) {
         const severity = rowIssues.some(issue => 
           issue.includes('Missing required field') || 
