@@ -49,7 +49,8 @@ interface Item {
 }
 
 const dashboardItems: Item[] = [
-  { title: "Facility Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Home", url: "/", icon: LayoutDashboard },
+  { title: "Facility Dashboard", url: "/facility-dashboard", icon: Building2 },
   { title: "CDSS Dashboard", url: "/cdss-dashboard", icon: Banknote },
 ];
 
