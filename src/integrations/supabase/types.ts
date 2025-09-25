@@ -564,7 +564,7 @@ export type Database = {
         Row: {
           country_id: number | null
           created_at: string | null
-          facility_code: string | null
+          facility_code: string
           facility_id: number
           facility_name: string
           facility_type: string | null
@@ -584,7 +584,7 @@ export type Database = {
         Insert: {
           country_id?: number | null
           created_at?: string | null
-          facility_code?: string | null
+          facility_code: string
           facility_id?: number
           facility_name: string
           facility_type?: string | null
@@ -604,7 +604,7 @@ export type Database = {
         Update: {
           country_id?: number | null
           created_at?: string | null
-          facility_code?: string | null
+          facility_code?: string
           facility_id?: number
           facility_name?: string
           facility_type?: string | null

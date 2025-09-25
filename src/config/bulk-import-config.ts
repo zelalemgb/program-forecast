@@ -33,7 +33,7 @@ export const IMPORT_TYPES: ImportType[] = [
 export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
   facilities: [
     { value: "facility_name", label: "Facility Name", required: true, type: "string", maxLength: 20 },
-    { value: "facility_code", label: "Facility Code", required: false, type: "string", maxLength: 20 },
+    { value: "facility_code", label: "Facility Code", required: true, type: "string", maxLength: 20 },
     { value: "facility_type", label: "Facility Type", required: false, type: "string", maxLength: 20 },
     { value: "country_name", label: "Country Name", required: false, type: "string" },
     { value: "region_name", label: "Region Name", required: false, type: "string" },
