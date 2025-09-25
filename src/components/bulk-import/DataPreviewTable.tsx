@@ -242,7 +242,7 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
         </div>
 
         {/* Data table */}
-        <div className="flex-1 min-h-0 overflow-x-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           <Table className="min-w-max">
             <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
