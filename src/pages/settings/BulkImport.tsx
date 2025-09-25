@@ -35,6 +35,7 @@ import {
 } from "@/config/bulk-import-config";
 import { transformFieldValue, getFieldConfig } from "@/utils/bulk-import-transformers";
 import { validateRowData, type ValidationIssue } from "@/utils/bulk-import-validators";
+import { performUpsert, getUpsertSummary } from "@/utils/bulk-import-upsert";
 
 interface ImportJob {
   id: string;
@@ -463,18 +464,20 @@ const BulkImport: React.FC = () => {
         throw new Error("No valid data rows found after mapping");
       }
 
-      // Get the table name for the selected import type
       const importConfig = getImportTypeConfig(selectedType);
       if (!importConfig) {
         throw new Error("Invalid import type");
       }
 
-      const { data, error } = await (supabase as any)
-        .from(importConfig.table)
-        .insert(transformedData);
+      // Use upsert instead of insert to handle existing records
+      const upsertResult = await performUpsert(
+        importConfig.table,
+        transformedData,
+        getDatabaseFields(selectedType)
+      );
 
-      if (error) {
-        throw error;
+      if (upsertResult.errors.length > 0) {
+        throw new Error(`Import completed with errors: ${upsertResult.errors.join(', ')}`);
       }
 
       // Create import job record
@@ -486,17 +489,18 @@ const BulkImport: React.FC = () => {
         progress: 100,
         totalRows: transformedData.length,
         processedRows: transformedData.length,
-        successRows: transformedData.length,
-        failedRows: 0,
-        errors: [],
+        successRows: upsertResult.inserted + upsertResult.updated,
+        failedRows: upsertResult.errors.length,
+        errors: upsertResult.errors,
         createdAt: new Date().toISOString()
       };
 
       setImportJobs(prev => [newJob, ...prev]);
 
+      const summaryText = getUpsertSummary(upsertResult);
       toast({
         title: "Import Successful",
-        description: `Successfully imported ${transformedData.length} records${skippedRows > 0 ? `, ${skippedRows} rows skipped due to data quality issues` : ''}`,
+        description: `${summaryText}${skippedRows > 0 ? `, ${skippedRows} rows skipped due to data quality issues` : ''}`,
       });
 
       closeModal();
