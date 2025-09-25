@@ -165,6 +165,13 @@ export const performUpsert = async (
       return cleanRecord;
     });
     
+    // If nothing valid remains after processing, stop early
+    if (recordsWithTimestamp.length === 0) {
+      result.skipped = records.length;
+      result.errors.push('No valid rows to import after validation');
+      return result;
+    }
+    
     // Handle duplicates within batch for various table types
     if (tableName === 'product_reference') {
       try {

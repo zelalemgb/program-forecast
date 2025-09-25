@@ -480,6 +480,16 @@ const BulkImport: React.FC = () => {
         throw new Error(`Import completed with errors: ${upsertResult.errors.join(', ')}`);
       }
 
+      const totalAffected = (upsertResult.inserted || 0) + (upsertResult.updated || 0);
+      if (totalAffected === 0) {
+        toast({
+          title: "No rows imported",
+          description: "No valid facility rows met the data quality rules (Facility Code, Facility Name, Woreda Name) or woreda matching. Please fix and try again.",
+          variant: "destructive",
+        });
+        return; // Keep the modal open for user to review
+      }
+
       // Create import job record
       const newJob: ImportJob = {
         id: Date.now().toString(),

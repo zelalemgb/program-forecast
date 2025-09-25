@@ -91,42 +91,34 @@ const FacilitiesManagement: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load facilities with hierarchical data
-      const facilitiesResult = await supabase
-        .from('facility')
-        .select(`
-          *,
-          woreda(
-            woreda_name,
-            zone(
-              zone_name,
-              region(region_name)
-            )
-          )
-        `)
-        .order('facility_name');
-
+      // Load administrative data first
       const [regionsResult, zonesResult, woredasResult] = await Promise.all([
         supabase.from('region').select('region_id, region_name').order('region_name'),
         supabase.from('zone').select('zone_id, zone_name, region_id').order('zone_name'),
         supabase.from('woreda').select('woreda_id, woreda_name, zone_id').order('woreda_name')
       ]);
 
-      if (facilitiesResult.data) {
-        // Ensure woreda field is properly typed and handle potential errors
-        const typedFacilities = facilitiesResult.data.map((facility: any) => {
-          const woreda = facility.woreda;
-          const isValidWoreda = woreda !== null && woreda !== undefined && typeof woreda === 'object' && !('error' in woreda);
-          return {
-            ...facility,
-            woreda: isValidWoreda ? woreda : null
-          } as Facility;
-        });
-        setFacilities(typedFacilities);
-      }
       if (regionsResult.data) setRegions(regionsResult.data);
       if (zonesResult.data) setZones(zonesResult.data);
       if (woredasResult.data) setWoredas(woredasResult.data);
+
+      // Load facilities (no nested embed to avoid ambiguous relationships)
+      const facilitiesResult = await supabase
+        .from('facility')
+        .select('*')
+        .order('facility_name');
+
+      if (facilitiesResult.data) {
+        // Attach hierarchy names using the loaded admin data
+        const typedFacilities = (facilitiesResult.data as any[]).map((facility) => {
+          const w = woredasResult.data?.find(w => w.woreda_id === facility.woreda_id) || null;
+          const z = w ? zonesResult.data?.find(z => z.zone_id === w.zone_id) || null : null;
+          const r = z ? regionsResult.data?.find(r => r.region_id === z.region_id) || null : null;
+          const woreda = w && z && r ? { woreda_name: w.woreda_name, zone: { zone_name: z.zone_name, region: { region_name: r.region_name } } } : null;
+          return { ...facility, woreda } as Facility;
+        });
+        setFacilities(typedFacilities);
+      }
     } catch (error) {
       toast({
         title: "Error loading data",
