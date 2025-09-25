@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { 
   AlertCircle, 
   XCircle, 
@@ -10,6 +11,8 @@ import {
   AlertTriangle,
   ChevronsLeft,
   ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   Tooltip,
@@ -241,22 +244,23 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
           )}
         </div>
 
-        {/* Data table */}
-        <div className="flex-1 min-h-0 overflow-auto">
-          <Table className="min-w-max">
-            <TableHeader className="sticky top-0 bg-background z-10">
-              <TableRow>
-                <TableHead className="w-12 text-xs">#</TableHead>
-                <TableHead className="w-20 text-xs">Quality</TableHead>
-                {currentSheetData.headers.map((header, index) => (
-                  <TableHead key={index} className="text-xs min-w-24">
-                    {header}
-                  </TableHead>
-                ))}
-                <TableHead className="w-16 text-xs">Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        {/* Data table with horizontal and vertical scroll */}
+        <ScrollArea className="flex-1 min-h-0 border rounded-md">
+          <div className="min-w-max">
+            <Table className="relative">
+              <TableHeader className="sticky top-0 bg-background z-10 border-b">
+                <TableRow>
+                  <TableHead className="w-12 text-xs bg-background">#</TableHead>
+                  <TableHead className="w-20 text-xs bg-background">Quality</TableHead>
+                  {currentSheetData.headers.map((header, index) => (
+                    <TableHead key={index} className="text-xs min-w-32 bg-background">
+                      {header}
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-16 text-xs bg-background">Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
               {currentRows.map(({ row, originalIndex, hasIssues, isError, issues, categorizedIssues }, displayIndex) => (
                 <React.Fragment key={`${originalIndex}-${displayIndex}`}>
                   <TableRow 
@@ -474,13 +478,101 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({
                     </TableRow>
                   )}
                 </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        {/* Pagination Controls */}
+        {/* Enhanced Pagination Controls */}
         {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t bg-background">
+            {/* Quick navigation buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+                First
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
+            </div>
+
+            {/* Page indicator and jump controls */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Forward navigation buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Forward
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Last
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Original pagination for reference - can be removed */}
+        {false && totalPages > 1 && (
           <div className="flex items-center justify-center pt-3 border-t bg-background">
             <Pagination>
               <PaginationContent>
