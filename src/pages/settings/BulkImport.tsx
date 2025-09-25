@@ -82,6 +82,8 @@ const BulkImport: React.FC = () => {
       { value: "facility_name", label: "Facility Name", required: true },
       { value: "facility_code", label: "Facility Code", required: false },
       { value: "facility_type", label: "Facility Type", required: false },
+      { value: "region_id", label: "Region ID", required: false },
+      { value: "zone_id", label: "Zone ID", required: false },
       { value: "woreda_id", label: "Woreda ID", required: false },
       { value: "regional_hub_id", label: "Regional Hub ID", required: false },
       { value: "ownership_type", label: "Ownership Type (public/private/ngo)", required: false },

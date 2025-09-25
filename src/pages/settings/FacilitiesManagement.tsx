@@ -122,6 +122,8 @@ const FacilitiesManagement: React.FC = () => {
         facility_name: formData.facility_name.trim(),
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        region_id: formData.region_id ? parseInt(formData.region_id) : null,
+        zone_id: formData.zone_id ? parseInt(formData.zone_id) : null,
         woreda_id: formData.woreda_id ? parseInt(formData.woreda_id) : null,
       };
 

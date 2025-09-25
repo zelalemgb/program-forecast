@@ -574,9 +574,11 @@ export type Database = {
           ownership_type:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
+          region_id: number | null
           regional_hub_id: string | null
           updated_at: string | null
           woreda_id: number | null
+          zone_id: number | null
         }
         Insert: {
           created_at?: string | null
@@ -591,9 +593,11 @@ export type Database = {
           ownership_type?:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
+          region_id?: number | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
+          zone_id?: number | null
         }
         Update: {
           created_at?: string | null
@@ -608,11 +612,20 @@ export type Database = {
           ownership_type?:
             | Database["public"]["Enums"]["facility_ownership_type"]
             | null
+          region_id?: number | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
+          zone_id?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "facility_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
           {
             foreignKeyName: "facility_regional_hub_id_fkey"
             columns: ["regional_hub_id"]
@@ -626,6 +639,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "woreda"
             referencedColumns: ["woreda_id"]
+          },
+          {
+            foreignKeyName: "facility_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["zone_id"]
           },
         ]
       }
