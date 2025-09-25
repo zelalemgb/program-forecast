@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FormSection, FormField, FormGrid } from "@/components/ui/form-section";
 import { 
   Target, 
   Calendar, 
@@ -86,9 +87,9 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
     switch (currentStep) {
       case 1: // Define Forecast
         return (
-          <div className="space-y-6">
-            <div className="space-y-4 max-w-md mx-auto">
-              <div>
+          <FormSection title="Forecast Details">
+            <FormGrid columns={1}>
+              <FormField>
                 <Label htmlFor="forecast-name">Forecast Name</Label>
                 <Input
                   id="forecast-name"
@@ -96,9 +97,9 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
                   value={forecastData.name}
                   onChange={(e) => updateForecastData({ name: e.target.value })}
                 />
-              </div>
+              </FormField>
 
-              <div>
+              <FormField>
                 <Label htmlFor="purpose">Forecast Purpose</Label>
                 <Select 
                   value={forecastData.purpose} 
@@ -114,91 +115,87 @@ export const ForecastWizardSteps: React.FC<ForecastWizardStepsProps> = ({
                     <SelectItem value="redistribution">Stock Redistribution</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          </div>
+              </FormField>
+            </FormGrid>
+          </FormSection>
         );
 
       case 2: // Define Scope
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label>Commodity Types</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {COMMODITY_TYPES.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={type}
-                          checked={forecastData.commodityTypes.includes(type)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              updateForecastData({ 
-                                commodityTypes: [...forecastData.commodityTypes, type] 
-                              });
-                            } else {
-                              updateForecastData({ 
-                                commodityTypes: forecastData.commodityTypes.filter(t => t !== type) 
-                              });
-                            }
-                          }}
-                        />
-                        <Label htmlFor={type} className="text-sm">{type}</Label>
-                      </div>
+          <FormSection title="Forecast Scope">
+            <FormGrid columns={2}>
+              <FormField>
+                <Label>Commodity Types</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {COMMODITY_TYPES.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={type}
+                        checked={forecastData.commodityTypes.includes(type)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            updateForecastData({ 
+                              commodityTypes: [...forecastData.commodityTypes, type] 
+                            });
+                          } else {
+                            updateForecastData({ 
+                              commodityTypes: forecastData.commodityTypes.filter(t => t !== type) 
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={type} className="text-sm">{type}</Label>
+                    </div>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField>
+                <Label htmlFor="program">Health Program</Label>
+                <Select 
+                  value={forecastData.program} 
+                  onValueChange={(value) => updateForecastData({ program: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select program" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HEALTH_PROGRAMS.map((program) => (
+                      <SelectItem key={program} value={program}>{program}</SelectItem>
                     ))}
-                  </div>
-                </div>
+                  </SelectContent>
+                </Select>
+              </FormField>
 
-                <div>
-                  <Label htmlFor="program">Health Program</Label>
-                  <Select 
-                    value={forecastData.program} 
-                    onValueChange={(value) => updateForecastData({ program: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select program" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {HEALTH_PROGRAMS.map((program) => (
-                        <SelectItem key={program} value={program}>{program}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <FormField>
+                <Label htmlFor="timeframe">Forecast Period (months)</Label>
+                <Select 
+                  value={forecastData.timeframe.toString()} 
+                  onValueChange={(value) => updateForecastData({ timeframe: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 months</SelectItem>
+                    <SelectItem value="6">6 months</SelectItem>
+                    <SelectItem value="12">12 months</SelectItem>
+                    <SelectItem value="24">24 months</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="timeframe">Forecast Period (months)</Label>
-                  <Select 
-                    value={forecastData.timeframe.toString()} 
-                    onValueChange={(value) => updateForecastData({ timeframe: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3">3 months</SelectItem>
-                      <SelectItem value="6">6 months</SelectItem>
-                      <SelectItem value="12">12 months</SelectItem>
-                      <SelectItem value="24">24 months</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="start-date">Start Date</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={forecastData.startDate}
-                    onChange={(e) => updateForecastData({ startDate: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+              <FormField>
+                <Label htmlFor="start-date">Start Date</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={forecastData.startDate}
+                  onChange={(e) => updateForecastData({ startDate: e.target.value })}
+                />
+              </FormField>
+            </FormGrid>
+          </FormSection>
         );
 
       case 3: // Data Assessment

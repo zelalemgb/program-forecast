@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { FormSection, FormField, FormGrid, FormContainer } from '@/components/ui/form-section';
 import { useHistoricalConsumption, PeriodGranularity } from '@/hooks/useHistoricalConsumption';
 import { useForecastIntegration } from '@/hooks/useForecastIntegration';
 import { TrendingUp, TrendingDown, Minus, BarChart3, Save, Filter, BookOpen, History, Eye, Settings } from 'lucide-react';

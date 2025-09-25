@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormSection, FormField, FormGrid } from '@/components/ui/form-section';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -149,13 +149,10 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Request User Role</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <FormSection>
+        <FormGrid columns={1}>
+          <FormField>
             <Label htmlFor="role">Role</Label>
             <Select value={selectedRole} onValueChange={setSelectedRole}>
               <SelectTrigger>
@@ -169,11 +166,11 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </FormField>
 
           {/* Location selector based on role */}
           {selectedRoleInfo?.level === 'facility' && (
-            <div>
+            <FormField>
               <Label htmlFor="facility">Facility</Label>
               <Select value={selectedFacility} onValueChange={setSelectedFacility}>
                 <SelectTrigger>
@@ -187,11 +184,11 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
 
           {selectedRoleInfo?.level === 'woreda' && (
-            <div>
+            <FormField>
               <Label htmlFor="woreda">Woreda</Label>
               <Select value={selectedWoreda} onValueChange={setSelectedWoreda}>
                 <SelectTrigger>
@@ -205,11 +202,11 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
 
           {selectedRoleInfo?.level === 'zone' && (
-            <div>
+            <FormField>
               <Label htmlFor="zone">Zone</Label>
               <Select value={selectedZone} onValueChange={setSelectedZone}>
                 <SelectTrigger>
@@ -223,11 +220,11 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
 
           {selectedRoleInfo?.level === 'regional' && (
-            <div>
+            <FormField>
               <Label htmlFor="region">Region</Label>
               <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                 <SelectTrigger>
@@ -241,10 +238,10 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
           )}
 
-          <div>
+          <FormField>
             <Label htmlFor="justification">Justification</Label>
             <Textarea
               id="justification"
@@ -253,13 +250,13 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
               placeholder="Please explain why you need this role..."
               required
             />
-          </div>
+          </FormField>
+        </FormGrid>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Submitting...' : 'Submit Request'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit Request'}
+        </Button>
+      </FormSection>
+    </form>
   );
 };
