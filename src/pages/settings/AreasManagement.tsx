@@ -14,9 +14,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/layout/PageHeader";
 
+interface Country {
+  country_id: number;
+  country_name: string;
+  country_code?: string;
+  created_at?: string;
+}
+
 interface Region {
   region_id: number;
   region_name: string;
+  country_id: number;
+  region_code?: string;
   created_at?: string;
 }
 
@@ -24,6 +33,7 @@ interface Zone {
   zone_id: number;
   zone_name: string;
   region_id: number;
+  zone_code?: string;
   created_at?: string;
 }
 
@@ -31,6 +41,9 @@ interface Woreda {
   woreda_id: number;
   woreda_name: string;
   zone_id: number;
+  country_id?: number;
+  region_id?: number;
+  woreda_code?: string;
   created_at?: string;
 }
 
@@ -38,11 +51,12 @@ const AreasManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [countries, setCountries] = useState<Country[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [woredas, setWoredas] = useState<Woreda[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'regions' | 'zones' | 'woredas'>('regions');
+  const [activeTab, setActiveTab] = useState<'countries' | 'regions' | 'zones' | 'woredas'>('countries');
   const [editingItem, setEditingItem] = useState<any>(null);
   const [viewingItem, setViewingItem] = useState<any>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -51,6 +65,7 @@ const AreasManagement: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    code: '',
     parent_id: ''
   });
 
@@ -61,12 +76,14 @@ const AreasManagement: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [regionsResult, zonesResult, woredasResult] = await Promise.all([
+      const [countriesResult, regionsResult, zonesResult, woredasResult] = await Promise.all([
+        supabase.from('countries').select('*').order('country_name'),
         supabase.from('region').select('*').order('region_name'),
         supabase.from('zone').select('*').order('zone_name'),
         supabase.from('woreda').select('*').order('woreda_name')
       ]);
 
+      if (countriesResult.data) setCountries(countriesResult.data);
       if (regionsResult.data) setRegions(regionsResult.data);
       if (zonesResult.data) setZones(zonesResult.data);
       if (woredasResult.data) setWoredas(woredasResult.data);
@@ -96,12 +113,28 @@ const AreasManagement: React.FC = () => {
     try {
       let payload: any = {};
       let table = '';
-      let idField = '';
 
-      if (activeTab === 'regions') {
-        payload = { region_name: formData.name.trim() };
+      if (activeTab === 'countries') {
+        payload = { 
+          country_name: formData.name.trim(),
+          country_code: formData.code.trim() || null
+        };
+        table = 'countries';
+      } else if (activeTab === 'regions') {
+        if (!formData.parent_id) {
+          toast({
+            title: "Validation Error",
+            description: "Country is required for regions",
+            variant: "destructive"
+          });
+          return;
+        }
+        payload = { 
+          region_name: formData.name.trim(),
+          region_code: formData.code.trim() || null,
+          country_id: parseInt(formData.parent_id)
+        };
         table = 'region';
-        idField = 'region_id';
       } else if (activeTab === 'zones') {
         if (!formData.parent_id) {
           toast({
@@ -113,10 +146,10 @@ const AreasManagement: React.FC = () => {
         }
         payload = { 
           zone_name: formData.name.trim(),
+          zone_code: formData.code.trim() || null,
           region_id: parseInt(formData.parent_id)
         };
         table = 'zone';
-        idField = 'zone_id';
       } else if (activeTab === 'woredas') {
         if (!formData.parent_id) {
           toast({
@@ -128,15 +161,17 @@ const AreasManagement: React.FC = () => {
         }
         payload = { 
           woreda_name: formData.name.trim(),
+          woreda_code: formData.code.trim() || null,
           zone_id: parseInt(formData.parent_id)
         };
         table = 'woreda';
-        idField = 'woreda_id';
       }
 
       let result;
       if (editingItem) {
-        if (activeTab === 'regions') {
+        if (activeTab === 'countries') {
+          result = await supabase.from('countries').update(payload).eq('country_id', editingItem.country_id);
+        } else if (activeTab === 'regions') {
           result = await supabase.from('region').update(payload).eq('region_id', editingItem.region_id);
         } else if (activeTab === 'zones') {
           result = await supabase.from('zone').update(payload).eq('zone_id', editingItem.zone_id);
@@ -144,7 +179,9 @@ const AreasManagement: React.FC = () => {
           result = await supabase.from('woreda').update(payload).eq('woreda_id', editingItem.woreda_id);
         }
       } else {
-        if (activeTab === 'regions') {
+        if (activeTab === 'countries') {
+          result = await supabase.from('countries').insert([payload]);
+        } else if (activeTab === 'regions') {
           result = await supabase.from('region').insert([payload]);
         } else if (activeTab === 'zones') {
           result = await supabase.from('zone').insert([payload]);
@@ -177,6 +214,7 @@ const AreasManagement: React.FC = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      code: '',
       parent_id: ''
     });
     setEditingItem(null);
@@ -184,8 +222,9 @@ const AreasManagement: React.FC = () => {
 
   const handleEdit = (item: any) => {
     setFormData({
-      name: item.region_name || item.zone_name || item.woreda_name || '',
-      parent_id: item.region_id?.toString() || item.zone_id?.toString() || ''
+      name: item.country_name || item.region_name || item.zone_name || item.woreda_name || '',
+      code: item.country_code || item.region_code || item.zone_code || item.woreda_code || '',
+      parent_id: item.country_id?.toString() || item.region_id?.toString() || item.zone_id?.toString() || ''
     });
     setEditingItem(item);
     setIsAddModalOpen(true);
@@ -203,7 +242,10 @@ const AreasManagement: React.FC = () => {
     try {
       let error;
 
-      if (activeTab === 'regions') {
+      if (activeTab === 'countries') {
+        const result = await supabase.from('countries').delete().eq('country_id', item.country_id);
+        error = result.error;
+      } else if (activeTab === 'regions') {
         const result = await supabase.from('region').delete().eq('region_id', item.region_id);
         error = result.error;
       } else if (activeTab === 'zones') {
@@ -234,18 +276,24 @@ const AreasManagement: React.FC = () => {
   };
 
   const getCurrentData = () => {
+    if (activeTab === 'countries') return countries;
     if (activeTab === 'regions') return regions;
     if (activeTab === 'zones') return zones;
     return woredas;
   };
 
   const getParentOptions = () => {
+    if (activeTab === 'regions') return countries.map(c => ({ value: c.country_id.toString(), label: c.country_name }));
     if (activeTab === 'zones') return regions.map(r => ({ value: r.region_id.toString(), label: r.region_name }));
     if (activeTab === 'woredas') return zones.map(z => ({ value: z.zone_id.toString(), label: z.zone_name }));
     return [];
   };
 
   const getParentName = (item: any) => {
+    if (activeTab === 'regions') {
+      const country = countries.find(c => c.country_id === item.country_id);
+      return country?.country_name || '-';
+    }
     if (activeTab === 'zones') {
       const region = regions.find(r => r.region_id === item.region_id);
       return region?.region_name || '-';
@@ -261,7 +309,7 @@ const AreasManagement: React.FC = () => {
     <>
       <Helmet>
         <title>Administrative Areas | Metadata Organization</title>
-        <meta name="description" content="Manage regions, zones, and woredas in the system." />
+        <meta name="description" content="Manage countries, regions, zones, and woredas in the system." />
         <link rel="canonical" href="/settings/metadata/areas" />
       </Helmet>
 
@@ -278,7 +326,7 @@ const AreasManagement: React.FC = () => {
 
       <PageHeader
         title="Administrative Areas"
-        description="Manage regions, zones, and woredas"
+        description="Manage countries, regions, zones, and woredas"
         actions={
           <div className="flex gap-2">
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -306,17 +354,26 @@ const AreasManagement: React.FC = () => {
                       required
                     />
                   </div>
-                  {activeTab !== 'regions' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="code">{activeTab.slice(0, -1)} Code</Label>
+                    <Input
+                      id="code"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                      placeholder={`Enter ${activeTab.slice(0, -1)} code (optional)`}
+                    />
+                  </div>
+                  {activeTab !== 'countries' && (
                     <div className="space-y-2">
                       <Label htmlFor="parent_id">
-                        {activeTab === 'zones' ? 'Region' : 'Zone'} *
+                        {activeTab === 'regions' ? 'Country' : activeTab === 'zones' ? 'Region' : 'Zone'} *
                       </Label>
                       <Select 
                         value={formData.parent_id} 
                         onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={`Select ${activeTab === 'zones' ? 'region' : 'zone'}`} />
+                          <SelectValue placeholder={`Select ${activeTab === 'regions' ? 'country' : activeTab === 'zones' ? 'region' : 'zone'}`} />
                         </SelectTrigger>
                         <SelectContent>
                           {getParentOptions().map(option => (
@@ -351,6 +408,12 @@ const AreasManagement: React.FC = () => {
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">
         <Button 
+          variant={activeTab === 'countries' ? 'default' : 'outline'}
+          onClick={() => setActiveTab('countries')}
+        >
+          Countries ({countries.length})
+        </Button>
+        <Button 
           variant={activeTab === 'regions' ? 'default' : 'outline'}
           onClick={() => setActiveTab('regions')}
         >
@@ -378,18 +441,22 @@ const AreasManagement: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  {activeTab !== 'regions' && <TableHead>{activeTab === 'zones' ? 'Region' : 'Zone'}</TableHead>}
+                  <TableHead>Code</TableHead>
+                  {activeTab !== 'countries' && <TableHead>{activeTab === 'regions' ? 'Country' : activeTab === 'zones' ? 'Region' : 'Zone'}</TableHead>}
                   <TableHead>Created</TableHead>
                   <TableHead className="w-32">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {getCurrentData().map((item: any) => (
-                  <TableRow key={item.region_id || item.zone_id || item.woreda_id}>
+                  <TableRow key={item.country_id || item.region_id || item.zone_id || item.woreda_id}>
                     <TableCell className="font-medium">
-                      {item.region_name || item.zone_name || item.woreda_name}
+                      {item.country_name || item.region_name || item.zone_name || item.woreda_name}
                     </TableCell>
-                    {activeTab !== 'regions' && (
+                    <TableCell>
+                      {item.country_code || item.region_code || item.zone_code || item.woreda_code || '-'}
+                    </TableCell>
+                    {activeTab !== 'countries' && (
                       <TableCell>{getParentName(item)}</TableCell>
                     )}
                     <TableCell>
@@ -443,19 +510,25 @@ const AreasManagement: React.FC = () => {
                 <div>
                   <Label className="font-medium">Name</Label>
                   <p className="mt-1">
-                    {viewingItem.region_name || viewingItem.zone_name || viewingItem.woreda_name}
+                    {viewingItem.country_name || viewingItem.region_name || viewingItem.zone_name || viewingItem.woreda_name}
                   </p>
                 </div>
-                {activeTab !== 'regions' && (
+                <div>
+                  <Label className="font-medium">Code</Label>
+                  <p className="mt-1">
+                    {viewingItem.country_code || viewingItem.region_code || viewingItem.zone_code || viewingItem.woreda_code || '-'}
+                  </p>
+                </div>
+                {activeTab !== 'countries' && (
                   <div>
-                    <Label className="font-medium">{activeTab === 'zones' ? 'Region' : 'Zone'}</Label>
+                    <Label className="font-medium">{activeTab === 'regions' ? 'Country' : activeTab === 'zones' ? 'Region' : 'Zone'}</Label>
                     <p className="mt-1">{getParentName(viewingItem)}</p>
                   </div>
                 )}
                 <div>
                   <Label className="font-medium">ID</Label>
                   <p className="mt-1 text-muted-foreground">
-                    {viewingItem.region_id || viewingItem.zone_id || viewingItem.woreda_id}
+                    {viewingItem.country_id || viewingItem.region_id || viewingItem.zone_id || viewingItem.woreda_id}
                   </p>
                 </div>
                 <div>
