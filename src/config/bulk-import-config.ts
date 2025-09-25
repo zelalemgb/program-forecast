@@ -82,8 +82,8 @@ export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
   ],
   areas: [
     { value: "country_name", label: "Country Name", required: false, type: "string" },
-    { value: "region_name", label: "Region Name", required: false, type: "string" },
-    { value: "zone_name", label: "Zone Name", required: false, type: "string" },
+    { value: "region_name", label: "Region Name", required: true, type: "string" },
+    { value: "zone_name", label: "Zone Name", required: true, type: "string" },
     { value: "woreda_name", label: "Woreda Name", required: true, type: "string" },
     { value: "woreda_code", label: "Woreda Code", required: false, type: "string" },
     { value: "zone_code", label: "Zone Code", required: false, type: "string" },
