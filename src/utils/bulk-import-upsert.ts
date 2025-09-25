@@ -108,12 +108,20 @@ export const performUpsert = async (
     // Clean records - remove null values to prevent overwriting existing data
     let recordsWithTimestamp = processedRecords.map(record => {
       const cleanRecord = { ...record, updated_at: new Date().toISOString() };
-      
-      // For facility table, don't overwrite existing location data with nulls
+      // For facility table, don't overwrite existing location data with nulls and strip removed columns
       if (tableName === 'facility') {
         Object.keys(cleanRecord).forEach(key => {
-          if (['region_id', 'zone_id', 'woreda_id', 'latitude', 'longitude', 'regional_hub_id'].includes(key) && 
+          if ([
+            // columns not present on facility anymore
+            'country_id', 'region_id', 'zone_id',
+            // allowed but optional
+            'woreda_id', 'latitude', 'longitude', 'regional_hub_id'
+          ].includes(key) && 
               (cleanRecord[key] === null || cleanRecord[key] === undefined || cleanRecord[key] === '')) {
+            delete cleanRecord[key];
+          }
+          // Always remove columns that no longer exist on facility
+          if (['country_id', 'region_id', 'zone_id'].includes(key)) {
             delete cleanRecord[key];
           }
           // Remove hierarchy name fields as they're not database columns
@@ -322,30 +330,51 @@ export const performUpsert = async (
 // Resolve administrative hierarchy for facility records
 const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
   console.log(`Starting hierarchy resolution for ${records.length} facility records`);
-  
-  // Extract location names from records
-  const locationNames = records.map(record => ({
-    country_name: record.country_name,
-    region_name: record.region_name,
-    zone_name: record.zone_name,
-    woreda_name: record.woreda_name
-  }));
-  
-  // Bulk resolve hierarchy to minimize database calls
-  const hierarchyResults = await bulkResolveHierarchy(locationNames);
-  
-  // Merge hierarchy results with original records
-  const processedRecords = records.map((record, index) => {
-    const hierarchy = hierarchyResults[index];
-    return {
-      ...record,
-      country_id: hierarchy.country_id,
-      region_id: hierarchy.region_id,
-      zone_id: hierarchy.zone_id,
-      woreda_id: hierarchy.woreda_id
-    };
-  });
-  
+
+  const processedRecords = await Promise.all(
+    records.map(async (record) => {
+      let woreda_id = record.woreda_id ?? null;
+
+      // If woreda_id not provided, try to resolve by names
+      if (!woreda_id) {
+        const hasFullChain = record.region_name || record.zone_name;
+
+        if (hasFullChain) {
+          // Use existing resolver when we have more context
+          const [h] = await bulkResolveHierarchy([{ 
+            country_name: record.country_name, 
+            region_name: record.region_name, 
+            zone_name: record.zone_name, 
+            woreda_name: record.woreda_name 
+          }]);
+          woreda_id = h?.woreda_id ?? null;
+        } else if (record.woreda_name) {
+          // Fallback: resolve by unique woreda_name
+          const { data: matches, error } = await supabase
+            .from('woreda')
+            .select('woreda_id')
+            .eq('woreda_name', record.woreda_name)
+            .limit(2);
+          if (!error && matches && matches.length === 1) {
+            woreda_id = matches[0].woreda_id;
+          } else {
+            console.warn(`Ambiguous or missing woreda for name: ${record.woreda_name}. Provide zone/region to disambiguate.`);
+          }
+        }
+      }
+
+      const out: any = { ...record };
+      if (woreda_id) out.woreda_id = woreda_id;
+
+      // Ensure we never pass removed columns
+      delete out.country_id;
+      delete out.region_id;
+      delete out.zone_id;
+
+      return out;
+    })
+  );
+
   console.log(`Completed hierarchy resolution for ${processedRecords.length} records`);
   return processedRecords;
 };
