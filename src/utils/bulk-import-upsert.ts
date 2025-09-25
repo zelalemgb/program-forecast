@@ -24,6 +24,20 @@ const getUniqueFields = (tableName: string): string[] => {
   return uniqueFieldMap[tableName] || ['id'];
 };
 
+// Get conflict resolution field for upserts
+const getConflictField = (tableName: string): string => {
+  const conflictFieldMap: { [key: string]: string } = {
+    'facility': 'facility_code',
+    'product_reference': 'canonical_name',
+    'epss_regional_hubs': 'hub_code',
+    'profiles': 'email',
+    'woreda': 'woreda_name,zone_id',
+    'suppliers': 'name',
+    'inventory_balances': 'facility_id,product_id'
+  };
+  return conflictFieldMap[tableName] || 'id';
+};
+
 // Check if two records are equal (ignoring timestamps and auto-generated fields)
 const recordsEqual = (existing: any, newRecord: any, tableName: string): boolean => {
   const ignoredFields = ['id', 'created_at', 'updated_at', 'last_updated'];
@@ -138,18 +152,9 @@ export const performUpsert = async (
     };
 
     // Set onConflict based on table type for proper upsert behavior
-    if (tableName === 'facility') {
-      upsertConfig.onConflict = 'facility_code';
-    } else if (tableName === 'epss_regional_hubs') {
-      upsertConfig.onConflict = 'hub_code';
-    } else if (tableName === 'profiles') {
-      upsertConfig.onConflict = 'email';
-    } else if (tableName === 'woreda') {
-      upsertConfig.onConflict = 'woreda_name,zone_id';
-    } else if (tableName === 'suppliers') {
-      upsertConfig.onConflict = 'name';
-    } else if (tableName === 'inventory_balances') {
-      upsertConfig.onConflict = 'facility_id,product_id';
+    const conflictField = getConflictField(tableName);
+    if (conflictField) {
+      upsertConfig.onConflict = conflictField;
     }
     
     const { data, error, count } = await supabase
@@ -157,9 +162,12 @@ export const performUpsert = async (
       .upsert(recordsWithTimestamp, upsertConfig);
     
     if (error) {
-      result.errors.push(`Upsert failed: ${error.message}`);
+      console.error(`Upsert failed for ${tableName}:`, error);
+      result.errors.push(`Upsert failed for ${tableName}: ${error.message}. Details: ${error.details || 'No additional details'}`);
       return result;
     }
+    
+    console.log(`Upsert successful for ${tableName}:`, { count, recordCount: records.length });
     
     // Report all as updated since we can't easily distinguish with upsert
     result.updated = records.length;
