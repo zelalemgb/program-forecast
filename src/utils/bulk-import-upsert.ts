@@ -150,7 +150,7 @@ export const performUpsert = async (
       return cleanRecord;
     });
     
-    // Special handling for product_reference - handle duplicates within batch
+    // Handle duplicates within batch for various table types
     if (tableName === 'product_reference') {
       try {
         // Remove duplicates within the batch based on canonical_name AND code
@@ -204,6 +204,72 @@ export const performUpsert = async (
         result.errors.push(`Upsert error: ${error.message}`);
       }
       
+      return result;
+    }
+
+    // Handle duplicates within batch for administrative areas
+    if (['countries', 'region', 'zone', 'woreda'].includes(tableName)) {
+      const conflictFields = getConflictField(tableName).split(',');
+      const uniqueRecords = recordsWithTimestamp.reduce((acc, record) => {
+        // Create a unique key based on conflict fields
+        const key = conflictFields.map(field => record[field]).join('|');
+        
+        // Skip if we already have this combination
+        if (acc.keys.has(key)) {
+          return acc;
+        }
+        
+        acc.keys.add(key);
+        acc.records.push(record);
+        return acc;
+      }, { 
+        keys: new Set<string>(), 
+        records: [] as any[] 
+      });
+
+      const deduplicatedRecords = uniqueRecords.records;
+      
+      if (records.length > deduplicatedRecords.length) {
+        console.log(`Removed ${records.length - deduplicatedRecords.length} duplicate records from batch for ${tableName}`);
+      }
+      
+      let upsertConfig: any = { 
+        ignoreDuplicates: false,
+        count: 'exact'
+      };
+
+      const conflictField = getConflictField(tableName);
+      if (conflictField) {
+        upsertConfig.onConflict = conflictField;
+      }
+      
+      console.log(`Attempting upsert for ${tableName} with config:`, upsertConfig);
+      console.log(`Records to upsert:`, deduplicatedRecords.slice(0, 2)); // Log first 2 records for debugging
+      
+      const { data, error, count } = await supabase
+        .from(tableName as any)
+        .upsert(deduplicatedRecords, upsertConfig);
+      
+      if (error) {
+        console.error(`Upsert failed for ${tableName}:`, {
+          error: error,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        result.errors.push(`Upsert failed for ${tableName}: ${error.message}${error.hint ? ` (Hint: ${error.hint})` : ''}${error.details ? ` (Details: ${error.details})` : ''}`);
+        return result;
+      }
+      
+      console.log(`Upsert successful for ${tableName}:`, { count, recordCount: deduplicatedRecords.length });
+      
+      result.updated = deduplicatedRecords.length;
+      if (records.length > deduplicatedRecords.length) {
+        result.skipped = records.length - deduplicatedRecords.length;
+      }
+      
+      console.log(`Upsert completed - reported ${result.updated} records as updated, ${result.skipped || 0} skipped for ${tableName}`);
       return result;
     }
 
