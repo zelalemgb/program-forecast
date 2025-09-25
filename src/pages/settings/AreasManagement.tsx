@@ -272,7 +272,23 @@ const AreasManagement: React.FC = () => {
   };
 
   const handleBulkImport = () => {
-    navigate('/settings/metadata/bulk-import?type=areas');
+    const importTypeMap = {
+      'countries': 'countries',
+      'regions': 'regions', 
+      'zones': 'zones',
+      'woredas': 'woredas'
+    };
+    navigate(`/settings/metadata/bulk-import?type=${importTypeMap[activeTab]}`);
+  };
+
+  const getImportButtonText = () => {
+    const buttonTextMap = {
+      'countries': 'Import Countries',
+      'regions': 'Import Regions',
+      'zones': 'Import Zones', 
+      'woredas': 'Import Woredas'
+    };
+    return buttonTextMap[activeTab];
   };
 
   const getCurrentData = () => {
@@ -399,7 +415,7 @@ const AreasManagement: React.FC = () => {
             </Dialog>
             <Button variant="outline" onClick={handleBulkImport}>
               <Upload className="h-4 w-4 mr-2" />
-              Bulk Import
+              {getImportButtonText()}
             </Button>
           </div>
         }
