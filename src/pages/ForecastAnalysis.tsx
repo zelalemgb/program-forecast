@@ -361,224 +361,93 @@ const ForecastAnalysis: React.FC = () => {
   };
 
   const titleActions = (
-    <div className="flex flex-col gap-6">
-      {/* Forecast Method Selection */}
-      <div className="bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-3">Forecast Method</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow border-2 border-primary/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <h4 className="font-medium">Consumption-Based</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Forecast based on historical consumption patterns from inventory data
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
-                <h4 className="font-medium">Program-Based</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Independent forecast for specific health programs or diseases
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Settings className="h-5 w-5 text-green-500" />
-                <h4 className="font-medium">Custom Data</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Import external data sources for comprehensive forecasting
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Account Type</Label>
+        <Select 
+          value={selectedAccountType} 
+          onValueChange={setSelectedAccountType}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select account type..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Products</SelectItem>
+            {availableAccountTypes.map(accountType => (
+              <SelectItem key={accountType.id} value={accountType.id}>
+                {accountType.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Configuration Panel */}
-      <div className="bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-3">Forecast Configuration</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Data Source Selection */}
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Data Source</Label>
-            <Select defaultValue="inventory">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="inventory">Inventory Consumption</SelectItem>
-                <SelectItem value="program">Program Requirements</SelectItem>
-                <SelectItem value="epidemiological">Epidemiological Data</SelectItem>
-                <SelectItem value="demographic">Demographic Data</SelectItem>
-                <SelectItem value="external">External Data Import</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Period</Label>
+        <Select 
+          value={selectedGranularity} 
+          onValueChange={(value: PeriodGranularity) => setSelectedGranularity(value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="weekly">Weekly</SelectItem>
+            <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
+            <SelectItem value="quarterly">Quarterly</SelectItem>
+            <SelectItem value="yearly">Yearly</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Forecast Duration ({selectedGranularity})</Label>
+        <Select 
+          value={forecastDuration.toString()} 
+          onValueChange={(value) => setForecastDuration(parseInt(value))}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Period</SelectItem>
+            <SelectItem value="2">2 Periods</SelectItem>
+            <SelectItem value="3">3 Periods</SelectItem>
+            <SelectItem value="4">4 Periods</SelectItem>
+            <SelectItem value="5">5 Periods</SelectItem>
+            <SelectItem value="6">6 Periods</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Duration</Label>
+        <Select 
+          value={periodMonths.toString()} 
+          onValueChange={(value) => setPeriodMonths(parseInt(value))}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="6">6 Months</SelectItem>
+            <SelectItem value="12">12 Months</SelectItem>
+            <SelectItem value="18">18 Months</SelectItem>
+            <SelectItem value="24">24 Months</SelectItem>
+            <SelectItem value="36">36 Months</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-          {/* Health Program Filter */}
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Health Program</Label>
-            <Select defaultValue="all">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Programs</SelectItem>
-                <SelectItem value="hiv">HIV/AIDS</SelectItem>
-                <SelectItem value="tb">Tuberculosis</SelectItem>
-                <SelectItem value="malaria">Malaria</SelectItem>
-                <SelectItem value="maternal">Maternal Health</SelectItem>
-                <SelectItem value="child">Child Health</SelectItem>
-                <SelectItem value="nutrition">Nutrition</SelectItem>
-                <SelectItem value="reproductive">Reproductive Health</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Disease/Condition Filter */}
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Disease/Condition</Label>
-            <Select defaultValue="all">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Conditions</SelectItem>
-                <SelectItem value="diabetes">Diabetes</SelectItem>
-                <SelectItem value="hypertension">Hypertension</SelectItem>
-                <SelectItem value="pneumonia">Pneumonia</SelectItem>
-                <SelectItem value="diarrhea">Diarrhea</SelectItem>
-                <SelectItem value="respiratory">Respiratory Infections</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Commodity Category */}
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Commodity Category</Label>
-            <Select 
-              value={selectedAccountType} 
-              onValueChange={setSelectedAccountType}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Commodities</SelectItem>
-                {availableAccountTypes.map(accountType => (
-                  <SelectItem key={accountType.id} value={accountType.id}>
-                    {accountType.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Time Configuration */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Historical Period</Label>
-            <Select 
-              value={periodMonths.toString()} 
-              onValueChange={(value) => setPeriodMonths(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="6">6 Months</SelectItem>
-                <SelectItem value="12">12 Months</SelectItem>
-                <SelectItem value="18">18 Months</SelectItem>
-                <SelectItem value="24">24 Months</SelectItem>
-                <SelectItem value="36">36 Months</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Granularity</Label>
-            <Select 
-              value={selectedGranularity} 
-              onValueChange={(value: PeriodGranularity) => setSelectedGranularity(value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Forecast Duration</Label>
-            <Select 
-              value={forecastDuration.toString()} 
-              onValueChange={(value) => setForecastDuration(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 Period</SelectItem>
-                <SelectItem value="2">2 Periods</SelectItem>
-                <SelectItem value="3">3 Periods</SelectItem>
-                <SelectItem value="4">4 Periods</SelectItem>
-                <SelectItem value="6">6 Periods</SelectItem>
-                <SelectItem value="12">12 Periods</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Forecast Algorithm</Label>
-            <Select defaultValue="trend">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trend">Trend Analysis</SelectItem>
-                <SelectItem value="seasonal">Seasonal Decomposition</SelectItem>
-                <SelectItem value="regression">Linear Regression</SelectItem>
-                <SelectItem value="exponential">Exponential Smoothing</SelectItem>
-                <SelectItem value="arima">ARIMA Model</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <Button className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Generate Forecast
-          </Button>
-          
-          <Button variant="outline" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            Import Data
-          </Button>
-
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">Actions</Label>
+        <div className="flex gap-2">
           <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Save className="h-4 w-4 mr-1" />
-                Save Configuration
+                Save
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -587,11 +456,11 @@ const ForecastAnalysis: React.FC = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Configuration Name</Label>
+                  <Label>Forecast Name</Label>
                   <Input
                     value={forecastName}
                     onChange={(e) => setForecastName(e.target.value)}
-                    placeholder="Enter configuration name"
+                    placeholder="Enter forecast name"
                   />
                 </div>
                 <div>
@@ -600,25 +469,32 @@ const ForecastAnalysis: React.FC = () => {
                     value={forecastDescription}
                     onChange={(e) => setForecastDescription(e.target.value)}
                     placeholder="Optional description"
-                    rows={3}
                   />
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveForecast}>
-                    Save Configuration
-                  </Button>
-                </div>
+                <Button onClick={handleSaveForecast} disabled={!forecastName.trim()}>
+                  Save Forecast
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" size="sm" onClick={() => setShowSavedForecastsModal(true)}>
-            <History className="h-4 w-4 mr-1" />
-            Load Saved
-          </Button>
+          {savedForecasts.length > 0 && (
+            <Select onValueChange={(value) => {
+              const forecast = savedForecasts.find(f => f.id === value);
+              if (forecast) loadSavedForecast(forecast);
+            }}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Load..." />
+              </SelectTrigger>
+              <SelectContent>
+                {savedForecasts.map(forecast => (
+                  <SelectItem key={forecast.id} value={forecast.id}>
+                    {forecast.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
     </div>
