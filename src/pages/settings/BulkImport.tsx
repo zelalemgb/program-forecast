@@ -326,10 +326,15 @@ const BulkImport: React.FC = () => {
         return isNaN(numValue) ? null : numValue;
       }
       
-      // Convert region_id, zone_id, woreda_id to integers if they are numeric
       if (['region_id', 'zone_id', 'woreda_id'].includes(dbColumn)) {
-        const numValue = Number(stringValue);
-        return isNaN(numValue) ? stringValue : numValue; // Keep as string if not numeric
+        const intValue = parseInt(stringValue, 10);
+        return isNaN(intValue) ? null : intValue;
+      }
+
+      // Validate regional_hub_id as UUID, else set null
+      if (dbColumn === 'regional_hub_id') {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(stringValue) ? stringValue : null;
       }
     }
     
@@ -552,7 +557,7 @@ const BulkImport: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Import Failed",
-        description: error.message || "An error occurred during import",
+        description: `${error?.message || "An error occurred during import"}${error?.details ? " — " + error.details : ""}`,
         variant: "destructive"
       });
 
@@ -885,7 +890,7 @@ const BulkImport: React.FC = () => {
                     checkDataQuality();
                     handleImport();
                   }}
-                  disabled={isImporting || columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__").length === 0}
+                  disabled={isImporting || columnMappings.filter(m => m.csvColumn && m.csvColumn !== "__skip__").length === 0}
                   className="flex-1"
                 >
                   {isImporting ? (
