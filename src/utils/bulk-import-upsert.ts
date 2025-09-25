@@ -77,16 +77,36 @@ export const performUpsert = async (
     // Special handling for product_reference - handle duplicates within batch
     if (tableName === 'product_reference') {
       try {
-        // Remove duplicates within the batch itself based on canonical_name
+        // Remove duplicates within the batch based on canonical_name AND code
         const uniqueRecords = recordsWithTimestamp.reduce((acc, record) => {
-          const key = record.canonical_name;
-          if (!acc.has(key)) {
-            acc.set(key, record);
+          const canonicalKey = record.canonical_name;
+          const codeKey = record.code;
+          
+          // Skip if we already have this canonical_name
+          if (acc.canonicalNames.has(canonicalKey)) {
+            return acc;
           }
+          
+          // Skip if we already have this code (and code is not null/empty)
+          if (codeKey && codeKey.trim() && acc.codes.has(codeKey)) {
+            return acc;
+          }
+          
+          // Add to tracking sets
+          acc.canonicalNames.add(canonicalKey);
+          if (codeKey && codeKey.trim()) {
+            acc.codes.add(codeKey);
+          }
+          
+          acc.records.push(record);
           return acc;
-        }, new Map<string, any>());
+        }, { 
+          canonicalNames: new Set<string>(), 
+          codes: new Set<string>(), 
+          records: [] as any[] 
+        });
 
-        const deduplicatedRecords = Array.from(uniqueRecords.values()) as any[];
+        const deduplicatedRecords = uniqueRecords.records;
         
         const { error } = await supabase
           .from('product_reference')
