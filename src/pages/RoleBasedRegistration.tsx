@@ -218,57 +218,79 @@ const RoleBasedRegistration: React.FC = () => {
     console.log('Loading location data for level:', level);
     try {
       if (level === 'facility') {
-        // Load facilities with hierarchical filtering
+        // Load facilities without nested relationships to avoid ambiguous FK errors
         console.log('Loading facilities...');
         console.log('Current user:', (await supabase.auth.getUser()).data.user?.email || 'No user');
         console.log('Filters - Region:', selectedRegionFilter, 'Zone:', selectedZoneFilter, 'Woreda:', selectedWoredaFilter);
         
-        let query = supabase
-          .from('facility')
-          .select(`
-            facility_id, 
-            facility_name, 
-            facility_type,
-            woreda_id,
-            woreda(
-              woreda_name,
-              zone(
-                zone_name,
-                zone_id,
-                region(
-                  region_name,
-                  region_id
-                )
-              )
-            )
-          `);
+        // First load administrative data
+        const [facilitiesResult, woredasResult, zonesResult, regionsResult] = await Promise.all([
+          supabase.from('facility').select('facility_id, facility_name, facility_type, woreda_id').order('facility_name'),
+          supabase.from('woreda').select('woreda_id, woreda_name, zone_id').order('woreda_name'),
+          supabase.from('zone').select('zone_id, zone_name, region_id').order('zone_name'),
+          supabase.from('region').select('region_id, region_name').order('region_name')
+        ]);
 
-        // Apply hierarchical filters through woreda relationship
-        if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
-          query = query.eq('woreda_id', parseInt(selectedWoredaFilter));
-        } else if (selectedZoneFilter && selectedZoneFilter !== 'all') {
-          query = query.eq('woreda.zone_id', parseInt(selectedZoneFilter));
-        } else if (selectedRegionFilter && selectedRegionFilter !== 'all') {
-          query = query.eq('woreda.zone.region_id', parseInt(selectedRegionFilter));
-        }
-
-        // Apply facility search filter
-        if (facilitySearch) {
-          query = query.ilike('facility_name', `%${facilitySearch}%`);
-        }
-
-        const { data: facilityData, error: facilityError } = await query.limit(100);
-        
-        if (facilityError) {
-          console.error('Error loading facilities:', facilityError);
-          console.error('Error details:', facilityError.message, facilityError.code);
+        if (facilitiesResult.error) {
+          console.error('Error loading facilities:', facilitiesResult.error);
           setFacilities([]);
           return;
         }
-        
-        console.log('Facilities loaded:', facilityData?.length || 0);
-        console.log('Sample facilities:', facilityData?.slice(0, 3));
-        setFacilities((facilityData as any) || []);
+
+        if (facilitiesResult.data && woredasResult.data && zonesResult.data && regionsResult.data) {
+          // Client-side join to build facility hierarchy
+          let facilitiesWithHierarchy = facilitiesResult.data.map((facility: any) => {
+            const woreda = woredasResult.data.find(w => w.woreda_id === facility.woreda_id);
+            const zone = woreda ? zonesResult.data.find(z => z.zone_id === woreda.zone_id) : null;
+            const region = zone ? regionsResult.data.find(r => r.region_id === zone.region_id) : null;
+            
+            return {
+              ...facility,
+              woreda: woreda ? {
+                woreda_name: woreda.woreda_name,
+                zone: zone ? {
+                  zone_name: zone.zone_name,
+                  zone_id: zone.zone_id,
+                  region: region ? {
+                    region_name: region.region_name,
+                    region_id: region.region_id
+                  } : null
+                } : null
+              } : null
+            };
+          });
+
+          // Apply client-side filtering
+          if (selectedWoredaFilter && selectedWoredaFilter !== 'all') {
+            facilitiesWithHierarchy = facilitiesWithHierarchy.filter(f => 
+              f.woreda_id === parseInt(selectedWoredaFilter)
+            );
+          } else if (selectedZoneFilter && selectedZoneFilter !== 'all') {
+            facilitiesWithHierarchy = facilitiesWithHierarchy.filter(f => 
+              f.woreda?.zone?.zone_id === parseInt(selectedZoneFilter)
+            );
+          } else if (selectedRegionFilter && selectedRegionFilter !== 'all') {
+            facilitiesWithHierarchy = facilitiesWithHierarchy.filter(f => 
+              f.woreda?.zone?.region?.region_id === parseInt(selectedRegionFilter)
+            );
+          }
+
+          // Apply facility search filter
+          if (facilitySearch) {
+            facilitiesWithHierarchy = facilitiesWithHierarchy.filter(f =>
+              f.facility_name.toLowerCase().includes(facilitySearch.toLowerCase())
+            );
+          }
+
+          // Limit to 100 results
+          facilitiesWithHierarchy = facilitiesWithHierarchy.slice(0, 100);
+          
+          console.log('Facilities loaded:', facilitiesWithHierarchy.length);
+          console.log('Sample facilities:', facilitiesWithHierarchy.slice(0, 3));
+          setFacilities(facilitiesWithHierarchy);
+        } else {
+          setFacilities([]);
+        }
         
       } else if (level === 'woreda') {
         let query = supabase
