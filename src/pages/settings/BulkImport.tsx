@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import DataPreviewTable from "@/components/bulk-import/DataPreviewTable";
 
 interface ImportJob {
   id: string;
@@ -312,28 +313,28 @@ const BulkImport: React.FC = () => {
         }
       });
 
-      // Check for data type issues (basic validation)
-      mappedColumns.forEach(mapping => {
-        const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
-        const cellValue = row[columnIndex];
-        
-        if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
-          // Check numeric fields
-          if (mapping.dbColumn.includes('_id') || mapping.dbColumn.includes('latitude') || mapping.dbColumn.includes('longitude')) {
-            if (isNaN(Number(cellValue))) {
-              rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
-            }
-          }
+        // Check for data type issues (basic validation)
+        mappedColumns.forEach(mapping => {
+          const columnIndex = selectedSheetData.headers.indexOf(mapping.csvColumn);
+          const cellValue = row[columnIndex];
           
-          // Check email format
-          if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(String(cellValue))) {
-              rowIssues.push(`Invalid email format: ${cellValue}`);
+          if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+            // Check latitude/longitude numeric fields
+            if (mapping.dbColumn === 'latitude' || mapping.dbColumn === 'longitude') {
+              if (isNaN(Number(cellValue))) {
+                rowIssues.push(`Invalid numeric value in ${mapping.dbColumn}: ${cellValue}`);
+              }
+            }
+            
+            // Check email format
+            if (mapping.dbColumn === 'email' || mapping.dbColumn === 'contact_email') {
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(String(cellValue))) {
+                rowIssues.push(`Invalid email format: ${cellValue}`);
+              }
             }
           }
-        }
-      });
+        });
 
       if (rowIssues.length > 0) {
         const severity = rowIssues.some(issue => 
@@ -554,7 +555,7 @@ const BulkImport: React.FC = () => {
 
         {/* Import Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col">
             <DialogHeader>
               <div className="flex items-center justify-between">
                 <DialogTitle>Import Data</DialogTitle>
@@ -564,7 +565,7 @@ const BulkImport: React.FC = () => {
               </div>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="flex-1 overflow-hidden space-y-6">
               {/* Step 1: File Upload */}
               {currentStep === 'upload' && (
                 <div className="space-y-4">
@@ -722,101 +723,61 @@ const BulkImport: React.FC = () => {
                   )}
 
                   {/* Data Preview Section - Bottom */}
-                  <div className="flex-1 border rounded-lg p-4 min-h-0">
-                    <h4 className="font-medium text-sm mb-3">Data Preview ({currentSheetData.rows.length} rows)</h4>
-                    <div className="overflow-auto h-full">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-background">
-                          <TableRow>
-                            <TableHead className="w-12 text-xs">#</TableHead>
-                            {currentSheetData.headers.map((header, index) => (
-                              <TableHead key={index} className="text-xs min-w-20">
-                                {header}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {currentSheetData.rows.slice(0, 50).map((row, rowIndex) => {
-                            const hasIssues = dataQualityIssues.some(issue => issue.rowIndex === rowIndex);
-                            const isError = dataQualityIssues.some(issue => issue.rowIndex === rowIndex && issue.severity === 'error');
-                            
-                            return (
-                              <TableRow 
-                                key={rowIndex} 
-                                className={hasIssues ? (isError ? 'bg-red-50 dark:bg-red-900/10' : 'bg-yellow-50 dark:bg-yellow-900/10') : ''}
-                              >
-                                <TableCell className="text-xs font-mono">
-                                  <div className="flex items-center gap-1">
-                                    {rowIndex + 1}
-                                    {hasIssues && (
-                                      <div className="flex items-center">
-                                        {isError ? (
-                                          <XCircle className="h-3 w-3 text-red-500" />
-                                        ) : (
-                                          <AlertCircle className="h-3 w-3 text-yellow-500" />
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                {row.map((cell, cellIndex) => (
-                                  <TableCell key={cellIndex} className="text-xs max-w-32 truncate">
-                                    {cell?.toString() || ''}
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                      {currentSheetData.rows.length > 50 && (
-                        <div className="text-center text-xs text-muted-foreground py-2">
-                          Showing first 50 rows of {currentSheetData.rows.length} total rows
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Import Actions */}
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Button
-                      onClick={() => {
-                        checkDataQuality();
-                        handleImport();
-                      }}
-                      disabled={isImporting || columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__").length === 0}
-                      className="flex-1"
-                    >
-                      {isImporting ? (
-                        <>
-                          <Database className="h-4 w-4 mr-2 animate-spin" />
-                          Importing...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Import {currentSheetData.rows.length - dataQualityIssues.filter(i => i.severity === 'error').length} rows
-                          {dataQualityIssues.filter(i => i.severity === 'error').length > 0 && (
-                            <span className="ml-1 text-xs">
-                              ({dataQualityIssues.filter(i => i.severity === 'error').length} skipped)
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </Button>
-                    <Button variant="outline" onClick={closeModal}>
-                      Cancel
-                    </Button>
-                  </div>
+                  <DataPreviewTable 
+                    currentSheetData={currentSheetData}
+                    dataQualityIssues={dataQualityIssues}
+                    maxPreviewRows={50}
+                  />
                 </div>
               )}
             </div>
+
+            {/* Bottom Action Bar - Fixed at bottom */}
+            {currentStep === 'mapping' && currentSheetData && selectedType && (
+              <div className="border-t bg-background p-4 flex gap-3">
+                <Button
+                  onClick={() => {
+                    checkDataQuality();
+                    handleImport();
+                  }}
+                  disabled={isImporting || columnMappings.filter(m => m.dbColumn && m.dbColumn !== "__skip__").length === 0}
+                  className="flex-1"
+                >
+                  {isImporting ? (
+                    <>
+                      <Database className="h-4 w-4 mr-2 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import {currentSheetData.rows.length - dataQualityIssues.filter(i => i.severity === 'error').length} rows
+                      {dataQualityIssues.filter(i => i.severity === 'error').length > 0 && (
+                        <span className="ml-1 text-xs">
+                          ({dataQualityIssues.filter(i => i.severity === 'error').length} skipped)
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={closeModal}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+
+            {/* Bottom Action Bar for other steps */}
+            {currentStep !== 'mapping' && (
+              <div className="border-t bg-background p-4 flex gap-3 justify-end">
+                <Button variant="outline" onClick={closeModal}>
+                  Cancel
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
     </PageLayout>
   );
 };
-
 export default BulkImport;
