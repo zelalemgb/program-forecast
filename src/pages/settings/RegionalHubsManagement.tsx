@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,8 @@ import {
   Building2,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Upload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/layout/PageLayout";
@@ -48,6 +50,7 @@ interface Region {
 
 const RegionalHubsManagement: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [hubs, setHubs] = useState<RegionalHub[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
@@ -225,6 +228,10 @@ const RegionalHubsManagement: React.FC = () => {
     }
   };
 
+  const handleBulkImport = () => {
+    navigate('/settings/metadata/bulk-import?type=regional_hubs');
+  };
+
   const filteredHubs = hubs.filter(hub =>
     hub.hub_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     hub.hub_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -374,10 +381,16 @@ const RegionalHubsManagement: React.FC = () => {
             <h1 className="text-2xl font-semibold text-foreground">EPSS Regional Hubs</h1>
             <p className="text-muted-foreground">Manage regional distribution hubs serving health facilities</p>
           </div>
-          <Button onClick={handleAdd} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add Regional Hub
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleAdd} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Regional Hub
+            </Button>
+            <Button variant="outline" onClick={handleBulkImport}>
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filters */}

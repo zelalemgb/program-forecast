@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
@@ -60,6 +61,7 @@ interface FileData {
 
 const BulkImport: React.FC = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
@@ -74,6 +76,15 @@ const BulkImport: React.FC = () => {
     issues: string[];
     severity: 'error' | 'warning';
   }[]>([]);
+
+  // Auto-detect import type from URL params and open modal
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam && importTypes.some(type => type.value === typeParam)) {
+      setSelectedType(typeParam);
+      setIsModalOpen(true);
+    }
+  }, [searchParams]);
 
   const importTypes = [
     { value: "facilities", label: "Health Facilities", icon: "🏥", table: "facility" as const },
@@ -598,24 +609,46 @@ const BulkImport: React.FC = () => {
               {/* Step 1: File Upload */}
               {currentStep === 'upload' && (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Import Type</label>
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select what you want to import" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {importTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className="flex items-center gap-2">
-                              <span>{type.icon}</span>
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Only show import type selector if not auto-detected */}
+                  {!searchParams.get('type') && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Import Type</label>
+                      <Select value={selectedType} onValueChange={setSelectedType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select what you want to import" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {importTypes.map(type => (
+                            <SelectItem key={type.value} value={type.value}>
+                              <div className="flex items-center gap-2">
+                                <span>{type.icon}</span>
+                                <span>{type.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Show selected type when auto-detected */}
+                  {searchParams.get('type') && selectedType && (
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                          {importTypes.find(t => t.value === selectedType)?.icon}
+                        </span>
+                        <div>
+                          <h3 className="font-medium">
+                            Import {importTypes.find(t => t.value === selectedType)?.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Upload your file to begin importing data
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium mb-2">Upload File</label>
