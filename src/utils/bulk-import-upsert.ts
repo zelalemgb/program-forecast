@@ -74,14 +74,23 @@ export const performUpsert = async (
       updated_at: new Date().toISOString()
     }));
     
-    // Special handling for product_reference - use index name for onConflict
+    // Special handling for product_reference - handle duplicates within batch
     if (tableName === 'product_reference') {
-      // Since there are multiple unique indexes, we'll try upsert by canonical_name first
-      // as it's the primary unique identifier for products
       try {
+        // Remove duplicates within the batch itself based on canonical_name
+        const uniqueRecords = recordsWithTimestamp.reduce((acc, record) => {
+          const key = record.canonical_name;
+          if (!acc.has(key)) {
+            acc.set(key, record);
+          }
+          return acc;
+        }, new Map<string, any>());
+
+        const deduplicatedRecords = Array.from(uniqueRecords.values()) as any[];
+        
         const { error } = await supabase
           .from('product_reference')
-          .upsert(recordsWithTimestamp, { 
+          .upsert(deduplicatedRecords, { 
             onConflict: 'canonical_name', 
             ignoreDuplicates: false, 
             count: 'exact' 
@@ -90,7 +99,10 @@ export const performUpsert = async (
         if (error) {
           result.errors.push(`Upsert failed: ${error.message}`);
         } else {
-          result.updated = records.length;
+          result.updated = deduplicatedRecords.length;
+          if (records.length > deduplicatedRecords.length) {
+            result.skipped = records.length - deduplicatedRecords.length;
+          }
         }
       } catch (error: any) {
         result.errors.push(`Upsert error: ${error.message}`);
