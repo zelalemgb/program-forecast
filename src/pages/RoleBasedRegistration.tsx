@@ -137,9 +137,8 @@ const RoleBasedRegistration: React.FC = () => {
       setSelectedWoredaFilter('');
     }
     
-    // Clear facility selection and reload facilities when region filter changes
+    // Reload facilities when region filter changes but don't clear selection yet
     if (selectedRoleInfo?.level === 'facility') {
-      setSelectedFacility('');
       loadLocationData('facility');
     }
   }, [selectedRegionFilter]);
@@ -152,18 +151,16 @@ const RoleBasedRegistration: React.FC = () => {
       setSelectedWoredaFilter('');
     }
     
-    // Clear facility selection and reload facilities when zone filter changes
+    // Reload facilities when zone filter changes but don't clear selection yet
     if (selectedRoleInfo?.level === 'facility') {
-      setSelectedFacility('');
       loadLocationData('facility');
     }
   }, [selectedZoneFilter]);
 
   // Add effect for woreda filter changes
   useEffect(() => {
-    // Clear facility selection and reload facilities when woreda filter changes
+    // Reload facilities when woreda filter changes but don't clear selection yet
     if (selectedRoleInfo?.level === 'facility') {
-      setSelectedFacility('');
       loadLocationData('facility');
     }
   }, [selectedWoredaFilter]);
@@ -174,6 +171,17 @@ const RoleBasedRegistration: React.FC = () => {
       loadLocationData(selectedRoleInfo.level);
     }
   }, [selectedRole, facilitySearch, woredaSearch, zoneSearch, regionSearch]);
+
+  // Clear facility selection only if the selected facility is no longer available in the filtered results
+  useEffect(() => {
+    if (selectedFacility && facilities.length > 0) {
+      const selectedFacilityExists = facilities.some(f => f.facility_id.toString() === selectedFacility);
+      if (!selectedFacilityExists) {
+        console.log('Selected facility no longer available in filtered results, clearing selection');
+        setSelectedFacility('');
+      }
+    }
+  }, [facilities, selectedFacility]);
 
   const loadRegions = async () => {
     try {
@@ -477,6 +485,8 @@ const RoleBasedRegistration: React.FC = () => {
 
       // Create role request
       console.log('Creating role request for user:', user.id, 'role:', selectedRole);
+      console.log('Selected locations - facility:', selectedFacility, 'woreda:', selectedWoreda, 'zone:', selectedZone, 'region:', selectedRegion);
+      
       const roleRequestData = {
         user_id: user.id,
         requested_role: selectedRole as any,
@@ -486,6 +496,8 @@ const RoleBasedRegistration: React.FC = () => {
         zone_id: selectedZone ? parseInt(selectedZone) : null,
         region_id: selectedRegion ? parseInt(selectedRegion) : null,
       };
+
+      console.log('Role request data being submitted:', roleRequestData);
 
       const { error: requestError } = await supabase
         .from('user_role_requests')
@@ -742,10 +754,16 @@ const RoleBasedRegistration: React.FC = () => {
                           {facilities.length} facilities available
                         </Badge>
                       </div>
-                       <Select value={selectedFacility} onValueChange={setSelectedFacility}>
-                         <SelectTrigger className="bg-background border">
-                           <SelectValue placeholder="Choose the facility where you work" />
-                         </SelectTrigger>
+                        <Select value={selectedFacility} onValueChange={(value) => {
+                          setSelectedFacility(value);
+                          if (value) {
+                            const selectedFacilityData = facilities.find(f => f.facility_id.toString() === value);
+                            console.log('Facility selected:', selectedFacilityData?.facility_name, 'ID:', value);
+                          }
+                        }}>
+                          <SelectTrigger className={`bg-background border ${selectedFacility ? 'border-green-500 bg-green-50' : ''}`}>
+                            <SelectValue placeholder="Choose the facility where you work" />
+                          </SelectTrigger>
                          <SelectContent className="bg-background border z-[70] max-h-60 overflow-auto shadow-lg">
                            {facilities.length === 0 ? (
                              <SelectItem value="no-facilities" disabled className="text-muted-foreground bg-background">
@@ -767,9 +785,16 @@ const RoleBasedRegistration: React.FC = () => {
                            )}
                          </SelectContent>
                        </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Select the health facility where you work and will be managing operations.
-                      </p>
+                       <p className="text-xs text-muted-foreground">
+                         Select the health facility where you work and will be managing operations.
+                       </p>
+                       {selectedFacility && (
+                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                           <p className="text-sm text-green-700 font-medium">
+                             ✓ Facility selected: {facilities.find(f => f.facility_id.toString() === selectedFacility)?.facility_name}
+                           </p>
+                         </div>
+                       )}
                     </div>
                   </div>
                 )}
