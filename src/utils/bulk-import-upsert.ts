@@ -87,14 +87,16 @@ export const performUpsert = async (
   try {
     const uniqueFields = getUniqueFields(tableName);
     
-    // Special handling for facility table - resolve administrative hierarchy
+    // Special handling for facility and woreda tables - resolve administrative hierarchy
     let processedRecords = records;
     if (tableName === 'facility') {
       processedRecords = await resolveFacilityHierarchy(records);
+    } else if (tableName === 'woreda') {
+      processedRecords = await resolveWoredaHierarchy(records);
     }
     
     // Clean records - remove null values to prevent overwriting existing data
-    const recordsWithTimestamp = processedRecords.map(record => {
+    let recordsWithTimestamp = processedRecords.map(record => {
       const cleanRecord = { ...record, updated_at: new Date().toISOString() };
       
       // For facility table, don't overwrite existing location data with nulls
@@ -114,8 +116,8 @@ export const performUpsert = async (
       // For woreda table, remove hierarchy name fields that don't exist in the database
       if (tableName === 'woreda') {
         Object.keys(cleanRecord).forEach(key => {
-          // Remove name and code fields that don't exist in woreda table
-          if (['country_name', 'country_code', 'region_name', 'region_code', 'zone_name', 'zone_code'].includes(key)) {
+          // Remove name/code fields and disallow passing woreda_id for inserts
+          if (['country_name', 'country_code', 'region_name', 'region_code', 'zone_name', 'zone_code', 'woreda_id'].includes(key)) {
             delete cleanRecord[key];
           }
         });
@@ -255,6 +257,35 @@ const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
   });
   
   console.log(`Completed hierarchy resolution for ${processedRecords.length} records`);
+  return processedRecords;
+};
+// Resolve parent hierarchy (country/region/zone) for woreda imports
+const resolveWoredaHierarchy = async (records: any[]): Promise<any[]> => {
+  console.log(`Resolving hierarchy for ${records.length} woreda records`);
+
+  // Extract only parent location names; woreda_name is not needed for parent resolution
+  const locationNames = records.map(record => ({
+    country_name: record.country_name,
+    region_name: record.region_name,
+    zone_name: record.zone_name
+  }));
+
+  const hierarchyResults = await bulkResolveHierarchy(locationNames);
+
+  const processedRecords = records.map((record, index) => {
+    const h = hierarchyResults[index] || {} as any;
+    const merged = {
+      ...record,
+      country_id: h.country_id ?? record.country_id ?? null,
+      region_id: h.region_id ?? record.region_id ?? null,
+      zone_id: h.zone_id ?? record.zone_id ?? null
+    };
+    // Never send woreda_id when inserting/upserting woreda rows
+    if ('woreda_id' in merged) delete (merged as any).woreda_id;
+    return merged;
+  });
+
+  console.log(`Completed resolving parents for woreda: ${processedRecords.length}`);
   return processedRecords;
 };
 
