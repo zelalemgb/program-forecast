@@ -21,11 +21,14 @@ interface Facility {
   facility_type?: string;
   level?: string;
   ownership?: string;
+  ownership_type?: string;
   latitude?: number;
   longitude?: number;
   woreda_id?: number;
   zone_id?: number;
   region_id?: number;
+  country_id?: number;
+  regional_hub_id?: string;
   created_at?: string;
   updated_at?: string;
   // Hierarchical data
@@ -37,7 +40,7 @@ interface Facility {
         region_name: string;
       };
     };
-  };
+  } | null;
 }
 
 interface Woreda {
@@ -115,7 +118,18 @@ const FacilitiesManagement: React.FC = () => {
         supabase.from('woreda').select('woreda_id, woreda_name, zone_id').order('woreda_name')
       ]);
 
-      if (facilitiesResult.data) setFacilities(facilitiesResult.data);
+      if (facilitiesResult.data) {
+        // Ensure woreda field is properly typed and handle potential errors
+        const typedFacilities = facilitiesResult.data.map((facility: any) => {
+          const woreda = facility.woreda;
+          const isValidWoreda = woreda !== null && woreda !== undefined && typeof woreda === 'object' && !('error' in woreda);
+          return {
+            ...facility,
+            woreda: isValidWoreda ? woreda : null
+          } as Facility;
+        });
+        setFacilities(typedFacilities);
+      }
       if (regionsResult.data) setRegions(regionsResult.data);
       if (zonesResult.data) setZones(zonesResult.data);
       if (woredasResult.data) setWoredas(woredasResult.data);

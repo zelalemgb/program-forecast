@@ -2,6 +2,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DatabaseField } from "@/config/bulk-import-config";
+import { resolveHierarchy, bulkResolveHierarchy } from "./hierarchy-resolver";
 
 interface UpsertResult {
   inserted: number;
@@ -86,8 +87,14 @@ export const performUpsert = async (
   try {
     const uniqueFields = getUniqueFields(tableName);
     
+    // Special handling for facility table - resolve administrative hierarchy
+    let processedRecords = records;
+    if (tableName === 'facility') {
+      processedRecords = await resolveFacilityHierarchy(records);
+    }
+    
     // Clean records - remove null values to prevent overwriting existing data
-    const recordsWithTimestamp = records.map(record => {
+    const recordsWithTimestamp = processedRecords.map(record => {
       const cleanRecord = { ...record, updated_at: new Date().toISOString() };
       
       // For facility table, don't overwrite existing location data with nulls
@@ -95,6 +102,10 @@ export const performUpsert = async (
         Object.keys(cleanRecord).forEach(key => {
           if (['region_id', 'zone_id', 'woreda_id', 'latitude', 'longitude', 'regional_hub_id'].includes(key) && 
               (cleanRecord[key] === null || cleanRecord[key] === undefined || cleanRecord[key] === '')) {
+            delete cleanRecord[key];
+          }
+          // Remove hierarchy name fields as they're not database columns
+          if (['country_name', 'region_name', 'zone_name', 'woreda_name'].includes(key)) {
             delete cleanRecord[key];
           }
         });
@@ -204,6 +215,37 @@ export const performUpsert = async (
   }
   
   return result;
+};
+
+// Resolve administrative hierarchy for facility records
+const resolveFacilityHierarchy = async (records: any[]): Promise<any[]> => {
+  console.log(`Starting hierarchy resolution for ${records.length} facility records`);
+  
+  // Extract location names from records
+  const locationNames = records.map(record => ({
+    country_name: record.country_name,
+    region_name: record.region_name,
+    zone_name: record.zone_name,
+    woreda_name: record.woreda_name
+  }));
+  
+  // Bulk resolve hierarchy to minimize database calls
+  const hierarchyResults = await bulkResolveHierarchy(locationNames);
+  
+  // Merge hierarchy results with original records
+  const processedRecords = records.map((record, index) => {
+    const hierarchy = hierarchyResults[index];
+    return {
+      ...record,
+      country_id: hierarchy.country_id,
+      region_id: hierarchy.region_id,
+      zone_id: hierarchy.zone_id,
+      woreda_id: hierarchy.woreda_id
+    };
+  });
+  
+  console.log(`Completed hierarchy resolution for ${processedRecords.length} records`);
+  return processedRecords;
 };
 
 // Get readable description of upsert results

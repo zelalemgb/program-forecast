@@ -650,6 +650,34 @@ export type Database = {
             referencedRelation: "zone"
             referencedColumns: ["zone_id"]
           },
+          {
+            foreignKeyName: "fk_facility_country"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "fk_facility_region"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
+          {
+            foreignKeyName: "fk_facility_woreda"
+            columns: ["woreda_id"]
+            isOneToOne: false
+            referencedRelation: "woreda"
+            referencedColumns: ["woreda_id"]
+          },
+          {
+            foreignKeyName: "fk_facility_zone"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["zone_id"]
+          },
         ]
       }
       finance_status: {
@@ -2342,7 +2370,15 @@ export type Database = {
           region_name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_region_country"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["country_id"]
+          },
+        ]
       }
       registration_requests: {
         Row: {
@@ -3047,6 +3083,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_woreda_country"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "fk_woreda_region"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
+          {
+            foreignKeyName: "fk_woreda_zone"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["zone_id"]
+          },
+          {
             foreignKeyName: "woreda_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
@@ -3081,6 +3138,13 @@ export type Database = {
           zone_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_zone_region"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "region"
+            referencedColumns: ["region_id"]
+          },
           {
             foreignKeyName: "zone_region_id_fkey"
             columns: ["region_id"]
