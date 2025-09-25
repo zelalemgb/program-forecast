@@ -1,28 +1,30 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Upload, 
-  Download, 
-  FileText, 
   CheckCircle, 
   AlertCircle, 
   XCircle,
   FileSpreadsheet,
   Database,
-  ArrowRight,
-  MapPin
+  X
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/layout/PageLayout";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImportJob {
   id: string;
@@ -43,153 +45,197 @@ interface ColumnMapping {
   dbColumn: string;
 }
 
-interface CSVPreview {
+interface SheetData {
   headers: string[];
-  rows: string[][];
+  rows: any[][];
+}
+
+interface FileData {
+  sheets: { [key: string]: SheetData };
+  selectedSheet: string;
 }
 
 const BulkImport: React.FC = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [currentStep, setCurrentStep] = useState<'upload' | 'mapping' | 'import'>('upload');
-  const [csvPreview, setCsvPreview] = useState<CSVPreview | null>(null);
+  const [fileData, setFileData] = useState<FileData | null>(null);
   const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
-  const [importJobs, setImportJobs] = useState<ImportJob[]>([
-    {
-      id: "1",
-      type: "facilities",
-      filename: "facilities_batch_001.xlsx",
-      status: "completed",
-      progress: 100,
-      totalRows: 150,
-      processedRows: 150,
-      successRows: 145,
-      failedRows: 5,
-      errors: ["Row 23: Invalid woreda ID", "Row 45: Missing facility name"],
-      createdAt: "2024-01-15T10:30:00"
-    },
-    {
-      id: "2", 
-      type: "products",
-      filename: "products_update.csv",
-      status: "processing",
-      progress: 65,
-      totalRows: 500,
-      processedRows: 325,
-      successRows: 320,
-      failedRows: 5,
-      errors: [],
-      createdAt: "2024-01-15T14:20:00"
-    }
-  ]);
+  const [currentStep, setCurrentStep] = useState<'upload' | 'sheet' | 'mapping'>('upload');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importJobs, setImportJobs] = useState<ImportJob[]>([]);
 
   const importTypes = [
-    { value: "facilities", label: "Health Facilities", icon: "🏥" },
-    { value: "products", label: "Products & Medicines", icon: "💊" },
-    { value: "users", label: "Users & Staff", icon: "👥" },
-    { value: "areas", label: "Administrative Areas", icon: "🗺️" },
-    { value: "suppliers", label: "Suppliers & Vendors", icon: "🏢" },
-    { value: "inventory", label: "Inventory Balances", icon: "📦" }
+    { value: "facilities", label: "Health Facilities", icon: "🏥", table: "facility" as const },
+    { value: "products", label: "Products & Medicines", icon: "💊", table: "product_reference" as const },
+    { value: "users", label: "Users & Staff", icon: "👥", table: "profiles" as const },
+    { value: "areas", label: "Administrative Areas", icon: "🗺️", table: "woreda" as const },
+    { value: "suppliers", label: "Suppliers & Vendors", icon: "🏢", table: "suppliers" as const },
+    { value: "inventory", label: "Inventory Balances", icon: "📦", table: "inventory_balances" as const }
   ];
 
   const databaseFields = {
     facilities: [
-      { value: "facility_name", label: "Facility Name" },
-      { value: "facility_code", label: "Facility Code" },
-      { value: "facility_type", label: "Facility Type" },
-      { value: "woreda_id", label: "Woreda ID" },
-      { value: "level", label: "Level" },
-      { value: "ownership", label: "Ownership" },
-      { value: "latitude", label: "Latitude" },
-      { value: "longitude", label: "Longitude" }
+      { value: "facility_name", label: "Facility Name", required: true },
+      { value: "facility_code", label: "Facility Code", required: false },
+      { value: "facility_type", label: "Facility Type", required: false },
+      { value: "woreda_id", label: "Woreda ID", required: false },
+      { value: "level", label: "Level", required: false },
+      { value: "ownership", label: "Ownership", required: false },
+      { value: "latitude", label: "Latitude", required: false },
+      { value: "longitude", label: "Longitude", required: false }
     ],
     products: [
-      { value: "canonical_name", label: "Product Name" },
-      { value: "code", label: "Product Code" },
-      { value: "program", label: "Program" },
-      { value: "atc_code", label: "ATC Code" },
-      { value: "strength", label: "Strength" },
-      { value: "form", label: "Form" },
-      { value: "pack_size", label: "Pack Size" },
-      { value: "base_unit", label: "Base Unit" },
-      { value: "default_unit", label: "Default Unit" }
+      { value: "canonical_name", label: "Product Name", required: true },
+      { value: "code", label: "Product Code", required: false },
+      { value: "program", label: "Program", required: false },
+      { value: "atc_code", label: "ATC Code", required: false },
+      { value: "strength", label: "Strength", required: false },
+      { value: "form", label: "Form", required: false },
+      { value: "pack_size", label: "Pack Size", required: false },
+      { value: "base_unit", label: "Base Unit", required: true },
+      { value: "default_unit", label: "Default Unit", required: false }
     ],
     users: [
-      { value: "full_name", label: "Full Name" },
-      { value: "email", label: "Email" },
-      { value: "facility_id", label: "Facility ID" },
-      { value: "role", label: "Role" }
+      { value: "full_name", label: "Full Name", required: true },
+      { value: "email", label: "Email", required: true },
+      { value: "phone_number", label: "Phone Number", required: false }
     ],
     areas: [
-      { value: "region_name", label: "Region Name" },
-      { value: "zone_name", label: "Zone Name" },
-      { value: "woreda_name", label: "Woreda Name" }
+      { value: "woreda_name", label: "Woreda Name", required: true },
+      { value: "zone_id", label: "Zone ID", required: true }
     ],
     suppliers: [
-      { value: "name", label: "Supplier Name" },
-      { value: "contact_info", label: "Contact Info" }
+      { value: "name", label: "Supplier Name", required: true },
+      { value: "contact_info", label: "Contact Info", required: false }
     ],
     inventory: [
-      { value: "facility_id", label: "Facility ID" },
-      { value: "product_id", label: "Product ID" },
-      { value: "current_stock", label: "Current Stock" },
-      { value: "reorder_level", label: "Reorder Level" },
-      { value: "max_level", label: "Max Level" }
+      { value: "facility_id", label: "Facility ID", required: true },
+      { value: "product_id", label: "Product ID", required: true },
+      { value: "current_stock", label: "Current Stock", required: true },
+      { value: "reorder_level", label: "Reorder Level", required: false },
+      { value: "max_level", label: "Max Level", required: false }
     ]
+  };
+
+  const openImportModal = () => {
+    setIsModalOpen(true);
+    setCurrentStep('upload');
+    setSelectedType("");
+    setUploadedFile(null);
+    setFileData(null);
+    setColumnMappings([]);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setCurrentStep('upload');
+    setSelectedType("");
+    setUploadedFile(null);
+    setFileData(null);
+    setColumnMappings([]);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      
-      // Parse CSV to get headers and preview
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        Papa.parse(file, {
-          complete: (results) => {
-            if (results.data && results.data.length > 0) {
-              const headers = results.data[0] as string[];
-              const rows = results.data.slice(1, 6) as string[][]; // First 5 rows
-              setCsvPreview({ headers, rows });
-              
-              // Initialize mappings
-              const initialMappings = headers.map(header => ({
-                csvColumn: header,
-                dbColumn: ""
-              }));
-              setColumnMappings(initialMappings);
+    if (!file) return;
+
+    setUploadedFile(file);
+    
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.csv')) {
+      // Handle CSV files
+      Papa.parse(file, {
+        complete: (results) => {
+          if (results.data && results.data.length > 0) {
+            const headers = results.data[0] as string[];
+            const rows = results.data.slice(1) as any[][];
+            
+            const sheetData = {
+              sheets: { 'Sheet1': { headers, rows } },
+              selectedSheet: 'Sheet1'
+            };
+            
+            setFileData(sheetData);
+            initializeColumnMappings(headers);
+            setCurrentStep('mapping');
+          }
+        },
+        header: false,
+        skipEmptyLines: true
+      });
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      // Handle Excel files
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          const sheets: { [key: string]: SheetData } = {};
+          
+          workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length > 0) {
+              const headers = jsonData[0] as string[];
+              const rows = jsonData.slice(1) as any[][];
+              sheets[sheetName] = { headers, rows };
             }
-          },
-          header: false,
-          skipEmptyLines: true
-        });
-      }
+          });
+          
+          const firstSheet = Object.keys(sheets)[0];
+          setFileData({
+            sheets,
+            selectedSheet: firstSheet
+          });
+          
+          // If multiple sheets, show sheet selection, otherwise go to mapping
+          if (Object.keys(sheets).length > 1) {
+            setCurrentStep('sheet');
+          } else {
+            initializeColumnMappings(sheets[firstSheet].headers);
+            setCurrentStep('mapping');
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to read Excel file. Please ensure it's a valid Excel format.",
+            variant: "destructive"
+          });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      toast({
+        title: "Unsupported file format",
+        description: "Please upload a CSV or Excel file (.csv, .xlsx, .xls)",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleNextToMapping = () => {
-    if (!selectedType || !uploadedFile) {
-      toast({
-        title: "Validation Error",
-        description: "Please select an import type and upload a file",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleSheetSelection = (sheetName: string) => {
+    if (!fileData) return;
     
-    if (!csvPreview) {
-      toast({
-        title: "Error",
-        description: "Unable to read CSV file. Please ensure it's a valid CSV format.",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    const updatedData = { ...fileData, selectedSheet: sheetName };
+    setFileData(updatedData);
+    
+    const selectedSheetData = fileData.sheets[sheetName];
+    initializeColumnMappings(selectedSheetData.headers);
     setCurrentStep('mapping');
+  };
+
+  const initializeColumnMappings = (headers: string[]) => {
+    const mappings = headers.map(header => ({
+      csvColumn: header,
+      dbColumn: ""
+    }));
+    setColumnMappings(mappings);
   };
 
   const handleMappingChange = (csvColumn: string, dbColumn: string) => {
@@ -202,60 +248,109 @@ const BulkImport: React.FC = () => {
     );
   };
 
-  const handleImport = () => {
-    const unmappedColumns = columnMappings.filter(m => !m.dbColumn);
-    if (unmappedColumns.length > 0) {
+  const handleImport = async () => {
+    if (!selectedType || !fileData) return;
+
+    const mappedColumns = columnMappings.filter(m => m.dbColumn);
+    if (mappedColumns.length === 0) {
       toast({
         title: "Validation Error",
-        description: `Please map all columns: ${unmappedColumns.map(m => m.csvColumn).join(', ')}`,
+        description: "Please map at least one column",
         variant: "destructive"
       });
       return;
     }
 
-    // Simulate import process
-    const newJob: ImportJob = {
-      id: Date.now().toString(),
-      type: selectedType,
-      filename: uploadedFile?.name || "",
-      status: "processing",
-      progress: 0,
-      totalRows: csvPreview?.rows.length || 0,
-      processedRows: 0,
-      successRows: 0,
-      failedRows: 0,
-      errors: [],
-      createdAt: new Date().toISOString()
-    };
+    setIsImporting(true);
 
-    setImportJobs(prev => [newJob, ...prev]);
-    
-    toast({
-      title: "Import Started",
-      description: `Started importing ${uploadedFile?.name} with column mappings`
-    });
+    try {
+      const selectedSheetData = fileData.sheets[fileData.selectedSheet];
+      const mappingObj = mappedColumns.reduce((acc, mapping) => {
+        acc[mapping.csvColumn] = mapping.dbColumn;
+        return acc;
+      }, {} as { [key: string]: string });
 
-    // Reset form
-    setSelectedType("");
-    setUploadedFile(null);
-    setCsvPreview(null);
-    setColumnMappings([]);
-    setCurrentStep('upload');
-    
-    // Clear file input
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
-  };
+      // Transform data according to mappings
+      const transformedData = selectedSheetData.rows.map(row => {
+        const item: any = {};
+        selectedSheetData.headers.forEach((header, index) => {
+          const dbColumn = mappingObj[header];
+          if (dbColumn && row[index] !== undefined && row[index] !== null && row[index] !== '') {
+            item[dbColumn] = row[index];
+          }
+        });
+        return item;
+      }).filter(item => Object.keys(item).length > 0);
 
-  const handleBackToUpload = () => {
-    setCurrentStep('upload');
-  };
+      if (transformedData.length === 0) {
+        throw new Error("No valid data rows found after mapping");
+      }
 
-  const downloadTemplate = (type: string) => {
-    toast({
-      title: "Downloading Template",
-      description: `Template for ${type} is being downloaded`
-    });
+      // Get the table name for the selected import type
+      const importConfig = importTypes.find(type => type.value === selectedType);
+      if (!importConfig) {
+        throw new Error("Invalid import type");
+      }
+
+      // Insert data into Supabase
+      const { data, error } = await supabase
+        .from(importConfig.table)
+        .insert(transformedData);
+
+      if (error) {
+        throw error;
+      }
+
+      // Create import job record
+      const newJob: ImportJob = {
+        id: Date.now().toString(),
+        type: selectedType,
+        filename: uploadedFile?.name || "",
+        status: "completed",
+        progress: 100,
+        totalRows: transformedData.length,
+        processedRows: transformedData.length,
+        successRows: transformedData.length,
+        failedRows: 0,
+        errors: [],
+        createdAt: new Date().toISOString()
+      };
+
+      setImportJobs(prev => [newJob, ...prev]);
+
+      toast({
+        title: "Import Successful",
+        description: `Successfully imported ${transformedData.length} records`,
+      });
+
+      closeModal();
+
+    } catch (error: any) {
+      toast({
+        title: "Import Failed",
+        description: error.message || "An error occurred during import",
+        variant: "destructive"
+      });
+
+      // Create failed job record
+      const failedJob: ImportJob = {
+        id: Date.now().toString(),
+        type: selectedType,
+        filename: uploadedFile?.name || "",
+        status: "failed",
+        progress: 0,
+        totalRows: 0,
+        processedRows: 0,
+        successRows: 0,
+        failedRows: 0,
+        errors: [error.message],
+        createdAt: new Date().toISOString()
+      };
+
+      setImportJobs(prev => [failedJob, ...prev]);
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -284,6 +379,8 @@ const BulkImport: React.FC = () => {
     }
   };
 
+  const currentSheetData = fileData ? fileData.sheets[fileData.selectedSheet] : null;
+
   return (
     <PageLayout>
       <Helmet>
@@ -292,26 +389,66 @@ const BulkImport: React.FC = () => {
         <link rel="canonical" href="/settings/metadata/bulk-import" />
       </Helmet>
 
-      <Tabs defaultValue="import" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="import">New Import</TabsTrigger>
-          <TabsTrigger value="history">Import History</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Bulk Import</h1>
+            <p className="text-muted-foreground">Import data from Excel or CSV files</p>
+          </div>
+          <Button onClick={openImportModal} className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+        </div>
 
-        <TabsContent value="import">
-          {currentStep === 'upload' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Data File
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+        {/* Import History */}
+        {importJobs.length > 0 && (
+          <div className="bg-card rounded-lg border p-6">
+            <h2 className="text-lg font-medium mb-4">Recent Imports</h2>
+            <div className="space-y-3">
+              {importJobs.slice(0, 5).map(job => (
+                <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(job.status)}
+                    <div>
+                      <div className="font-medium">{job.filename}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {importTypes.find(t => t.value === job.type)?.label} • {new Date(job.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge className={getStatusColor(job.status)}>
+                      {job.status}
+                    </Badge>
+                    <div className="text-sm text-muted-foreground">
+                      {job.successRows}/{job.totalRows} rows
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Import Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle>Import Data</DialogTitle>
+                <Button variant="ghost" size="sm" onClick={closeModal}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Step 1: File Upload */}
+              {currentStep === 'upload' && (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Import Type *</label>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Import Type</label>
                     <Select value={selectedType} onValueChange={setSelectedType}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select what you want to import" />
@@ -329,335 +466,167 @@ const BulkImport: React.FC = () => {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Data File *</label>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Upload File</label>
                     <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <div className="space-y-4">
-                        <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto" />
-                        <div>
-                          <label htmlFor="file-upload" className="cursor-pointer">
-                            <span className="text-sm text-muted-foreground">
-                              Drop your CSV file here or{" "}
-                              <span className="text-primary underline">browse</span>
-                            </span>
-                            <input
-                              id="file-upload"
-                              type="file"
-                              className="hidden"
-                              accept=".csv"
-                              onChange={handleFileUpload}
-                            />
-                          </label>
-                        </div>
-                        {uploadedFile && (
-                          <div className="flex items-center justify-center gap-2 text-sm text-green-600">
-                            <FileText className="h-4 w-4" />
-                            {uploadedFile.name}
-                          </div>
-                        )}
-                        <div className="text-xs text-muted-foreground">
-                          Supported format: CSV (.csv) - Any column structure
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {csvPreview && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">CSV Preview</label>
-                      <div className="border rounded-lg p-4 bg-muted/50">
-                        <div className="text-xs text-muted-foreground mb-2">
-                          Found {csvPreview.headers.length} columns, showing first 5 rows
-                        </div>
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                {csvPreview.headers.map((header, index) => (
-                                  <TableHead key={index} className="text-xs">
-                                    {header}
-                                  </TableHead>
-                                ))}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {csvPreview.rows.slice(0, 3).map((row, rowIndex) => (
-                                <TableRow key={rowIndex}>
-                                  {row.map((cell, cellIndex) => (
-                                    <TableCell key={cellIndex} className="text-xs">
-                                      {cell}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedType && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Template</span>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => downloadTemplate(selectedType)}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download Template
-                        </Button>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Download the template to see the expected format
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      onClick={handleNextToMapping}
-                      disabled={!selectedType || !uploadedFile || !csvPreview}
-                    >
-                      <ArrowRight className="h-4 w-4 mr-2" />
-                      Next: Map Columns
-                    </Button>
-                    <Button variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Validate Only
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-           {currentStep === 'mapping' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Map Columns
-                </CardTitle>
-                <div className="text-sm text-muted-foreground">
-                  Map CSV columns to database fields for{" "}
-                  <span className="font-medium">
-                    {importTypes.find(t => t.value === selectedType)?.label}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Database Fields - Left Side */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b">
-                      <Database className="h-4 w-4" />
-                      <h3 className="text-sm font-medium">Database Fields</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedType && databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
-                        <div key={field.value} className="p-3 border rounded-lg bg-muted/30">
-                          <div className="font-medium text-sm">{field.label}</div>
-                          <div className="text-xs text-muted-foreground font-mono">{field.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* CSV Columns & Mapping - Right Side */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b">
-                      <FileSpreadsheet className="h-4 w-4" />
-                      <h3 className="text-sm font-medium">CSV Columns & Mapping</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {columnMappings.map((mapping, index) => (
-                        <div key={index} className="space-y-2 p-3 border rounded-lg">
-                          <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">CSV Column</label>
-                            <div className="p-2 bg-background rounded border text-sm font-mono">
-                              {mapping.csvColumn}
-                            </div>
-                            {csvPreview && csvPreview.rows[0] && (
-                              <div className="text-xs text-muted-foreground">
-                                Sample: "{csvPreview.rows[0][index] || 'No data'}"
-                              </div>
-                            )}
-                           </div>
-                          
-                          <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">Maps to Database Field</label>
-                            <Select 
-                              value={mapping.dbColumn} 
-                              onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Select database field" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="">-- Skip this column --</SelectItem>
-                                {selectedType && databaseFields[selectedType as keyof typeof databaseFields]?.map(field => (
-                                  <SelectItem key={field.value} value={field.value}>
-                                    {field.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={handleBackToUpload}>
-                    Back
-                  </Button>
-                  <Button onClick={handleImport}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Start Import
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Import History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {importJobs.map((job) => (
-                  <div key={job.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(job.status)}
-                        <div>
-                          <div className="font-medium">{job.filename}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {importTypes.find(t => t.value === job.type)?.label}
-                          </div>
-                        </div>
-                      </div>
-                      <Badge className={getStatusColor(job.status)}>
-                        {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                      </Badge>
-                    </div>
-
-                    {job.status === 'processing' && (
+                      <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <div className="space-y-2">
-                        <Progress value={job.progress} />
-                        <div className="text-sm text-muted-foreground">
-                          Processing {job.processedRows} of {job.totalRows} rows ({job.progress}%)
+                        <label htmlFor="file-upload" className="cursor-pointer">
+                          <span className="text-primary underline">Browse files</span>
+                          <input
+                            id="file-upload"
+                            type="file"
+                            className="hidden"
+                            accept=".csv,.xlsx,.xls"
+                            onChange={handleFileUpload}
+                          />
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          Supports CSV, Excel (.xlsx, .xls) files
+                        </p>
+                      </div>
+                      {uploadedFile && (
+                        <div className="mt-4 text-sm text-green-600">
+                          ✓ {uploadedFile.name}
                         </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">Total Rows</div>
-                        <div className="font-medium">{job.totalRows}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">Successful</div>
-                        <div className="font-medium text-green-600">{job.successRows}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">Failed</div>
-                        <div className="font-medium text-red-600">{job.failedRows}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">Started</div>
-                        <div className="font-medium">
-                          {new Date(job.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {job.errors.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-red-600">Errors:</div>
-                        <ul className="text-xs space-y-1">
-                          {job.errors.slice(0, 3).map((error, index) => (
-                            <li key={index} className="text-red-600">• {error}</li>
-                          ))}
-                          {job.errors.length > 3 && (
-                            <li className="text-muted-foreground">
-                              ... and {job.errors.length - 3} more errors
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Report
-                      </Button>
-                      {job.status === 'failed' && (
-                        <Button size="sm" variant="outline">
-                          <Upload className="h-4 w-4 mr-2" />
-                          Retry Import
-                        </Button>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </div>
+              )}
 
-        <TabsContent value="templates">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {importTypes.map((type) => (
-              <Card key={type.value}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span className="text-2xl">{type.icon}</span>
-                    {type.label}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      Template for importing {type.label.toLowerCase()} data
+              {/* Step 2: Sheet Selection (for Excel files with multiple sheets) */}
+              {currentStep === 'sheet' && fileData && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium">Select Sheet</h3>
+                    <p className="text-sm text-muted-foreground">This Excel file contains multiple sheets. Please select the one to import:</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {Object.keys(fileData.sheets).map(sheetName => (
+                      <Button
+                        key={sheetName}
+                        variant="outline"
+                        className="justify-start h-auto p-4"
+                        onClick={() => handleSheetSelection(sheetName)}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{sheetName}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {fileData.sheets[sheetName].rows.length} rows, {fileData.sheets[sheetName].headers.length} columns
+                          </div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Column Mapping */}
+              {currentStep === 'mapping' && currentSheetData && selectedType && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-medium">Map Columns</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Match your file columns to database fields for {importTypes.find(t => t.value === selectedType)?.label}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* File Preview */}
+                    <div>
+                      <h4 className="font-medium text-sm mb-3">File Preview</h4>
+                      <div className="border rounded-lg p-4 max-h-96 overflow-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {currentSheetData.headers.map((header, index) => (
+                                <TableHead key={index} className="text-xs">
+                                  {header}
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentSheetData.rows.slice(0, 3).map((row, rowIndex) => (
+                              <TableRow key={rowIndex}>
+                                {row.map((cell, cellIndex) => (
+                                  <TableCell key={cellIndex} className="text-xs">
+                                    {cell?.toString() || ''}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => downloadTemplate(type.value)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Excel Template
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => downloadTemplate(type.value)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        CSV Template
-                      </Button>
+
+                    {/* Column Mapping */}
+                    <div>
+                      <h4 className="font-medium text-sm mb-3">Column Mapping</h4>
+                      <div className="space-y-3 max-h-96 overflow-auto">
+                        {columnMappings.map((mapping) => (
+                          <div key={mapping.csvColumn} className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{mapping.csvColumn}</div>
+                            </div>
+                            <div className="w-4 text-muted-foreground">→</div>
+                            <div className="flex-1">
+                              <Select
+                                value={mapping.dbColumn}
+                                onValueChange={(value) => handleMappingChange(mapping.csvColumn, value)}
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue placeholder="Select field" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="">Skip this column</SelectItem>
+                                  {databaseFields[selectedType as keyof typeof databaseFields]?.map((field) => (
+                                    <SelectItem key={field.value} value={field.value}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{field.label}</span>
+                                        {field.required && <span className="text-red-500">*</span>}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button
+                      onClick={handleImport}
+                      disabled={isImporting || columnMappings.filter(m => m.dbColumn).length === 0}
+                      className="flex-1"
+                    >
+                      {isImporting ? (
+                        <>
+                          <Database className="h-4 w-4 mr-2 animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Import {currentSheetData.rows.length} rows
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="outline" onClick={closeModal}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </PageLayout>
   );
 };
