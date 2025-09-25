@@ -571,6 +571,9 @@ export type Database = {
           level: string | null
           longitude: number | null
           ownership: string | null
+          ownership_type:
+            | Database["public"]["Enums"]["facility_ownership_type"]
+            | null
           regional_hub_id: string | null
           updated_at: string | null
           woreda_id: number | null
@@ -585,6 +588,9 @@ export type Database = {
           level?: string | null
           longitude?: number | null
           ownership?: string | null
+          ownership_type?:
+            | Database["public"]["Enums"]["facility_ownership_type"]
+            | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
@@ -599,6 +605,9 @@ export type Database = {
           level?: string | null
           longitude?: number | null
           ownership?: string | null
+          ownership_type?:
+            | Database["public"]["Enums"]["facility_ownership_type"]
+            | null
           regional_hub_id?: string | null
           updated_at?: string | null
           woreda_id?: number | null
@@ -3157,6 +3166,7 @@ export type Database = {
     Enums: {
       admin_level: "facility" | "woreda" | "zone" | "regional" | "national"
       app_role: "admin" | "analyst" | "viewer"
+      facility_ownership_type: "public" | "private" | "ngo"
       user_role_type:
         | "facility_logistic_officer"
         | "facility_admin"
@@ -3298,6 +3308,7 @@ export const Constants = {
     Enums: {
       admin_level: ["facility", "woreda", "zone", "regional", "national"],
       app_role: ["admin", "analyst", "viewer"],
+      facility_ownership_type: ["public", "private", "ngo"],
       user_role_type: [
         "facility_logistic_officer",
         "facility_admin",
