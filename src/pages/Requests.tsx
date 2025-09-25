@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import PageHeader from "@/components/layout/PageHeader";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Badge } from "@/components/ui/badge";
+import { User } from "lucide-react";
 
 const years = Array.from({ length: 6 }, (_, i) => `${2024 + i}`);
 
@@ -16,6 +19,7 @@ type Request = Database["public"]["Tables"]["procurement_requests"]["Row"];
 
 export default function RequestsPage() {
   const navigate = useNavigate();
+  const { user, getUserId, isAdmin, isAnalyst } = useCurrentUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>(years[0]);
@@ -27,14 +31,22 @@ export default function RequestsPage() {
 
   useEffect(() => {
     const fetchRows = async () => {
+      if (!user) return;
+      
       let q = supabase.from("procurement_requests").select("*").order("created_at", { ascending: false });
+      
+      // Filter by user unless admin/analyst
+      if (!isAdmin() && !isAnalyst()) {
+        q = q.eq("user_id", getUserId());
+      }
+      
       if (selectedProgramId && selectedProgramId !== "__all__") q = q.eq("program_id", selectedProgramId);
       if (selectedYear) q = q.eq("year", selectedYear);
       const { data } = await q;
       setRows(data || []);
     };
     fetchRows();
-  }, [selectedProgramId, selectedYear]);
+  }, [selectedProgramId, selectedYear, user, getUserId, isAdmin, isAnalyst]);
 
   const programMap = useMemo(() => Object.fromEntries(programs.map(p => [p.id, p.name])), [programs]);
 
@@ -47,6 +59,11 @@ export default function RequestsPage() {
       </Helmet>
       <PageHeader
         title="Procurement Requests"
+        description={
+          !isAdmin() && !isAnalyst() 
+            ? `Showing your requests only (${user?.email})`
+            : "Manage all procurement requests"
+        }
         actions={<Button onClick={() => navigate("/requests/new")}>New Request</Button>}
       />
 

@@ -10,7 +10,7 @@ import { Eye, EyeOff, Shield, Globe, ArrowLeft, TrendingUp } from "lucide-react"
 import { Helmet } from "react-helmet-async";
 
 const Auth: React.FC = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -20,6 +20,13 @@ const Auth: React.FC = () => {
   React.useEffect(() => {
     document.title = mode === "signup" ? "Register Account | MoH" : "Sign In | MoH";
   }, [mode]);
+
+  // Redirect authenticated users to dashboard
+  React.useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

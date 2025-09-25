@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,71 +9,21 @@ import DashboardWidgets from "@/components/dashboard/DashboardWidgets";
 import { FacilityWorkflow } from "@/components/workflow/FacilityWorkflow";
 import { RegionalWorkflow } from "@/components/workflow/RegionalWorkflow";
 import { NationalWorkflow } from "@/components/workflow/NationalWorkflow";
-import { supabase } from "@/integrations/supabase/client";
+import UserProfileBadge from "@/components/auth/UserProfileBadge";
 import { useAuth } from "@/context/AuthContext";
-import { MapPin, Users, Globe, Building } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useUserFacility } from "@/hooks/useUserFacility";
+import { MapPin, Users, Globe, Building, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Landing: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string>("");
-  const [facilityInfo, setFacilityInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { userRole, loading: roleLoading } = useUserRole();
+  const facilityInfo = useUserFacility();
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
-      
-      try {
-        // Get user role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .order("role")
-          .limit(1)
-          .single();
-
-        setUserRole(roleData?.role || "viewer");
-
-        // Get facility info if user is facility-level
-        if (roleData?.role === "viewer") {
-          const { data: facilityData } = await supabase
-            .from("user_facility_memberships")
-            .select(`
-              facility:facility_id (
-                facility_name,
-                facility_type,
-                woreda:woreda_id (
-                  woreda_name,
-                  zone:zone_id (
-                    zone_name,
-                    region:region_id (
-                      region_name
-                    )
-                  )
-                )
-              )
-            `)
-            .eq("user_id", user.id)
-            .eq("status", "approved")
-            .limit(1)
-            .single();
-
-          setFacilityInfo(facilityData?.facility);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, [user]);
-
-  const getRoleDisplay = (role: string) => {
+  const getRoleDisplay = (role: string | undefined) => {
     switch (role) {
       case "admin":
         return { title: "National Administrator", icon: Globe, variant: "default" as const };
@@ -87,7 +37,7 @@ const Landing: React.FC = () => {
   };
 
   const renderRoleBasedView = () => {
-    switch (userRole) {
+    switch (userRole?.role) {
       case "admin":
         return <NationalWorkflow />;
       case "analyst":
@@ -99,7 +49,7 @@ const Landing: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (roleLoading || facilityInfo.loading) {
     return (
       <main className="container py-6">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -112,7 +62,7 @@ const Landing: React.FC = () => {
     );
   }
 
-  const roleDisplay = getRoleDisplay(userRole);
+  const roleDisplay = getRoleDisplay(userRole?.role);
   const RoleIcon = roleDisplay.icon;
 
   return (
@@ -122,6 +72,9 @@ const Landing: React.FC = () => {
         <meta name="description" content="Health supply chain management dashboard for monitoring stock levels, forecasts, and facility operations." />
         <link rel="canonical" href={canonical} />
       </Helmet>
+
+      {/* User Profile Card */}
+      <UserProfileBadge />
 
       {/* Header with Role & Context */}
       <Card>
@@ -133,19 +86,29 @@ const Landing: React.FC = () => {
                 Welcome back!
               </CardTitle>
               <CardDescription className="mt-1">
-                {facilityInfo ? (
+                {facilityInfo.facilityName ? (
                   <span>
-                    {facilityInfo.facility_name} • {facilityInfo.woreda?.zone?.region?.region_name} Region
+                    {facilityInfo.facilityName} • {facilityInfo.locationDisplay}
                   </span>
                 ) : (
                   "Health Supply Chain Management Platform"
                 )}
               </CardDescription>
             </div>
-            <Badge variant={roleDisplay.variant} className="flex items-center gap-1">
-              <RoleIcon className="h-3 w-3" />
-              {roleDisplay.title}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant={roleDisplay.variant} className="flex items-center gap-1">
+                <RoleIcon className="h-3 w-3" />
+                {roleDisplay.title}
+              </Badge>
+              {userRole?.role === "admin" && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin Panel
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -156,7 +119,7 @@ const Landing: React.FC = () => {
       </div>
 
       {/* Legacy Dashboard Widgets (for admin/analyst overview) */}
-      {(userRole === "admin" || userRole === "analyst") && (
+      {(userRole?.role === "admin" || userRole?.role === "analyst") && (
         <Tabs defaultValue="workflow" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="workflow">Workflow Overview</TabsTrigger>
@@ -169,6 +132,23 @@ const Landing: React.FC = () => {
             <DashboardWidgets />
           </TabsContent>
         </Tabs>
+      )}
+
+      {/* Show message if user has no role assigned */}
+      {!userRole?.role && !roleLoading && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-amber-800">Role Assignment Pending</CardTitle>
+            <CardDescription className="text-amber-700">
+              Your account is created but you don't have a role assigned yet. Please contact your administrator or request a role to access the system features.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" asChild>
+              <Link to="/user-management">Request Role</Link>
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </main>
   );

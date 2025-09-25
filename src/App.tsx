@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Validation from "./pages/Validation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NavigationProvider } from "@/context/NavigationContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CDSSDashboard from "./pages/CDSSDashboard";
@@ -59,37 +60,150 @@ const AppShell: React.FC = () => {
           <main className="flex-1 overflow-x-auto">
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/facility-dashboard" element={<FacilityDashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/cdss-dashboard" element={<CDSSDashboard />} />
-              <Route path="/forecast" element={<RunForecast />} />
-              <Route path="/forecast-analysis" element={<ForecastAnalysis />} />
-              <Route path="/saved-forecasts" element={<SavedForecasts />} />
-              
-              <Route path="/forecast-workbench" element={<ForecastWorkbench />} />
-              <Route path="/dagu" element={<Dagu />} />
-              <Route path="/supply-planning" element={<SupplyPlanning />} />
-              <Route path="/budget-alignment" element={<BudgetAlignment />} />
-              <Route path="/validation" element={<Validation />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/role-registration" element={<RoleBasedRegistration />} />
-              <Route path="/register" element={<RegisterFacility />} />
-              <Route path="/approvals" element={<Approvals />} />
-              <Route path="/admin" element={<SuperAdminDashboard />} />
-              <Route path="/user-management" element={<UserManagement />} />
-              <Route path="/settings/metadata" element={<MetadataOrganization />} />
-              <Route path="/settings/metadata/facilities" element={<FacilitiesManagement />} />
-              <Route path="/settings/metadata/products" element={<ProductsManagement />} />
-              <Route path="/settings/metadata/account-types" element={<AccountTypesManagement />} />
-              <Route path="/settings/metadata/regional-hubs" element={<RegionalHubsManagement />} />
-              <Route path="/settings/metadata/areas" element={<AreasManagement />} />
-              <Route path="/settings/metadata/bulk-import" element={<BulkImport />} />
-              <Route path="/requests" element={<Requests />} />
-              <Route path="/requests/new" element={<RequestWizard />} />
-              <Route path="/requests/:id" element={<RequestDetail />} />
-              <Route path="/help/guides" element={<Guides />} />
-              <Route path="/help/videos" element={<Videos />} />
+              
+              {/* Protected Routes */}
+              <Route path="/facility-dashboard" element={
+                <ProtectedRoute>
+                  <FacilityDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/cdss-dashboard" element={
+                <ProtectedRoute>
+                  <CDSSDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/forecast" element={
+                <ProtectedRoute>
+                  <RunForecast />
+                </ProtectedRoute>
+              } />
+              <Route path="/forecast-analysis" element={
+                <ProtectedRoute>
+                  <ForecastAnalysis />
+                </ProtectedRoute>
+              } />
+              <Route path="/saved-forecasts" element={
+                <ProtectedRoute>
+                  <SavedForecasts />
+                </ProtectedRoute>
+              } />
+              <Route path="/forecast-workbench" element={
+                <ProtectedRoute>
+                  <ForecastWorkbench />
+                </ProtectedRoute>
+              } />
+              <Route path="/dagu" element={
+                <ProtectedRoute>
+                  <Dagu />
+                </ProtectedRoute>
+              } />
+              <Route path="/supply-planning" element={
+                <ProtectedRoute>
+                  <SupplyPlanning />
+                </ProtectedRoute>
+              } />
+              <Route path="/budget-alignment" element={
+                <ProtectedRoute>
+                  <BudgetAlignment />
+                </ProtectedRoute>
+              } />
+              <Route path="/validation" element={
+                <ProtectedRoute>
+                  <Validation />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/register" element={
+                <ProtectedRoute>
+                  <RegisterFacility />
+                </ProtectedRoute>
+              } />
+              <Route path="/approvals" element={
+                <ProtectedRoute>
+                  <Approvals />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/user-management" element={
+                <ProtectedRoute>
+                  <UserManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata" element={
+                <ProtectedRoute>
+                  <MetadataOrganization />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/facilities" element={
+                <ProtectedRoute>
+                  <FacilitiesManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/products" element={
+                <ProtectedRoute>
+                  <ProductsManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/account-types" element={
+                <ProtectedRoute>
+                  <AccountTypesManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/regional-hubs" element={
+                <ProtectedRoute>
+                  <RegionalHubsManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/areas" element={
+                <ProtectedRoute>
+                  <AreasManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/metadata/bulk-import" element={
+                <ProtectedRoute>
+                  <BulkImport />
+                </ProtectedRoute>
+              } />
+              <Route path="/requests" element={
+                <ProtectedRoute>
+                  <Requests />
+                </ProtectedRoute>
+              } />
+              <Route path="/requests/new" element={
+                <ProtectedRoute>
+                  <RequestWizard />
+                </ProtectedRoute>
+              } />
+              <Route path="/requests/:id" element={
+                <ProtectedRoute>
+                  <RequestDetail />
+                </ProtectedRoute>
+              } />
+              <Route path="/help/guides" element={
+                <ProtectedRoute>
+                  <Guides />
+                </ProtectedRoute>
+              } />
+              <Route path="/help/videos" element={
+                <ProtectedRoute>
+                  <Videos />
+                </ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
