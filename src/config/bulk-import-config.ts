@@ -82,16 +82,12 @@ export const DATABASE_FIELD_CONFIG: ImportFieldConfig = {
   ],
   areas: [
     { value: "country_name", label: "Country Name", required: false, type: "string" },
-    { value: "country_code", label: "Country Code", required: false, type: "string" },
     { value: "region_name", label: "Region Name", required: false, type: "string" },
-    { value: "region_code", label: "Region Code", required: false, type: "string" },
     { value: "zone_name", label: "Zone Name", required: false, type: "string" },
-    { value: "zone_code", label: "Zone Code", required: false, type: "string" },
     { value: "woreda_name", label: "Woreda Name", required: true, type: "string" },
     { value: "woreda_code", label: "Woreda Code", required: false, type: "string" },
-    { value: "zone_id", label: "Zone ID", required: false, type: "number" },
-    { value: "region_id", label: "Region ID", required: false, type: "number" },
-    { value: "country_id", label: "Country ID", required: false, type: "number" }
+    { value: "zone_code", label: "Zone Code", required: false, type: "string" },
+    { value: "region_code", label: "Region Code", required: false, type: "string" }
   ],
   suppliers: [
     { value: "name", label: "Supplier Name", required: true, type: "string" },
