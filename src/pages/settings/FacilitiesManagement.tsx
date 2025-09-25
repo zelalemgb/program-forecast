@@ -24,8 +24,20 @@ interface Facility {
   latitude?: number;
   longitude?: number;
   woreda_id?: number;
+  zone_id?: number;
+  region_id?: number;
   created_at?: string;
   updated_at?: string;
+  // Hierarchical data
+  woreda?: {
+    woreda_name: string;
+    zone: {
+      zone_name: string;
+      region: {
+        region_name: string;
+      };
+    };
+  };
 }
 
 interface Woreda {
@@ -82,8 +94,22 @@ const FacilitiesManagement: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [facilitiesResult, regionsResult, zonesResult, woredasResult] = await Promise.all([
-        supabase.from('facility').select('*').order('facility_name'),
+      // Load facilities with hierarchical data
+      const facilitiesResult = await supabase
+        .from('facility')
+        .select(`
+          *,
+          woreda(
+            woreda_name,
+            zone(
+              zone_name,
+              region(region_name)
+            )
+          )
+        `)
+        .order('facility_name');
+
+      const [regionsResult, zonesResult, woredasResult] = await Promise.all([
         supabase.from('region').select('region_id, region_name').order('region_name'),
         supabase.from('zone').select('zone_id, zone_name, region_id').order('zone_name'),
         supabase.from('woreda').select('woreda_id, woreda_name, zone_id').order('woreda_name')
@@ -245,25 +271,21 @@ const FacilitiesManagement: React.FC = () => {
 
   const handleExport = (data: Facility[]) => {
     const csvContent = [
-      ['Name', 'Code', 'Type', 'Level', 'Ownership', 'Region', 'Zone', 'Woreda', 'Latitude', 'Longitude'],
-      ...data.map(facility => {
-        const woreda = woredas.find(w => w.woreda_id === facility.woreda_id);
-        const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
-        const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
-        
-        return [
-          facility.facility_name,
-          facility.facility_code || '',
-          facility.facility_type || '',
-          facility.level || '',
-          facility.ownership || '',
-          region?.region_name || '',
-          zone?.zone_name || '',
-          woreda?.woreda_name || '',
-          facility.latitude?.toString() || '',
-          facility.longitude?.toString() || ''
-        ];
-      })
+      ['Name', 'Code', 'Type', 'Level', 'Ownership', 'Region', 'Zone', 'Woreda', 'Latitude', 'Longitude', 'Created', 'Updated'],
+      ...data.map(facility => [
+        facility.facility_name,
+        facility.facility_code || '',
+        facility.facility_type || '',
+        facility.level || '',
+        facility.ownership || '',
+        facility.woreda?.zone?.region?.region_name || '',
+        facility.woreda?.zone?.zone_name || '',
+        facility.woreda?.woreda_name || '',
+        facility.latitude?.toString() || '',
+        facility.longitude?.toString() || '',
+        facility.created_at ? new Date(facility.created_at).toLocaleDateString() : '',
+        facility.updated_at ? new Date(facility.updated_at).toLocaleDateString() : ''
+      ])
     ].map(row => row.join(',')).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -325,15 +347,58 @@ const FacilitiesManagement: React.FC = () => {
       render: (value) => value || '-'
     },
     {
-      key: 'location',
-      title: 'Location',
+      key: 'region',
+      title: 'Region',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => (
+        <span className="text-sm">
+          {row.woreda?.zone?.region?.region_name || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'zone',
+      title: 'Zone',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => (
+        <span className="text-sm">
+          {row.woreda?.zone?.zone_name || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'woreda',
+      title: 'Woreda',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => (
+        <span className="text-sm">
+          {row.woreda?.woreda_name || '-'}
+        </span>
+      )
+    },
+    {
+      key: 'coordinates',
+      title: 'Coordinates',
       sortable: false,
       filterable: false,
       render: (_, row) => (
-        <div className="text-sm max-w-48">
-          {getLocationDisplay(row)}
+        <div className="text-xs text-muted-foreground">
+          {row.latitude && row.longitude 
+            ? `${row.latitude.toFixed(4)}, ${row.longitude.toFixed(4)}`
+            : '-'
+          }
         </div>
       )
+    },
+    {
+      key: 'created_at',
+      title: 'Created',
+      sortable: true,
+      filterable: false,
+      render: (value) => value ? new Date(value).toLocaleDateString() : '-'
     }
   ];
 
@@ -652,7 +717,7 @@ const FacilitiesManagement: React.FC = () => {
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
@@ -660,57 +725,100 @@ const FacilitiesManagement: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           {viewingFacility && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-medium">Name</Label>
-                  <p className="mt-1">{viewingFacility.facility_name}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Facility Name</Label>
+                  <p className="text-sm font-medium">{viewingFacility.facility_name}</p>
                 </div>
                 <div>
-                  <Label className="font-medium">Code</Label>
-                  <p className="mt-1">{viewingFacility.facility_code || '-'}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Facility Code</Label>
+                  <p className="text-sm">{viewingFacility.facility_code || '-'}</p>
                 </div>
                 <div>
-                  <Label className="font-medium">Type</Label>
-                  <p className="mt-1">{viewingFacility.facility_type || '-'}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Type</Label>
+                  <p className="text-sm">
+                    {viewingFacility.facility_type ? (
+                      <Badge variant="outline">{viewingFacility.facility_type}</Badge>
+                    ) : '-'}
+                  </p>
                 </div>
                 <div>
-                  <Label className="font-medium">Level</Label>
-                  <p className="mt-1">{viewingFacility.level || '-'}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Level</Label>
+                  <p className="text-sm">
+                    {viewingFacility.level ? (
+                      <Badge variant="secondary">{viewingFacility.level}</Badge>
+                    ) : '-'}
+                  </p>
                 </div>
                 <div>
-                  <Label className="font-medium">Ownership</Label>
-                  <p className="mt-1">{viewingFacility.ownership || '-'}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Ownership</Label>
+                  <p className="text-sm">{viewingFacility.ownership || '-'}</p>
                 </div>
-                <div>
-                  <Label className="font-medium">Administrative Location</Label>
-                  <div className="mt-1">
-                    {(() => {
-                      const woreda = woredas.find(w => w.woreda_id === viewingFacility.woreda_id);
-                      const zone = woreda ? zones.find(z => z.zone_id === woreda.zone_id) : null;
-                      const region = zone ? regions.find(r => r.region_id === zone.region_id) : null;
-                      return (
-                        <div className="space-y-1">
-                          {region && <p><strong>Region:</strong> {region.region_name}</p>}
-                          {zone && <p><strong>Zone:</strong> {zone.zone_name}</p>}
-                          {woreda && <p><strong>Woreda:</strong> {woreda.woreda_name}</p>}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-                {viewingFacility.latitude && (
+              </div>
+
+              {/* Location Information */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Administrative Location</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label className="font-medium">Latitude</Label>
-                    <p className="mt-1">{viewingFacility.latitude}</p>
+                    <Label className="text-sm font-medium text-muted-foreground">Region</Label>
+                    <p className="text-sm">{viewingFacility.woreda?.zone?.region?.region_name || '-'}</p>
                   </div>
-                )}
-                {viewingFacility.longitude && (
                   <div>
-                    <Label className="font-medium">Longitude</Label>
-                    <p className="mt-1">{viewingFacility.longitude}</p>
+                    <Label className="text-sm font-medium text-muted-foreground">Zone</Label>
+                    <p className="text-sm">{viewingFacility.woreda?.zone?.zone_name || '-'}</p>
                   </div>
-                )}
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Woreda</Label>
+                    <p className="text-sm">{viewingFacility.woreda?.woreda_name || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coordinates */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">Geographic Coordinates</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Latitude</Label>
+                    <p className="text-sm">{viewingFacility.latitude?.toFixed(6) || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Longitude</Label>
+                    <p className="text-sm">{viewingFacility.longitude?.toFixed(6) || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* System Information */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-3">System Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Facility ID</Label>
+                    <p className="text-sm">{viewingFacility.facility_id}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Created Date</Label>
+                    <p className="text-sm">
+                      {viewingFacility.created_at 
+                        ? new Date(viewingFacility.created_at).toLocaleDateString()
+                        : '-'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                    <p className="text-sm">
+                      {viewingFacility.updated_at 
+                        ? new Date(viewingFacility.updated_at).toLocaleDateString()
+                        : '-'
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
