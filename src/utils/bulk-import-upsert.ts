@@ -14,7 +14,7 @@ interface UpsertResult {
 const getUniqueFields = (tableName: string): string[] => {
   const uniqueFieldMap: { [key: string]: string[] } = {
     'facility': ['facility_code'],
-    'product_reference': ['canonical_name', 'code'],
+    'product_reference': ['canonical_name'], // Changed to use single field constraint
     'epss_regional_hubs': ['hub_code'],
     'profiles': ['email'],
     'woreda': ['woreda_name', 'zone_id'],
@@ -85,7 +85,7 @@ export const performUpsert = async (
     if (tableName === 'facility') {
       upsertConfig.onConflict = 'facility_code';
     } else if (tableName === 'product_reference') {
-      upsertConfig.onConflict = 'canonical_name,code';
+      upsertConfig.onConflict = 'canonical_name'; // Fixed to use actual constraint
     } else if (tableName === 'epss_regional_hubs') {
       upsertConfig.onConflict = 'hub_code';
     } else if (tableName === 'profiles') {
