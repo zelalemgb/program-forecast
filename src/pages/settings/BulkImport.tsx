@@ -841,37 +841,6 @@ const BulkImport: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Data Quality Issues */}
-                  {dataQualityIssues.length > 0 && (
-                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-900/20">
-                      <div className="flex items-center gap-2 mb-3">
-                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <h4 className="font-medium text-sm text-amber-800 dark:text-amber-200">
-                          Data Quality Issues Found ({dataQualityIssues.length} rows affected)
-                        </h4>
-                      </div>
-                      <div className="max-h-32 overflow-y-auto space-y-2">
-                        {dataQualityIssues.slice(0, 10).map(({ rowIndex, issues, severity }) => (
-                          <div key={rowIndex} className={`text-xs p-2 rounded border-l-2 ${
-                            severity === 'error' 
-                              ? 'bg-red-50 border-red-500 text-red-700 dark:bg-red-900/20 dark:text-red-300' 
-                              : 'bg-yellow-50 border-yellow-500 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300'
-                          }`}>
-                            <div className="font-medium">Row {rowIndex + 1}:</div>
-                            <div>{issues.join(', ')}</div>
-                          </div>
-                        ))}
-                        {dataQualityIssues.length > 10 && (
-                          <div className="text-xs text-muted-foreground text-center">
-                            ... and {dataQualityIssues.length - 10} more issues
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-                        <strong>Note:</strong> Validation is applied only to mapped columns. Rows with errors will be automatically skipped during import.
-                      </div>
-                    </div>
-                  )}
 
                   {/* Data Preview Section - Bottom */}
                   <DataPreviewTable 
