@@ -217,11 +217,10 @@ const BulkImport: React.FC = () => {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
-            if (jsonData.length > 0) {
-              const headers = jsonData[0] as string[];
-              const rows = jsonData.slice(1) as any[][];
-              sheets[sheetName] = { headers, rows };
-            }
+            // Include all sheets, even if they appear empty (they might have headers only)
+            const headers = jsonData.length > 0 ? (jsonData[0] as string[]) : [];
+            const rows = jsonData.length > 1 ? (jsonData.slice(1) as any[][]) : [];
+            sheets[sheetName] = { headers, rows };
           });
           
           const firstSheet = Object.keys(sheets)[0];
@@ -231,9 +230,12 @@ const BulkImport: React.FC = () => {
           });
           
           // If multiple sheets, show sheet selection, otherwise go to mapping
+          console.log(`Found ${Object.keys(sheets).length} sheets:`, Object.keys(sheets));
           if (Object.keys(sheets).length > 1) {
+            console.log('Multiple sheets detected, showing sheet selection');
             setCurrentStep('sheet');
           } else {
+            console.log('Single sheet detected, going to mapping');
             initializeColumnMappings(sheets[firstSheet].headers);
             setCurrentStep('mapping');
           }
@@ -761,26 +763,49 @@ const BulkImport: React.FC = () => {
               {/* Step 2: Sheet Selection (for Excel files with multiple sheets) */}
               {currentStep === 'sheet' && fileData && (
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium">Select Sheet</h3>
-                    <p className="text-sm text-muted-foreground">This Excel file contains multiple sheets. Please select the one to import:</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Select Sheet to Import</h3>
+                      <p className="text-sm text-muted-foreground">
+                        This Excel file contains {Object.keys(fileData.sheets).length} sheets. Please select the one to import:
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setCurrentStep('upload')}
+                    >
+                      ← Back
+                    </Button>
                   </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {Object.keys(fileData.sheets).map(sheetName => (
-                      <Button
-                        key={sheetName}
-                        variant="outline"
-                        className="justify-start h-auto p-4"
-                        onClick={() => handleSheetSelection(sheetName)}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{sheetName}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {fileData.sheets[sheetName].rows.length} rows, {fileData.sheets[sheetName].headers.length} columns
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.keys(fileData.sheets).map(sheetName => {
+                      const sheet = fileData.sheets[sheetName];
+                      const hasData = sheet.rows.length > 0;
+                      const hasHeaders = sheet.headers.length > 0;
+                      
+                      return (
+                        <Button
+                          key={sheetName}
+                          variant="outline"
+                          className="justify-start h-auto p-4 hover:bg-accent"
+                          onClick={() => handleSheetSelection(sheetName)}
+                          disabled={!hasHeaders && !hasData}
+                        >
+                          <div className="text-left w-full">
+                            <div className="font-medium flex items-center gap-2">
+                              {sheetName}
+                              {!hasData && !hasHeaders && (
+                                <Badge variant="secondary" className="text-xs">Empty</Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {hasHeaders ? `${sheet.headers.length} columns` : 'No headers'}, {sheet.rows.length} data rows
+                            </div>
                           </div>
-                        </div>
-                      </Button>
-                    ))}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
