@@ -76,6 +76,8 @@ export interface DataTableProps<T = any> {
   title?: string;
   description?: string;
   emptyState?: React.ReactNode;
+  showHeader?: boolean;
+  showExport?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -87,11 +89,13 @@ export function DataTable<T extends Record<string, any>>({
   actions = [],
   bulkActions = [],
   onExport,
-  showSummary = true,
+  showSummary = false,
   customSummary,
   title,
   description,
   emptyState,
+  showHeader = false,
+  showExport = false,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -195,14 +199,14 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <Card className="w-full">
-      {(title || description) && (
+      {showHeader && (title || description) && (
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               {title && <CardTitle>{title}</CardTitle>}
               {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
             </div>
-            {onExport && (
+            {showExport && onExport && (
               <Button variant="outline" onClick={() => onExport(filteredData)}>
                 <Download className="h-4 w-4 mr-2" />
                 Export

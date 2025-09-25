@@ -840,9 +840,6 @@ const ProductsManagement: React.FC = () => {
         loading={loading}
         actions={tableActions}
         bulkActions={bulkActions}
-        onExport={handleExport}
-        title="Products & Medicines"
-        description="Manage pharmaceutical products, medical supplies, and equipment"
         searchPlaceholder="Search products by name, code, program, or ATC code..."
         emptyState={
           <div className="text-center py-8">

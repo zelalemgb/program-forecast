@@ -626,9 +626,6 @@ const FacilitiesManagement: React.FC = () => {
         loading={loading}
         actions={tableActions}
         bulkActions={bulkActions}
-        onExport={handleExport}
-        title="Health Facilities"
-        description="Manage hospitals, health centers, clinics, and other healthcare facilities"
         searchPlaceholder="Search facilities by name, code, or type..."
         emptyState={
           <div className="text-center py-8">

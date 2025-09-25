@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, TableColumn, TableAction } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
@@ -170,6 +170,89 @@ const UsersManagement: React.FC = () => {
     navigate('/settings/metadata/bulk-import?type=users');
   };
 
+  const columns: TableColumn<UserProfile>[] = [
+    {
+      key: 'full_name',
+      title: 'Full Name',
+      sortable: true,
+      filterable: true,
+      render: (value) => <span className="font-medium">{value || '-'}</span>
+    },
+    {
+      key: 'email',
+      title: 'Email',
+      sortable: true,
+      filterable: true,
+      render: (value) => value || '-'
+    },
+    {
+      key: 'created_at',
+      title: 'Created',
+      sortable: true,
+      filterable: false,
+      render: (value) => value ? new Date(value).toLocaleDateString() : '-'
+    }
+  ];
+
+  const tableActions: TableAction<UserProfile>[] = [
+    {
+      label: 'View',
+      onClick: (user) => {
+        setViewingUser(user);
+        setIsViewModalOpen(true);
+      },
+      icon: <Eye className="h-4 w-4" />
+    },
+    {
+      label: 'Edit',
+      onClick: (user) => {
+        setFormData({
+          full_name: user.full_name || '',
+          email: user.email || ''
+        });
+        setEditingUser(user);
+        setIsAddModalOpen(true);
+      },
+      icon: <Edit className="h-4 w-4" />
+    },
+    {
+      label: 'Delete',
+      onClick: (user) => handleDelete(user.id),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive'
+    }
+  ];
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      onClick: async (selectedUsers: UserProfile[]) => {
+        if (confirm(`Are you sure you want to delete ${selectedUsers.length} user profiles?`)) {
+          const ids = selectedUsers.map(u => u.id);
+          const { error } = await supabase
+            .from('profiles')
+            .delete()
+            .in('id', ids);
+
+          if (error) {
+            toast({
+              title: "Error",
+              description: "Failed to delete selected users",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: `Deleted ${selectedUsers.length} user profiles`
+            });
+            loadUsers();
+          }
+        }
+      },
+      variant: 'destructive' as const
+    }
+  ];
+
   return (
     <>
       <Helmet>
@@ -251,70 +334,23 @@ const UsersManagement: React.FC = () => {
       />
 
       {/* Users List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Users ({users.length})
-            </div>
-            <Button size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.full_name || '-'}</TableCell>
-                    <TableCell>{user.email || '-'}</TableCell>
-                    <TableCell>
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleView(user)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <DataTable
+        data={users}
+        columns={columns}
+        loading={loading}
+        actions={tableActions}
+        bulkActions={bulkActions}
+        searchPlaceholder="Search users by name or email..."
+        emptyState={
+          <div className="text-center py-8">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No users found</h3>
+            <p className="text-muted-foreground mb-4">
+              User profiles will appear here as they register.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

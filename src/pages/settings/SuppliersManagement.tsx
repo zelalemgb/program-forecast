@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, TableColumn, TableAction } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileText, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -178,6 +178,99 @@ const SuppliersManagement: React.FC = () => {
     navigate('/settings/metadata/bulk-import?type=suppliers');
   };
 
+  const columns: TableColumn<Supplier>[] = [
+    {
+      key: 'name',
+      title: 'Name',
+      sortable: true,
+      filterable: true,
+      render: (value) => <span className="font-medium">{value}</span>
+    },
+    {
+      key: 'contact_person',
+      title: 'Contact Person',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => row.contact_info?.contact_person || '-'
+    },
+    {
+      key: 'email',
+      title: 'Email',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => row.contact_info?.email || '-'
+    },
+    {
+      key: 'phone',
+      title: 'Phone',
+      sortable: true,
+      filterable: true,
+      render: (_, row) => row.contact_info?.phone || '-'
+    }
+  ];
+
+  const tableActions: TableAction<Supplier>[] = [
+    {
+      label: 'View',
+      onClick: (supplier) => {
+        setViewingSupplier(supplier);
+        setIsViewModalOpen(true);
+      },
+      icon: <Eye className="h-4 w-4" />
+    },
+    {
+      label: 'Edit',
+      onClick: (supplier) => {
+        setFormData({
+          name: supplier.name,
+          email: supplier.contact_info?.email || '',
+          phone: supplier.contact_info?.phone || '',
+          address: supplier.contact_info?.address || '',
+          contact_person: supplier.contact_info?.contact_person || ''
+        });
+        setEditingSupplier(supplier);
+        setIsAddModalOpen(true);
+      },
+      icon: <Edit className="h-4 w-4" />
+    },
+    {
+      label: 'Delete',
+      onClick: (supplier) => handleDelete(supplier.id),
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive'
+    }
+  ];
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      onClick: async (selectedSuppliers: Supplier[]) => {
+        if (confirm(`Are you sure you want to delete ${selectedSuppliers.length} suppliers?`)) {
+          const ids = selectedSuppliers.map(s => s.id);
+          const { error } = await supabase
+            .from('suppliers')
+            .delete()
+            .in('id', ids);
+
+          if (error) {
+            toast({
+              title: "Error",
+              description: "Failed to delete selected suppliers",
+              variant: "destructive"
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: `Deleted ${selectedSuppliers.length} suppliers`
+            });
+            loadSuppliers();
+          }
+        }
+      },
+      variant: 'destructive' as const
+    }
+  ];
+
   return (
     <>
       <Helmet>
@@ -286,70 +379,27 @@ const SuppliersManagement: React.FC = () => {
       />
 
       {/* Suppliers List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Suppliers ({suppliers.length})
-            </div>
-            <Button size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+      <DataTable
+        data={suppliers}
+        columns={columns}
+        loading={loading}
+        actions={tableActions}
+        bulkActions={bulkActions}
+        searchPlaceholder="Search suppliers by name, contact person, or email..."
+        emptyState={
+          <div className="text-center py-8">
+            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No suppliers found</h3>
+            <p className="text-muted-foreground mb-4">
+              Get started by adding your first supplier.
+            </p>
+            <Button onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Supplier
             </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Contact Person</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {suppliers.map((supplier) => (
-                  <TableRow key={supplier.id}>
-                    <TableCell className="font-medium">{supplier.name}</TableCell>
-                    <TableCell>{supplier.contact_info?.contact_person || '-'}</TableCell>
-                    <TableCell>{supplier.contact_info?.email || '-'}</TableCell>
-                    <TableCell>{supplier.contact_info?.phone || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleView(supplier)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(supplier)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(supplier.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>

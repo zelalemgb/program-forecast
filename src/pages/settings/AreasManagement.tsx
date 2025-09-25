@@ -372,19 +372,7 @@ const AreasManagement: React.FC = () => {
 
       {/* Data List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} ({getCurrentData().length})
-            </div>
-            <Button size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -392,7 +380,7 @@ const AreasManagement: React.FC = () => {
                   <TableHead>Name</TableHead>
                   {activeTab !== 'regions' && <TableHead>{activeTab === 'zones' ? 'Region' : 'Zone'}</TableHead>}
                   <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-32">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
