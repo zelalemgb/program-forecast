@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 interface RequestRow {
   id: string;
@@ -108,10 +108,6 @@ const Approvals: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <PageHeader
-        title="Approvals"
-        description="Review pending facility registration requests in your scope."
-      />
 
       <section className="pb-16">
         <Card className="surface">

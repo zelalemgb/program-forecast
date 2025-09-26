@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import PageHeader from "@/components/layout/PageHeader";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -148,10 +148,6 @@ const ForecastWorkbench: React.FC = () => {
         <link rel="canonical" href="/forecast" />
       </Helmet>
 
-      <PageHeader
-        title="Forecast Workbench"
-        description="Create or adjust facility forecasts, review guardrails, and compare against program budgets."
-      />
 
       <section className="space-y-6">
         <ImportCommodityIssues onDataImported={() => {

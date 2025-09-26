@@ -1,7 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
-import PageHeader from "@/components/layout/PageHeader";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -123,10 +123,6 @@ const Videos: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <PageHeader 
-        title="Micro-learning Videos" 
-        description="Access bite-sized video tutorials to master the Forlab+ platform quickly and efficiently."
-      />
 
       {/* Video Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

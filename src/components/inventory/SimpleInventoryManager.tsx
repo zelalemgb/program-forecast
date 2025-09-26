@@ -8,7 +8,7 @@ import { ReceivingModule } from "./ReceivingModule";
 import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
 
@@ -29,10 +29,6 @@ export const SimpleInventoryManager: React.FC = () => {
   if (!selectedAction) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
-        <PageHeader 
-          title="Inventory Management"
-          description="Choose an action to get started"
-        />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {/* Stock Review Action */}
@@ -171,26 +167,26 @@ export const SimpleInventoryManager: React.FC = () => {
   // Action-specific screens
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
-      <PageHeader 
-        title={
-          selectedAction === "overview" ? "Stock Review" :
-          selectedAction === "receive" ? "Receive Stock" :
-          selectedAction === "issue" ? "Issue Stock" :
-          "Stock Adjustments"
-        }
-        description={
-          selectedAction === "overview" ? "Review current stock levels and inventory status" :
-          selectedAction === "receive" ? "Record incoming stock deliveries" :
-          selectedAction === "issue" ? "Issue stock to departments and wards" :
-          "Record stock adjustments and corrections"
-        }
-        actions={
-          <Button variant="outline" onClick={handleBackToActions} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Actions
-          </Button>
-        }
-      />
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {selectedAction === "overview" ? "Stock Review" :
+            selectedAction === "receive" ? "Receive Stock" :
+            selectedAction === "issue" ? "Issue Stock" :
+            "Stock Adjustments"}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {selectedAction === "overview" ? "Review current stock levels and inventory status" :
+            selectedAction === "receive" ? "Record incoming stock deliveries" :
+            selectedAction === "issue" ? "Issue stock to departments and wards" :
+            "Record stock adjustments and corrections"}
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleBackToActions} className="flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Actions
+        </Button>
+      </div>
 
       {selectedAction === "overview" && <StockOverview facilityId={facilityId} />}
       

@@ -12,7 +12,7 @@ import { MapPin, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "lu
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 interface Country {
   country_id: number;
@@ -340,10 +340,12 @@ const AreasManagement: React.FC = () => {
         </Button>
       </div>
 
-      <PageHeader
-        title="Administrative Areas"
-        description="Manage countries, regions, zones, and woredas"
-        actions={
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Administrative Areas</h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">Manage countries, regions, zones, and woredas</p>
+        </div>
+        <div className="flex gap-2">
           <div className="flex gap-2">
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
@@ -418,8 +420,7 @@ const AreasManagement: React.FC = () => {
               {getImportButtonText()}
             </Button>
           </div>
-        }
-      />
+        </div>
 
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6">

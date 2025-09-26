@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import PageHeader from "@/components/layout/PageHeader";
+
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Badge } from "@/components/ui/badge";
 import { User } from "lucide-react";
@@ -57,15 +57,17 @@ export default function RequestsPage() {
         <meta name="description" content="Create and track procurement requests by program and year." />
         <link rel="canonical" href="/requests" />
       </Helmet>
-      <PageHeader
-        title="Procurement Requests"
-        description={
-          !isAdmin() && !isAnalyst() 
-            ? `Showing your requests only (${user?.email})`
-            : "Manage all procurement requests"
-        }
-        actions={<Button onClick={() => navigate("/requests/new")}>New Request</Button>}
-      />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Procurement Requests</h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">
+            {!isAdmin() && !isAnalyst() 
+              ? `Showing your requests only (${user?.email})`
+              : "Manage all procurement requests"}
+          </p>
+        </div>
+        <Button onClick={() => navigate("/requests/new")}>New Request</Button>
+      </div>
 
       <Card>
         <CardHeader>

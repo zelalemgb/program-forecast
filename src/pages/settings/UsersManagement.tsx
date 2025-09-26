@@ -11,7 +11,7 @@ import { Users, Plus, Edit, Trash2, Upload, Download, ArrowLeft, Eye } from "luc
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 interface UserProfile {
   id: string;
@@ -272,66 +272,66 @@ const UsersManagement: React.FC = () => {
         </Button>
       </div>
 
-      <PageHeader
-        title="Users & Staff"
-        description="Manage user profiles and staff information"
-        actions={
-          <div className="flex gap-2">
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setEditingUser(null)} disabled>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add User
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    {editingUser ? 'Edit User Profile' : 'Add New User'}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name *</Label>
-                    <Input
-                      id="full_name"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      placeholder="Enter full name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="Enter email address"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={loading}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      {editingUser ? 'Update' : 'Add'} User
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Button variant="outline" onClick={handleBulkImport}>
-              <Upload className="h-4 w-4 mr-2" />
-              Bulk Import
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Users & Staff</h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">Manage user profiles and staff information</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingUser(null)} disabled>
+                <Plus className="h-4 w-4 mr-2" />
+                Add User
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  {editingUser ? 'Edit User Profile' : 'Add New User'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" disabled={loading}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {editingUser ? 'Update' : 'Add'} User
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" onClick={handleBulkImport}>
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Import
+          </Button>
+        </div>
+      </div>
 
       {/* Users List */}
       <DataTable

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 interface ForecastRowDb {
   program: string;
@@ -111,10 +111,6 @@ const Validation: React.FC = () => {
 
   return (
     <>
-      <PageHeader
-        title="Forecast Validation Dashboard"
-        description="Overview of data quality checks, mapping coverage, and key assumptions for forecast data."
-      />
 
       <section className="space-y-6 pb-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

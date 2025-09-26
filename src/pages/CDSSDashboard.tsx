@@ -1,7 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
-import PageHeader from "@/components/layout/PageHeader";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
@@ -105,10 +105,6 @@ const CDSSDashboard: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <PageHeader 
-        title="CDSS Dashboard" 
-        description="Monitor CDSS budget alignment, forecast performance, and facility participation across the health system."
-      />
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

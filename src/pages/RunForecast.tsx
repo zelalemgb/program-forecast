@@ -20,7 +20,7 @@ import {
   BarChart3,
   FileText
 } from "lucide-react";
-import PageHeader from "@/components/layout/PageHeader";
+
 import ForecastingWizardModal from "@/components/forecast/ForecastingWizardModal";
 import { ForecastSummaryModal } from "@/components/forecast/ForecastSummaryModal";
 
@@ -146,19 +146,19 @@ const RunForecast: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <PageHeader 
-        title="Run Forecast"
-        description="Create and manage health commodity forecasts for your facility"
-        actions={
-          <Button 
-            onClick={() => setIsWizardOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New Forecast
-          </Button>
-        }
-      />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Run Forecast</h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">Create and manage health commodity forecasts for your facility</p>
+        </div>
+        <Button 
+          onClick={() => setIsWizardOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Forecast
+        </Button>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">

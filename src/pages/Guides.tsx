@@ -3,15 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Camera, Brain, CheckCircle, Upload, FileText, MessageSquare, TrendingUp, ShoppingCart } from "lucide-react";
-import PageHeader from "@/components/layout/PageHeader";
+
 
 const Guides = () => {
   return (
     <div className="space-y-8">
-      <PageHeader 
-        title="User Guides" 
-        description="Learn how to effectively use the platform through our comprehensive guide system"
-      />
 
       {/* Infographics Section: Sense-Think-Act Approach */}
       <div className="space-y-6">

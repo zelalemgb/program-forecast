@@ -16,7 +16,7 @@ import { ProductTrendDialog } from "@/components/dashboard/ProductTrendDialog";
 import { AbruptChangesTable } from "@/components/dashboard/AbruptChangesTable";
 import ProgramInsights from "@/components/dashboard/ProgramInsights";
 import { ForecastAccuracyChart } from "@/components/dashboard/ForecastAccuracyChart";
-import PageHeader from "@/components/layout/PageHeader";
+
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
@@ -168,40 +168,40 @@ const filteredTotals = React.useMemo(() => {
         <link rel="canonical" href={`${window.location.origin}/dashboard`} />
       </Helmet>
       
-      <PageHeader
-        title="Health Programs Forecast Dashboard"
-        description="Import forecast CSVs and analyze from program-level trends down to individual products."
-        actions={
-          <div className="flex items-center gap-2">
-            <Dialog open={importOpen} onOpenChange={setImportOpen}>
-              <DialogTrigger asChild>
-                <Button>Import Forecast</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Bulk import forecast CSV</DialogTitle>
-                  <DialogDescription>Upload your CSV to update your dataset.</DialogDescription>
-                </DialogHeader>
-                <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
-              </DialogContent>
-            </Dialog>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">Import Issue Data</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Import Issue Data</DialogTitle>
-                  <DialogDescription>Upload issue data to analyze forecast problems.</DialogDescription>
-                </DialogHeader>
-                <ImportIssueData onData={() => {
-                  // Refresh or handle issue data import completion
-                }} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        }
-      />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Health Programs Forecast Dashboard</h1>
+          <p className="text-muted-foreground mt-1 max-w-3xl">Import forecast CSVs and analyze from program-level trends down to individual products.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Dialog open={importOpen} onOpenChange={setImportOpen}>
+            <DialogTrigger asChild>
+              <Button>Import Forecast</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Bulk import forecast CSV</DialogTitle>
+                <DialogDescription>Upload your CSV to update your dataset.</DialogDescription>
+              </DialogHeader>
+              <ImportForecast onData={(d) => { setDataset(d); setImportOpen(false); }} />
+            </DialogContent>
+          </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Import Issue Data</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Import Issue Data</DialogTitle>
+                <DialogDescription>Upload issue data to analyze forecast problems.</DialogDescription>
+              </DialogHeader>
+              <ImportIssueData onData={() => {
+                // Refresh or handle issue data import completion
+              }} />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
 
       <div className="space-y-6 mt-6">{/* Changed from section to div and added mt-6 */}
         {/* Auth CTA when not signed in */}
