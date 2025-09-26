@@ -77,6 +77,8 @@ const UserManagement: React.FC = () => {
         title="User Management"
         description="Manage user roles, permissions, and access control across the system"
         actions={actions}
+        showNavigation={false}
+        showBreadcrumbs={false}
       />
 
       <Tabs defaultValue="roles" className="space-y-6">
