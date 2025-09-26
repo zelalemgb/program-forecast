@@ -42,6 +42,7 @@ import FacilityDashboard from "./pages/FacilityDashboard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
+import UnifiedTopBar from "@/components/layout/UnifiedTopBar";
 
 const queryClient = new QueryClient();
 
@@ -55,7 +56,7 @@ const AppShell: React.FC = () => {
       <div className="flex min-h-screen w-full bg-background">
         {user && !isAuth && <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
-          {user && !isAuth && <DashboardHeader />}
+          {user && !isAuth && <UnifiedTopBar />}
           
           <main className="flex-1 overflow-x-auto">
             <Routes>

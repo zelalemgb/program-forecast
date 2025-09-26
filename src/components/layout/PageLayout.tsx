@@ -37,14 +37,16 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
     <div className={cn("min-h-screen flex flex-col", className)}>
       {/* Container for header and content */}
       <div className={cn("container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1", containerClassName)}>
-        {/* Page Header with Navigation */}
-        <PageHeader
-          title={pageTitle}
-          description={pageDescription}
-          actions={actions}
-          showNavigation={showNavigation}
-          showBreadcrumbs={showBreadcrumbs}
-        />
+        {/* Page Header - simplified since navigation is now in top bar */}
+        {(pageTitle || pageDescription || actions) && (
+          <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+              {pageTitle && <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{pageTitle}</h1>}
+              {pageDescription && <p className="text-muted-foreground mt-1 max-w-3xl">{pageDescription}</p>}
+            </div>
+            {actions && <div className="flex items-center gap-2">{actions}</div>}
+          </header>
+        )}
 
         {/* Main Content */}
         <main className="mt-8">
