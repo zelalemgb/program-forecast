@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download, HelpCircle } from "lucide-react";
 import { RefinedForecastWizard } from "@/components/forecast/RefinedForecastWizard";
-import PageHeader from "@/components/layout/PageHeader";
 import { PeriodSelector } from "@/components/supply-planning/PeriodSelector";
 import { SupplyPlanningControls } from "@/components/supply-planning/SupplyPlanningControls";
 import { DrugAnalysisTable } from "@/components/supply-planning/DrugAnalysisTable";
@@ -117,11 +116,18 @@ const SupplyPlanning: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <PageHeader
-        title="Supply Planning"
-        description="Facility: Main Health Center • Period: Feb 2024 • Analysis Period: Ethiopian Calendar Year"
-        actions={actions}
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            Supply Planning
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Facility: Main Health Center • Period: Feb 2024 • Analysis Period: Ethiopian Calendar Year
+          </p>
+        </div>
+        {actions}
+      </div>
 
       <div className="space-y-6">
         <Card>
