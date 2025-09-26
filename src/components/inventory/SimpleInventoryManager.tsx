@@ -8,6 +8,7 @@ import { ReceivingModule } from "./ReceivingModule";
 import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
+import { TodayQuickStats } from "./TodayQuickStats";
 
 
 type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
@@ -29,6 +30,7 @@ export const SimpleInventoryManager: React.FC = () => {
   if (!selectedAction) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
+        <TodayQuickStats />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
           {/* Stock Review Action */}
