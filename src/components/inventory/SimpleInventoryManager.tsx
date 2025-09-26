@@ -10,12 +10,14 @@ import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
 import { TodayQuickStats } from "./TodayQuickStats";
 import { useUserRole } from "@/hooks/useUserRole";
+import GuidedForecastingFlow from "@/components/forecast/GuidedForecastingFlow";
 
 
 type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
 
 export const SimpleInventoryManager: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<InventoryAction>(null);
+  const [showForecastFlow, setShowForecastFlow] = useState(false);
   const navigate = useNavigate();
   const { userRole } = useUserRole();
   const facilityId = userRole?.facility_id || 1; // Get from user context or fallback
@@ -104,7 +106,7 @@ export const SimpleInventoryManager: React.FC = () => {
           </Card>
 
           {/* Forecast Analysis Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => navigate('/forecast-analysis')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => setShowForecastFlow(true)}>
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-info/10 rounded-full flex items-center justify-center">
                 <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-info" />
@@ -115,13 +117,18 @@ export const SimpleInventoryManager: React.FC = () => {
               </p>
               <Badge variant="outline" className="mb-2">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                Trend Analysis
+                Guided Forecast
               </Badge>
             </CardContent>
           </Card>
 
         </div>
 
+        {/* Guided Forecasting Flow */}
+        <GuidedForecastingFlow 
+          isOpen={showForecastFlow} 
+          onClose={() => setShowForecastFlow(false)} 
+        />
       </div>
     );
   }
