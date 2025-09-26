@@ -11,6 +11,7 @@ import { UserRolesList } from '@/components/users/UserRolesList';
 
 const UserManagement: React.FC = () => {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('roles');
 
   const actions = (
     <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
@@ -65,10 +66,14 @@ const UserManagement: React.FC = () => {
     </Dialog>
   );
 
+  const getTabTitle = () => {
+    return activeTab === 'roles' ? 'Active Users & Roles' : 'Role Approvals';
+  };
+
   return (
     <>
       <Helmet>
-        <title>User Management | Health Supply Management System</title>
+        <title>{`User Management - ${getTabTitle()} | Health Supply Management System`}</title>
         <meta name="description" content="Manage user roles, approvals, and access control for the health supply management system." />
         <link rel="canonical" href="/user-management" />
       </Helmet>
@@ -77,7 +82,7 @@ const UserManagement: React.FC = () => {
         {actions}
       </div>
 
-      <Tabs defaultValue="roles" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="roles" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
