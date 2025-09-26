@@ -32,11 +32,10 @@ export const useUserRole = () => {
         // Fetch user role
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
-          .select('*')
+          .select('role, admin_level, facility_id, woreda_id, zone_id, region_id')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (roleError && roleError.code !== 'PGRST116') {
           throw roleError;

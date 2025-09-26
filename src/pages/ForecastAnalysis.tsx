@@ -112,14 +112,14 @@ const ForecastAnalysis: React.FC = () => {
     const fetchFacilityName = async () => {
       try {
         const { data, error } = await supabase
-          .from('facilities')
-          .select('name')
-          .eq('id', facilityId.toString())
-          .single();
+          .from('facility')
+          .select('facility_name')
+          .eq('facility_id', facilityId)
+          .maybeSingle();
         
         if (error) throw error;
-        if (data?.name) {
-          setFacilityName(data.name);
+        if (data?.facility_name) {
+          setFacilityName(data.facility_name);
         }
       } catch (error) {
         console.error('Error fetching facility name:', error);

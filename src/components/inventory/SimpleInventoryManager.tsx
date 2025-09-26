@@ -9,6 +9,7 @@ import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
 import { TodayQuickStats } from "./TodayQuickStats";
+import { useUserRole } from "@/hooks/useUserRole";
 
 
 type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
@@ -16,7 +17,8 @@ type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
 export const SimpleInventoryManager: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<InventoryAction>(null);
   const navigate = useNavigate();
-  const facilityId = 1; // Would come from user context/auth
+  const { userRole } = useUserRole();
+  const facilityId = userRole?.facility_id || 1; // Get from user context or fallback
 
   const handleActionSelect = (action: InventoryAction) => {
     setSelectedAction(action);
