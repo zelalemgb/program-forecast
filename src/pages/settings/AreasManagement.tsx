@@ -346,7 +346,6 @@ const AreasManagement: React.FC = () => {
           <p className="text-muted-foreground mt-1 max-w-3xl">Manage countries, regions, zones, and woredas</p>
         </div>
         <div className="flex gap-2">
-          <div className="flex gap-2">
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingItem(null)}>
