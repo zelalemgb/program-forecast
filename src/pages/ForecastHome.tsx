@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -331,6 +332,7 @@ const QuickActions: React.FC<{
 };
 
 const ForecastHome: React.FC = () => {
+  const navigate = useNavigate();
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType | null>(null);
 
@@ -363,8 +365,13 @@ const ForecastHome: React.FC = () => {
   };
 
   const handleScenarioSelect = (scenario: ScenarioType) => {
-    setSelectedScenario(scenario);
-    setShowIntentModal(false);
+    if (scenario === 'INV') {
+      navigate('/supply-planning');
+      setShowIntentModal(false);
+    } else {
+      setSelectedScenario(scenario);
+      setShowIntentModal(false);
+    }
   };
 
   const handleWizardClose = () => {
