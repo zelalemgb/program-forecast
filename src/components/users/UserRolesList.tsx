@@ -122,10 +122,7 @@ export const UserRolesList: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Current User Roles</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <Table>
           <TableHeader>
             <TableRow>
