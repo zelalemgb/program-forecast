@@ -118,22 +118,6 @@ export const SimpleInventoryManager: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Request Supply Action */}
-          <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 surface" onClick={() => navigate('/requests/new')}>
-            <CardContent className="p-4 sm:p-6 text-center">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-accent/10 rounded-full flex items-center justify-center">
-                <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Request Supply</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create procurement requests and place orders for supplies
-              </p>
-              <Badge variant="outline" className="mb-2">
-                <ShoppingCart className="h-3 w-3 mr-1" />
-                Place Order
-              </Badge>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Quick Stats */}
