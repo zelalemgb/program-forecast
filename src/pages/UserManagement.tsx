@@ -73,13 +73,9 @@ const UserManagement: React.FC = () => {
         <link rel="canonical" href="/user-management" />
       </Helmet>
       
-      <PageHeader 
-        title="User Management"
-        description="Manage user roles, permissions, and access control across the system"
-        actions={actions}
-        showNavigation={false}
-        showBreadcrumbs={false}
-      />
+      <div className="flex justify-end mb-6">
+        {actions}
+      </div>
 
       <Tabs defaultValue="roles" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
