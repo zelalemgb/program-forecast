@@ -13,6 +13,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import PageLayout from "@/components/layout/PageLayout";
+import MetadataSummaryDashboard from "@/components/metadata/MetadataSummaryDashboard";
 
 const MetadataOrganization: React.FC = () => {
   const navigate = useNavigate();
@@ -91,6 +92,8 @@ const MetadataOrganization: React.FC = () => {
         <meta name="description" content="Manage health facilities, products, users, and other metadata objects through manual entry or bulk import." />
         <link rel="canonical" href="/settings/metadata" />
       </Helmet>
+
+      <MetadataSummaryDashboard />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {metadataCategories.map((category) => (
