@@ -120,32 +120,6 @@ export const SimpleInventoryManager: React.FC = () => {
 
         </div>
 
-        {/* Quick Stats */}
-        <Card className="surface">
-          <CardHeader>
-            <CardTitle className="text-center text-lg sm:text-xl">Today's Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 text-center">
-              <div className="p-2">
-                <div className="text-xl sm:text-2xl font-bold text-status-ok">23</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Items in Stock</div>
-              </div>
-              <div className="p-2">
-                <div className="text-xl sm:text-2xl font-bold text-status-warning">4</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Low Stock Items</div>
-              </div>
-              <div className="p-2">
-                <div className="text-xl sm:text-2xl font-bold text-status-critical">2</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Stock Outs</div>
-              </div>
-              <div className="p-2">
-                <div className="text-xl sm:text-2xl font-bold text-brand">15</div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Recent Transactions</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
