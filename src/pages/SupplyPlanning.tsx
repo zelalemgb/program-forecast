@@ -109,11 +109,7 @@ const SupplyPlanning: React.FC = () => {
 
   const actions = (
     <div className="flex items-center gap-2">
-      <Badge variant="outline" className="flex items-center gap-1">
-        <FileText className="h-3 w-3" />
-        Annual Analysis
-      </Badge>
-      <Button variant="ghost" size="icon">
+      <Button variant="ghost" size="sm">
         <HelpCircle className="h-4 w-4" />
       </Button>
     </div>
@@ -130,48 +126,51 @@ const SupplyPlanning: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            Supply Planning
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Facility: Main Health Center • Period: Feb 2024 • Analysis Period: Ethiopian Calendar Year
+      {/* Streamlined Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold">Supply Planning</h1>
+            <Badge variant="outline" className="text-xs">
+              Annual Analysis
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {facility?.facility_name || "No facility selected"} • Inventory-based forecasting
           </p>
         </div>
         {actions}
       </div>
 
-      <div className="space-y-6">
+      {/* Compact Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg mb-6">
+        <div className="flex-1">
+          <PeriodSelector
+            periodType={periodType}
+            startingPeriod={startingPeriod}
+            onPeriodTypeChange={setPeriodType}
+            onStartingPeriodChange={setStartingPeriod}
+            periods={periods}
+          />
+        </div>
+        <SupplyPlanningControls
+          manualEntryMode={manualEntryMode}
+          onToggleManualEntry={handleClearAndManualEntry}
+          onImportFromExcel={handleImportFromExcel}
+        />
+      </div>
+
+      <div className="space-y-8">
         <Card>
-          <CardContent className="space-y-6 pt-6">
-            {/* Period Configuration */}
-            <div className="space-y-4">
-              <PeriodSelector
-                periodType={periodType}
-                startingPeriod={startingPeriod}
-                onPeriodTypeChange={setPeriodType}
-                onStartingPeriodChange={setStartingPeriod}
-                periods={periods}
-              />
-              
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-medium">Drug-by-Drug Annual Analysis ({periodType} periods)</h4>
-                <SupplyPlanningControls
-                  manualEntryMode={manualEntryMode}
-                  onToggleManualEntry={handleClearAndManualEntry}
-                  onImportFromExcel={handleImportFromExcel}
-                />
-              </div>
-            </div>
+          <CardContent className="space-y-8 pt-6">
 
             {/* Historical Drug Analysis Table */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Historical Inventory Analysis (Previous Year)</h4>
-              <p className="text-sm text-muted-foreground">
-                Inventory data from one year prior to the selected starting period ({periodType} view)
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">Historical Analysis</h3>
+                <span className="text-xs text-muted-foreground">Previous year data</span>
+              </div>
               <HistoricalInventoryTable
                 periods={periods}
                 collapsedPeriods={collapsedPeriods}
@@ -182,11 +181,11 @@ const SupplyPlanning: React.FC = () => {
             </div>
 
             {/* Forecast Table */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-lg">Consumption Forecast (Next Year)</h4>
-              <p className="text-sm text-muted-foreground">
-                Predicted consumption values starting from the selected period for one year ({periods.length} {periodType} periods)
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">Consumption Forecast</h3>
+                <span className="text-xs text-muted-foreground">Next year predictions</span>
+              </div>
               <ForecastTable
                 periods={periods}
                 data={forecastData}

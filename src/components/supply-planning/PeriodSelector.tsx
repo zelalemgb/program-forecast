@@ -19,41 +19,42 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   periods
 }) => {
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center gap-4 p-4 bg-muted/50 rounded-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="period-type" className="font-medium whitespace-nowrap">Period Type:</Label>
-          <Select value={periodType} onValueChange={onPeriodTypeChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="bi-monthly">Bi-monthly</SelectItem>
-              <SelectItem value="quarterly">Quarterly</SelectItem>
-              <SelectItem value="biannually">Biannually</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="starting-period" className="font-medium whitespace-nowrap">Starting Period:</Label>
-          <Select value={startingPeriod} onValueChange={onStartingPeriodChange}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hamle-2017">Hamle 2017 E.C.</SelectItem>
-              <SelectItem value="hamle-2016">Hamle 2016 E.C.</SelectItem>
-              <SelectItem value="hamle-2015">Hamle 2015 E.C.</SelectItem>
-              <SelectItem value="hamle-2014">Hamle 2014 E.C.</SelectItem>
-              <SelectItem value="hamle-2013">Hamle 2013 E.C.</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex-1">
+        <Label className="text-xs font-medium text-muted-foreground">Period Type</Label>
+        <Select value={periodType} onValueChange={onPeriodTypeChange}>
+          <SelectTrigger className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="monthly">Monthly (12 periods)</SelectItem>
+            <SelectItem value="bi-monthly">Bi-monthly (6 periods)</SelectItem>
+            <SelectItem value="quarterly">Quarterly (4 periods)</SelectItem>
+            <SelectItem value="biannually">Bi-annually (2 periods)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex-1">
+        <Label className="text-xs font-medium text-muted-foreground">Starting Period</Label>
+        <Select value={startingPeriod} onValueChange={onStartingPeriodChange}>
+          <SelectTrigger className="h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hamle-2017">Hamle 2017 EC</SelectItem>
+            <SelectItem value="hamle-2018">Hamle 2018 EC</SelectItem>
+            <SelectItem value="hamle-2019">Hamle 2019 EC</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex-1">
+        <Label className="text-xs font-medium text-muted-foreground">Generated Periods</Label>
+        <div className="text-xs text-muted-foreground mt-1 p-2 bg-muted/50 rounded border min-h-[32px] flex items-center">
+          {periods.length} {periodType} periods
         </div>
       </div>
-      <Badge variant="outline" className="ml-2 whitespace-nowrap">
-        One Year Analysis ({periods.length} {periodType === "monthly" ? "months" : periodType === "bi-monthly" ? "bi-monthly periods" : periodType === "quarterly" ? "quarters" : "periods"})
-      </Badge>
     </div>
   );
 };

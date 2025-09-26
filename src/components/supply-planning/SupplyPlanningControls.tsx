@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 
 interface SupplyPlanningControlsProps {
   manualEntryMode: boolean;
@@ -13,20 +14,23 @@ export const SupplyPlanningControls: React.FC<SupplyPlanningControlsProps> = ({
   onImportFromExcel
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-2">
-      <Button 
-        variant="outline" 
+    <div className="flex items-center gap-2">
+      <Button
+        variant={manualEntryMode ? "default" : "outline"}
+        size="sm"
         onClick={onToggleManualEntry}
-        className="flex items-center gap-2"
+        className="text-xs"
       >
-        {manualEntryMode ? "Switch to Auto Forecast using inventory" : "Clear values and Enter Manually"}
+        {manualEntryMode ? "Auto Mode" : "Manual Entry"}
       </Button>
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
+        size="sm"
         onClick={onImportFromExcel}
-        className="flex items-center gap-2"
+        className="flex items-center gap-1 text-xs"
       >
-        Import from Excel
+        <Download className="h-3 w-3" />
+        Import
       </Button>
     </div>
   );
