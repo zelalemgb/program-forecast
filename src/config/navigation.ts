@@ -7,6 +7,9 @@ export interface NavigationPage {
   category?: string;
   breadcrumbLabel?: string;
   showInSidebar?: boolean;
+  requiredRole?: string[];
+  requiredPermission?: string;
+  adminLevel?: string[];
 }
 
 export interface NavigationCategory {
@@ -45,6 +48,43 @@ export const navigationPages: Record<string, NavigationPage> = {
     category: 'dashboard',
     breadcrumbLabel: 'Facility Dashboard',
     showInSidebar: true,
+    adminLevel: ['facility'],
+  },
+  '/woreda-dashboard': {
+    path: '/woreda-dashboard',
+    title: 'Woreda Dashboard',
+    description: 'Woreda-level facility oversight and management dashboard',
+    category: 'dashboard',
+    breadcrumbLabel: 'Woreda Dashboard',
+    showInSidebar: true,
+    adminLevel: ['woreda'],
+  },
+  '/zone-dashboard': {
+    path: '/zone-dashboard',
+    title: 'Zone Dashboard',
+    description: 'Zone-level aggregated analytics and trends',
+    category: 'dashboard',
+    breadcrumbLabel: 'Zone Dashboard',
+    showInSidebar: true,
+    adminLevel: ['zone'],
+  },
+  '/regional-dashboard': {
+    path: '/regional-dashboard',
+    title: 'Regional Dashboard',
+    description: 'Regional health supply chain analytics',
+    category: 'dashboard',
+    breadcrumbLabel: 'Regional Dashboard',
+    showInSidebar: true,
+    adminLevel: ['regional'],
+  },
+  '/national-dashboard': {
+    path: '/national-dashboard',
+    title: 'National Dashboard',
+    description: 'National health supply system overview',
+    category: 'dashboard',
+    breadcrumbLabel: 'National Dashboard',
+    showInSidebar: true,
+    adminLevel: ['national'],
   },
   '/cdss-dashboard': {
     path: '/cdss-dashboard',

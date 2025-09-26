@@ -37,6 +37,10 @@ import Videos from "./pages/Videos";
 import ForecastAnalysis from "./pages/ForecastAnalysis";
 import SavedForecasts from "./pages/SavedForecasts";
 import UserManagement from "./pages/UserManagement";
+import WoredasDashboard from "./pages/WoredasDashboard";
+import ZoneDashboard from "./pages/ZoneDashboard";
+import RegionalDashboard from "./pages/RegionalDashboard";
+import NationalDashboard from "./pages/NationalDashboard";
 import RoleBasedRegistration from "./pages/RoleBasedRegistration";
 import FacilityDashboard from "./pages/FacilityDashboard";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -67,6 +71,26 @@ const AppShell: React.FC = () => {
               <Route path="/facility-dashboard" element={
                 <ProtectedRoute>
                   <FacilityDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/woreda-dashboard" element={
+                <ProtectedRoute>
+                  <WoredasDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/zone-dashboard" element={
+                <ProtectedRoute>
+                  <ZoneDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/regional-dashboard" element={
+                <ProtectedRoute>
+                  <RegionalDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/national-dashboard" element={
+                <ProtectedRoute>
+                  <NationalDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard" element={

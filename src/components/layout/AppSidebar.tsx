@@ -40,6 +40,10 @@ import {
   Building2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { filterNavigationByRole, shouldShowInSidebar } from "@/utils/navigationUtils";
+import { navigationPages } from "@/config/navigation";
 
 interface Item {
   title: string;
@@ -48,11 +52,33 @@ interface Item {
   items?: Item[];
 }
 
-const dashboardItems: Item[] = [
-  { title: "Home", url: "/", icon: LayoutDashboard },
-  { title: "Facility Dashboard", url: "/facility-dashboard", icon: Building2 },
-  { title: "CDSS Dashboard", url: "/cdss-dashboard", icon: Banknote },
-];
+const getDashboardItems = (permissions: ReturnType<typeof useRolePermissions>): Item[] => {
+  const items: Item[] = [
+    { title: "Home", url: "/", icon: LayoutDashboard },
+  ];
+
+  // Add role-specific dashboards
+  if (permissions.canViewOwnFacility) {
+    items.push({ title: "Facility Dashboard", url: "/facility-dashboard", icon: Building2 });
+  }
+  if (permissions.canViewWoredasFacilities) {
+    items.push({ title: "Woreda Dashboard", url: "/woreda-dashboard", icon: Building2 });
+  }
+  if (permissions.canViewZoneFacilities) {
+    items.push({ title: "Zone Dashboard", url: "/zone-dashboard", icon: Map });
+  }
+  if (permissions.canViewRegionalFacilities) {
+    items.push({ title: "Regional Dashboard", url: "/regional-dashboard", icon: Map });
+  }
+  if (permissions.canViewNationalData) {
+    items.push({ title: "National Dashboard", url: "/national-dashboard", icon: Map });
+  }
+
+  // Always show CDSS Dashboard
+  items.push({ title: "CDSS Dashboard", url: "/cdss-dashboard", icon: Banknote });
+
+  return items;
+};
 
 interface ItemWithComingSoon extends Item {
   comingSoon?: boolean;
@@ -88,9 +114,15 @@ const settings: Item[] = [
   { title: "Metadata", url: "/settings/metadata", icon: Database },
 ];
 
-const admin: Item[] = [
-  { title: "User Management", url: "/user-management", icon: Users },
-];
+const getAdminItems = (permissions: ReturnType<typeof useRolePermissions>): Item[] => {
+  const items: Item[] = [];
+  
+  if (permissions.canManageUsers) {
+    items.push({ title: "User Management", url: "/user-management", icon: Users });
+  }
+  
+  return items;
+};
 
 const helpTraining: Item[] = [
   { title: "Guides", url: "/help/guides", icon: BookOpen },
@@ -185,12 +217,18 @@ const AppSidebar = () => {
   const { pathname } = location;
   const { user } = useAuth();
   const navigate = useNavigate();
+  const permissions = useRolePermissions();
+  const { userRole, adminLevel } = useCurrentUser();
   
   const handleLogoClick = () => {
     console.log("Logo clicked - navigating to /");
     navigate("/");
   };
   
+  // Get role-specific menu items
+  const dashboardItems = getDashboardItems(permissions);
+  const adminItems = getAdminItems(permissions);
+
   if (!user && pathname === "/") return null;
   return (
     <Sidebar collapsible="icon">
@@ -220,13 +258,13 @@ const AppSidebar = () => {
         </div>
         
         <Group label="" items={dashboardItems} />
-        <Group label="Data Capture" items={dataCapture} />
-        <Group label="Forecasting" items={forecasting} />
-        <Group label="Supply Planning" items={supplyPlanning} />
-        <Group label="Analytics & Reports" items={analytics} />
+        {permissions.canViewOwnFacility && <Group label="Data Capture" items={dataCapture} />}
+        {permissions.canGenerateForecast && <Group label="Forecasting" items={forecasting} />}
+        {permissions.canViewAnalytics && <Group label="Supply Planning" items={supplyPlanning} />}
+        {permissions.canViewAnalytics && <Group label="Analytics & Reports" items={analytics} />}
         <Group label="" items={aiAssistant} />
-        <Group label="Settings" items={settings} />
-        <Group label="Admin" items={admin} />
+        {(permissions.canManageSystem || permissions.isFacilityLevel) && <Group label="Settings" items={settings} />}
+        {adminItems.length > 0 && <Group label="Admin" items={adminItems} />}
         <Group label="Help & Training" items={helpTraining} />
       </SidebarContent>
     </Sidebar>
