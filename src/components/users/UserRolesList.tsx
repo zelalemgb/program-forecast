@@ -44,20 +44,65 @@ export const UserRolesList: React.FC = () => {
 
   const loadUserRoles = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get all user roles
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select(`
-          *,
-          profiles!user_id (full_name, email),
-          facility!facility_id (facility_name),
-          woreda!woreda_id (woreda_name),
-          zone!zone_id (zone_name),
-          region!region_id (region_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUserRoles((data as any) || []);
+      if (roleError) throw roleError;
+
+      if (!roleData || roleData.length === 0) {
+        setUserRoles([]);
+        return;
+      }
+
+      // Get unique user IDs to fetch profiles
+      const userIds = [...new Set(roleData.map(role => role.user_id))];
+      
+      // Fetch profiles for all users
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError);
+      }
+
+      // Get unique facility IDs to fetch facility names
+      const facilityIds = roleData
+        .filter(role => role.facility_id)
+        .map(role => role.facility_id)
+        .filter((id, index, self) => self.indexOf(id) === index);
+
+      let facilityData = [];
+      if (facilityIds.length > 0) {
+        const { data: facilities, error: facilityError } = await supabase
+          .from('facility')
+          .select('facility_id, facility_name')
+          .in('facility_id', facilityIds);
+
+        if (facilityError) {
+          console.error('Error fetching facilities:', facilityError);
+        } else {
+          facilityData = facilities || [];
+        }
+      }
+
+      // Combine the data
+      const combinedData = roleData.map(role => {
+        const profile = profileData?.find(p => p.user_id === role.user_id);
+        const facility = facilityData.find(f => f.facility_id === role.facility_id);
+        
+        return {
+          ...role,
+          profiles: profile || null,
+          facility: facility ? { facility_name: facility.facility_name } : null
+        };
+      });
+
+      setUserRoles(combinedData as any);
     } catch (error: any) {
       toast({
         title: "Error",
