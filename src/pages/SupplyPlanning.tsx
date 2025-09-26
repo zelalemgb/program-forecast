@@ -10,6 +10,7 @@ import { PeriodSelector } from "@/components/supply-planning/PeriodSelector";
 import { SupplyPlanningControls } from "@/components/supply-planning/SupplyPlanningControls";
 import { HistoricalInventoryTable } from "@/components/supply-planning/HistoricalInventoryTable";
 import { ForecastTable } from "@/components/supply-planning/ForecastTable";
+import { AnalysisFilters } from "@/components/supply-planning/AnalysisFilters";
 import { useHistoricalInventoryData } from "@/hooks/useHistoricalInventoryData";
 import { useCurrentFacility } from "@/hooks/useCurrentFacility";
 
@@ -22,6 +23,11 @@ const SupplyPlanning: React.FC = () => {
   const [showWizard, setShowWizard] = useState(false);
   const [manualEntryMode, setManualEntryMode] = useState(false);
 
+  // Filter states
+  const [productType, setProductType] = useState<string>("all");
+  const [accountType, setAccountType] = useState<string>("all");
+  const [program, setProgram] = useState<string>("all");
+
   // Get user's facility
   const { facility } = useCurrentFacility();
   
@@ -31,7 +37,7 @@ const SupplyPlanning: React.FC = () => {
     forecastData, 
     loading, 
     error 
-  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod);
+  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod, productType, accountType, program);
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -87,10 +93,16 @@ const SupplyPlanning: React.FC = () => {
     setEditableValues({});
     
     if (manualEntryMode) {
-      setManualEntryMode(false);
+    setManualEntryMode(false);
     } else {
       setManualEntryMode(true);
     }
+  };
+
+  const handleClearFilters = () => {
+    setProductType("all");
+    setAccountType("all");
+    setProgram("all");
   };
 
   const handleImportFromExcel = () => {
@@ -144,24 +156,39 @@ const SupplyPlanning: React.FC = () => {
       </div>
 
       {/* Compact Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg mb-6">
-        <div className="flex-1">
-          <PeriodSelector
-            periodType={periodType}
-            startingPeriod={startingPeriod}
-            onPeriodTypeChange={setPeriodType}
-            onStartingPeriodChange={setStartingPeriod}
-            periods={periods}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
+          <div className="flex-1">
+            <PeriodSelector
+              periodType={periodType}
+              startingPeriod={startingPeriod}
+              onPeriodTypeChange={setPeriodType}
+              onStartingPeriodChange={setStartingPeriod}
+              periods={periods}
+            />
+          </div>
+          <SupplyPlanningControls
+            manualEntryMode={manualEntryMode}
+            onToggleManualEntry={handleClearAndManualEntry}
+            onImportFromExcel={handleImportFromExcel}
           />
         </div>
-        <SupplyPlanningControls
-          manualEntryMode={manualEntryMode}
-          onToggleManualEntry={handleClearAndManualEntry}
-          onImportFromExcel={handleImportFromExcel}
-        />
+
+        {/* Analysis Filters */}
+        <div className="p-4 bg-muted/20 rounded-lg">
+          <AnalysisFilters
+            productType={productType}
+            accountType={accountType}
+            program={program}
+            onProductTypeChange={setProductType}
+            onAccountTypeChange={setAccountType}
+            onProgramChange={setProgram}
+            onClearFilters={handleClearFilters}
+          />
+        </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 mt-6">
         <Card>
           <CardContent className="space-y-8 pt-6">
 
@@ -217,7 +244,7 @@ const SupplyPlanning: React.FC = () => {
                 <div className="text-sm text-muted-foreground space-y-1">
                   <div>• Total products analyzed: {Object.keys(historicalData.reduce((acc, item) => ({ ...acc, [item.product_id]: true }), {})).length}</div>
                   <div>• Periods covered: {periods.length} {periodType} periods</div>
-                  <div>• Data source: {historicalData.length > 0 ? "Database inventory records" : "No historical data available"}</div>
+                  <div>• Filters: {[productType !== 'all' && productType, accountType !== 'all' && accountType, program !== 'all' && program].filter(Boolean).join(', ') || 'None applied'}</div>
                   <div>• Facility: {facility?.facility_name || "Not selected"}</div>
                 </div>
               </div>
