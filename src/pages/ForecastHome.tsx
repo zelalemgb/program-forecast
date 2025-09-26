@@ -1,0 +1,446 @@
+import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  TrendingUp, 
+  Target, 
+  Database, 
+  Activity,
+  Plus,
+  FileText,
+  Upload,
+  AlertTriangle,
+  CheckCircle,
+  BarChart3
+} from 'lucide-react';
+
+// Types
+type ScenarioType = "INV" | "PROGRAM" | "CAMPAIGN" | "NATIONAL" | "CUSTOM";
+
+interface Scenario {
+  key: ScenarioType;
+  title: string;
+  desc: string;
+  time: string;
+}
+
+interface KPIData {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+interface ForecastHistory {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  accuracy?: number;
+  updated: string;
+}
+
+interface DataQualityIssue {
+  id: string;
+  label: string;
+  fix: string;
+}
+
+// Data
+const scenarios: Scenario[] = [
+  { key: 'INV', title: 'Facility – Inventory', desc: 'Use issues/consumption from stock to forecast automatically.', time: '~2 min' },
+  { key: 'PROGRAM', title: 'Program (Morbidity)', desc: 'Malaria, RMNCH, HIV, EPI templates with conversion factors.', time: '~3–5 min' },
+  { key: 'CAMPAIGN', title: 'Campaign/Event', desc: 'Forecast for HIV testing month, Measles catch-up, etc.', time: '~5 min' },
+  { key: 'NATIONAL', title: 'National/Regional Roll-up', desc: 'Aggregate facility data or morbidity estimates at scale.', time: '~10+ min' },
+  { key: 'CUSTOM', title: 'Custom Data Source', desc: 'Upload CSV or connect DHIS2/service statistics.', time: '~3–5 min' }
+];
+
+// Components
+const IntentModal: React.FC<{ onSelect: (key: ScenarioType) => void; onClose: () => void }> = ({ onSelect, onClose }) => {
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>What do you want to forecast today?</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {scenarios.map(s => (
+            <Button
+              key={s.key}
+              variant="outline"
+              className="p-6 h-auto text-left justify-start flex-col items-start space-y-2"
+              onClick={() => onSelect(s.key)}
+            >
+              <div className="font-medium text-foreground">{s.title}</div>
+              <div className="text-sm text-muted-foreground">{s.desc}</div>
+              <div className="text-xs text-muted-foreground">{s.time}</div>
+            </Button>
+          ))}
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onSelect('INV')}>Skip (Expert Mode)</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const Wizard: React.FC<{ scenario: ScenarioType; onClose: () => void }> = ({ scenario, onClose }) => {
+  const [step, setStep] = useState(1);
+  const next = () => setStep(s => Math.min(5, s + 1));
+  const back = () => setStep(s => Math.max(1, s - 1));
+
+  const StepBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <Card>
+      <CardContent className="p-6">
+        {children}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-background overflow-auto p-6 z-40">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">{scenario} Forecast Wizard</h2>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {[1,2,3,4,5].map(n => (
+            <div 
+              key={n} 
+              className={`px-3 py-1 rounded-full text-sm ${
+                step === n ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              Step {n}
+            </div>
+          ))}
+        </div>
+
+        {step === 1 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 1 – Scope</h3>
+            <p className="text-sm text-muted-foreground">Choose level (Facility/National), program, time horizon.</p>
+          </StepBox>
+        )}
+        {step === 2 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 2 – Data source</h3>
+            <p className="text-sm text-muted-foreground">Select inventory, service stats, morbidity, or upload CSV.</p>
+          </StepBox>
+        )}
+        {step === 3 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 3 – Assumptions</h3>
+            <p className="text-sm text-muted-foreground">Lead time, service level, wastage, seasonality. Program templates add specific inputs (e.g., malaria positivity).</p>
+          </StepBox>
+        )}
+        {step === 4 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 4 – Review & warnings</h3>
+            <p className="text-sm text-muted-foreground">Show formulas, data quality flags, missing data prompts.</p>
+          </StepBox>
+        )}
+        {step === 5 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 5 – Outputs & actions</h3>
+            <p className="text-sm text-muted-foreground">Forecast table & charts, export RRF/procurement, budget simulator slider.</p>
+          </StepBox>
+        )}
+
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={back} disabled={step === 1}>
+            Back
+          </Button>
+          {step < 5 ? (
+            <Button onClick={next}>Next</Button>
+          ) : (
+            <Button onClick={onClose} className="bg-emerald-600 hover:bg-emerald-700">
+              Save & Close
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const KPICard: React.FC<{ kpi: KPIData }> = ({ kpi }) => (
+  <Card>
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-2xl font-semibold">{kpi.value}</div>
+          <div className="text-sm text-muted-foreground">{kpi.label}</div>
+        </div>
+        <kpi.icon className={`h-8 w-8 ${kpi.color}`} />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const HistoryList: React.FC<{ items: ForecastHistory[]; onOpen: (id: string) => void }> = ({ items, onOpen }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Recent Forecasts</CardTitle>
+          <Button variant="link" className="text-sm">View all</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No forecasts yet</div>
+        ) : (
+          <div className="space-y-4">
+            {items.slice(0, 5).map(item => (
+              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <div className="text-sm font-medium">
+                    {item.name} 
+                    <span className="text-xs text-muted-foreground ml-2">
+                      · {item.type} · {item.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Updated {item.updated}
+                    {item.accuracy && ` · Accuracy ${item.accuracy}%`}
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => onOpen(item.id)}>
+                  Open
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const DataQualityCard: React.FC<{ issues: DataQualityIssue[]; score: number; onFix: (id: string) => void }> = ({ issues, score, onFix }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="h-5 w-5" />
+          Data Readiness
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <div className="text-sm text-muted-foreground">Score: 
+            <span className="font-medium text-foreground ml-1">{score}%</span>
+          </div>
+        </div>
+        {issues.length === 0 ? (
+          <div className="flex items-center gap-2 text-sm text-emerald-600">
+            <CheckCircle className="h-4 w-4" />
+            All good!
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {issues.map(issue => (
+              <div key={issue.id} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <div className="text-sm text-amber-900">{issue.label}</div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => onFix(issue.id)}>
+                  {issue.fix}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const AccuracyCard: React.FC<{ series: Array<{cycle: string; mape: number}> }> = ({ series }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          Forecast Accuracy
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-xs text-muted-foreground mb-3">MAPE by cycle</div>
+        <div className="space-y-2">
+          {series.map(s => (
+            <div key={s.cycle} className="flex items-center justify-between">
+              <span className="text-sm">{s.cycle}</span>
+              <span className="font-medium">{s.mape}%</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const QuickActions: React.FC<{
+  onNew: () => void;
+  onRRF: () => void;
+  onCDSS: () => void;
+  onNonCDSS: () => void;
+  onProgram: () => void;
+  onImport: () => void;
+}> = ({ onNew, onRRF, onCDSS, onNonCDSS, onProgram, onImport }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={onNew} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Forecast
+          </Button>
+          <Button variant="outline" onClick={onRRF} className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Generate RRF
+          </Button>
+          <Button variant="outline" onClick={onCDSS}>
+            CDSS Forecast
+          </Button>
+          <Button variant="outline" onClick={onNonCDSS}>
+            Non-CDSS Forecast
+          </Button>
+          <Button variant="outline" onClick={onProgram}>
+            Program Forecast
+          </Button>
+          <Button variant="outline" onClick={onImport} className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Import Forecast
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ForecastHome: React.FC = () => {
+  const [showIntentModal, setShowIntentModal] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType | null>(null);
+
+  const kpis: KPIData[] = [
+    { label: 'Forecasts Done', value: '12', icon: TrendingUp, color: 'text-blue-600' },
+    { label: 'Avg. Accuracy', value: '84%', icon: Target, color: 'text-green-600' },
+    { label: 'Data Completeness', value: '92%', icon: Database, color: 'text-purple-600' },
+    { label: 'Programs Covered', value: '3', icon: Activity, color: 'text-orange-600' }
+  ];
+
+  const history: ForecastHistory[] = [
+    { id: 'F-102', name: 'RMNCH Q3', type: 'Program', status: 'Approved', accuracy: 82, updated: '3 days ago' },
+    { id: 'F-101', name: 'Facility RRF Aug', type: 'CDSS', status: 'Submitted', accuracy: 88, updated: '2 weeks ago' },
+    { id: 'F-100', name: 'Malaria Jun–Aug', type: 'Program', status: 'Draft', updated: '1 month ago' }
+  ];
+
+  const dataQualityIssues: DataQualityIssue[] = [
+    { id: 'dq1', label: '2 months missing consumption for Oxytocin', fix: 'Add data' },
+    { id: 'dq2', label: 'Negative stock for Ceftriaxone (-4)', fix: 'Open stock card' }
+  ];
+
+  const accuracySeries = [
+    { cycle: 'Q1', mape: 18 },
+    { cycle: 'Q2', mape: 15 },
+    { cycle: 'Q3', mape: 14 }
+  ];
+
+  const handleNewForecast = () => {
+    setShowIntentModal(true);
+  };
+
+  const handleScenarioSelect = (scenario: ScenarioType) => {
+    setSelectedScenario(scenario);
+    setShowIntentModal(false);
+  };
+
+  const handleWizardClose = () => {
+    setSelectedScenario(null);
+  };
+
+  return (
+    <>
+      <Helmet>
+        <title>Forecasting Home | Health Supply Management System</title>
+        <meta name="description" content="Comprehensive forecasting dashboard for health supply management with guided workflows and analytics." />
+        <link rel="canonical" href="/forecast-home" />
+      </Helmet>
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Forecasting Home</h1>
+          <Button onClick={handleNewForecast} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Forecast
+          </Button>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {kpis.map((kpi, index) => (
+            <KPICard key={index} kpi={kpi} />
+          ))}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - History and Actions */}
+          <div className="lg:col-span-2 space-y-6">
+            <HistoryList 
+              items={history} 
+              onOpen={(id) => alert(`Open forecast ${id}`)} 
+            />
+            <QuickActions
+              onNew={handleNewForecast}
+              onRRF={() => alert('Generate RRF')}
+              onCDSS={() => alert('CDSS Forecast')}
+              onNonCDSS={() => alert('Non-CDSS Forecast')}
+              onProgram={() => alert('Program Forecast: Malaria, RMNCH, HIV, EPI, Lab')}
+              onImport={() => alert('Import from CSV/DHIS2')}
+            />
+          </div>
+
+          {/* Right Column - Data Quality and Accuracy */}
+          <div className="space-y-6">
+            <DataQualityCard
+              issues={dataQualityIssues}
+              score={91}
+              onFix={(id) => alert(`Fix ${id}`)}
+            />
+            <AccuracyCard series={accuracySeries} />
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {showIntentModal && (
+        <IntentModal 
+          onSelect={handleScenarioSelect}
+          onClose={() => setShowIntentModal(false)}
+        />
+      )}
+
+      {selectedScenario && (
+        <Wizard 
+          scenario={selectedScenario}
+          onClose={handleWizardClose}
+        />
+      )}
+    </>
+  );
+};
+
+export default ForecastHome;

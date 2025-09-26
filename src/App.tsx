@@ -35,6 +35,7 @@ import BudgetAlignment from "./pages/BudgetAlignment";
 import Guides from "./pages/Guides";
 import Videos from "./pages/Videos";
 import ForecastAnalysis from "./pages/ForecastAnalysis";
+import ForecastHome from "./pages/ForecastHome";
 import SavedForecasts from "./pages/SavedForecasts";
 import UserManagement from "./pages/UserManagement";
 import WoredasDashboard from "./pages/WoredasDashboard";
@@ -106,6 +107,11 @@ const AppShell: React.FC = () => {
               <Route path="/forecast" element={
                 <ProtectedRoute>
                   <RunForecast />
+                </ProtectedRoute>
+              } />
+               <Route path="/forecast-home" element={
+                <ProtectedRoute>
+                  <ForecastHome />
                 </ProtectedRoute>
               } />
               <Route path="/forecast-analysis" element={
