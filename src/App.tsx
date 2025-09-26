@@ -41,7 +41,6 @@ import RoleBasedRegistration from "./pages/RoleBasedRegistration";
 import FacilityDashboard from "./pages/FacilityDashboard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
-import DashboardHeader from "@/components/layout/DashboardHeader";
 import UnifiedTopBar from "@/components/layout/UnifiedTopBar";
 
 const queryClient = new QueryClient();
