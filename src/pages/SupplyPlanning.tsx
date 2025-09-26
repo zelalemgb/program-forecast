@@ -8,7 +8,10 @@ import { FileText, Download, HelpCircle } from "lucide-react";
 import { RefinedForecastWizard } from "@/components/forecast/RefinedForecastWizard";
 import { PeriodSelector } from "@/components/supply-planning/PeriodSelector";
 import { SupplyPlanningControls } from "@/components/supply-planning/SupplyPlanningControls";
-import { DrugAnalysisTable } from "@/components/supply-planning/DrugAnalysisTable";
+import { HistoricalInventoryTable } from "@/components/supply-planning/HistoricalInventoryTable";
+import { ForecastTable } from "@/components/supply-planning/ForecastTable";
+import { useHistoricalInventoryData } from "@/hooks/useHistoricalInventoryData";
+import { useCurrentFacility } from "@/hooks/useCurrentFacility";
 
 const SupplyPlanning: React.FC = () => {
   const location = useLocation();
@@ -18,6 +21,17 @@ const SupplyPlanning: React.FC = () => {
   const [startingPeriod, setStartingPeriod] = useState<string>("hamle-2017");
   const [showWizard, setShowWizard] = useState(false);
   const [manualEntryMode, setManualEntryMode] = useState(false);
+
+  // Get user's facility
+  const { facility } = useCurrentFacility();
+  
+  // Fetch historical inventory data and forecasts
+  const { 
+    historicalData, 
+    forecastData, 
+    loading, 
+    error 
+  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod);
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -152,15 +166,33 @@ const SupplyPlanning: React.FC = () => {
               </div>
             </div>
 
-            {/* Drug Analysis Table */}
-            <DrugAnalysisTable
-              periods={periods}
-              collapsedPeriods={collapsedPeriods}
-              editableValues={editableValues}
-              onTogglePeriod={togglePeriod}
-              onValueChange={handleValueChange}
-              getEditableValue={getEditableValue}
-            />
+            {/* Historical Drug Analysis Table */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg">Historical Inventory Analysis (Previous Year)</h4>
+              <p className="text-sm text-muted-foreground">
+                Inventory data from one year prior to the selected starting period ({periodType} view)
+              </p>
+              <HistoricalInventoryTable
+                periods={periods}
+                collapsedPeriods={collapsedPeriods}
+                onTogglePeriod={togglePeriod}
+                data={historicalData}
+                loading={loading}
+              />
+            </div>
+
+            {/* Forecast Table */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg">Consumption Forecast (Next Year)</h4>
+              <p className="text-sm text-muted-foreground">
+                Predicted consumption values starting from the selected period for one year ({periods.length} {periodType} periods)
+              </p>
+              <ForecastTable
+                periods={periods}
+                data={forecastData}
+                loading={loading}
+              />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
@@ -184,9 +216,10 @@ const SupplyPlanning: React.FC = () => {
               <div className="flex-1 space-y-2">
                 <h4 className="font-medium">Analysis Summary</h4>
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <div>• Total drugs analyzed: 3</div>
+                  <div>• Total products analyzed: {Object.keys(historicalData.reduce((acc, item) => ({ ...acc, [item.product_id]: true }), {})).length}</div>
                   <div>• Periods covered: {periods.length} {periodType} periods</div>
-                  <div>• Data completion: {manualEntryMode ? "Manual entry mode" : "Using inventory data"}</div>
+                  <div>• Data source: {historicalData.length > 0 ? "Database inventory records" : "No historical data available"}</div>
+                  <div>• Facility: {facility?.facility_name || "Not selected"}</div>
                 </div>
               </div>
             </div>
