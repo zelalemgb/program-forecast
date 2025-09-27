@@ -259,7 +259,7 @@ const CriticalQuickActions: React.FC = () => {
                   {task.badge && task.badge > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="absolute -top-2 -right-2 flex items-center gap-1 text-xs min-w-[20px] h-5 rounded-full"
+                      className="ml-2 flex items-center gap-1 text-xs h-5 rounded-full px-2"
                     >
                       <AlertTriangle className="w-3 h-3" />
                       {task.badge}
