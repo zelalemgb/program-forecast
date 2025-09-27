@@ -243,13 +243,13 @@ const CriticalQuickActions: React.FC = () => {
               <Button
                 key={task.title}
                 variant={task.variant || "outline"}
-                className="h-auto min-h-[120px] p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow w-full"
+                className="h-auto min-h-[120px] p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow w-full overflow-hidden"
                 onClick={() => handleTaskClick(task)}
               >
                 <div className="flex items-start justify-between w-full mb-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Icon className="w-5 h-5 shrink-0 text-primary" />
-                    <span className="font-medium text-sm leading-tight break-words">{task.title}</span>
+                    <span className="font-medium text-sm leading-snug truncate">{task.title}</span>
                   </div>
                   {task.badge && task.badge > 0 && (
                     <Badge 
@@ -262,7 +262,7 @@ const CriticalQuickActions: React.FC = () => {
                   )}
                 </div>
                 {task.description && (
-                  <span className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                  <span className="block text-xs text-muted-foreground leading-relaxed truncate">
                     {task.description}
                   </span>
                 )}
