@@ -63,9 +63,13 @@ export const useHistoricalInventoryData = (
 
   const fetchHistoricalData = async () => {
     console.log('fetchHistoricalData called with:', { facilityId, accountType, productType, program, selectedDrugs });
-    if (!facilityId) return;
+    if (!facilityId) {
+      console.log('No facility ID provided, skipping data fetch');
+      return;
+    }
     
     try {
+      console.log('Starting data fetch...');
       setLoading(true);
       setError(null);
 
@@ -264,6 +268,9 @@ export const useHistoricalInventoryData = (
     forecastData,
     loading,
     error,
-    refreshData: fetchHistoricalData
+    refreshData: () => {
+      console.log('refreshData called, triggering fetchHistoricalData');
+      fetchHistoricalData();
+    }
   };
 };

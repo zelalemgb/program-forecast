@@ -63,6 +63,8 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
   const [loading, setLoading] = useState(false);
   
   const hasFilters = periodType !== 'monthly' || startingPeriod !== 'hamle-2017' || productType !== 'all' || accountType !== 'all' || program !== 'all' || selectedDrugs.length > 0;
+  
+  console.log('AnalysisFilters render - hasFilters:', hasFilters, 'selectedDrugs:', selectedDrugs.length);
 
   // Fetch account types on component mount
   useEffect(() => {
@@ -277,7 +279,12 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               </Select>
               
               <Button 
-                onClick={onLoadProducts}
+                onClick={() => {
+                  console.log('Load Products button clicked in AnalysisFilters');
+                  console.log('onLoadProducts function:', onLoadProducts);
+                  console.log('Button disabled state:', !hasFilters && selectedDrugs.length === 0);
+                  onLoadProducts?.();
+                }}
                 className="px-4 h-8 text-xs"
                 disabled={!hasFilters && selectedDrugs.length === 0}
               >

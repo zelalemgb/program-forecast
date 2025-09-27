@@ -32,6 +32,8 @@ const SupplyPlanning: React.FC = () => {
   // Get user's facility
   const { facility } = useCurrentFacility();
   
+  console.log('SupplyPlanning render - facility:', facility);
+  
   // Fetch historical inventory data and forecasts
   const { 
     historicalData, 
@@ -125,6 +127,9 @@ const SupplyPlanning: React.FC = () => {
   };
 
   const handleLoadProducts = () => {
+    console.log('Load Products button clicked!');
+    console.log('Current filters:', { productType, accountType, program, selectedDrugs });
+    console.log('Facility ID:', facility?.facility_id);
     refreshData();
   };
 
