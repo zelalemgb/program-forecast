@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Home, Slash } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, Slash, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useNavigation } from "@/context/NavigationContext";
@@ -114,6 +114,18 @@ export const UnifiedTopBar: React.FC<UnifiedTopBarProps> = ({ className }) => {
           </div>
         </>
       )}
+
+      {/* User Profile Icon */}
+      <Separator orientation="vertical" className="h-5" />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigateWithHistory('/profile')}
+        className="h-8 w-8 p-0"
+        title="User Profile"
+      >
+        <User className="h-4 w-4" />
+      </Button>
     </div>
   );
 };
