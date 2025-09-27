@@ -113,7 +113,7 @@ export const useRolePermissions = (): RolePermissions => {
         canGenerateForecast: true,
         canApproveForecast: true,
         canManageUsers: true,
-        canManageSystem: false,
+        canManageSystem: true,
         canViewAnalytics: true,
         canExportData: true,
         
@@ -144,7 +144,7 @@ export const useRolePermissions = (): RolePermissions => {
         canGenerateForecast: true,
         canApproveForecast: true,
         canManageUsers: true,
-        canManageSystem: false,
+        canManageSystem: true,
         canViewAnalytics: true,
         canExportData: true,
         
@@ -175,7 +175,7 @@ export const useRolePermissions = (): RolePermissions => {
         canGenerateForecast: true,
         canApproveForecast: true,
         canManageUsers: true,
-        canManageSystem: false,
+        canManageSystem: true,
         canViewAnalytics: true,
         canExportData: true,
         
@@ -206,7 +206,7 @@ export const useRolePermissions = (): RolePermissions => {
         canGenerateForecast: true,
         canApproveForecast: true,
         canManageUsers: true,
-        canManageSystem: false,
+        canManageSystem: true,
         canViewAnalytics: true,
         canExportData: true,
         

@@ -215,6 +215,7 @@ export const navigationPages: Record<string, NavigationPage> = {
     category: 'settings',
     breadcrumbLabel: 'Metadata',
     showInSidebar: true,
+    requiredPermission: 'canManageSystem',
   },
   '/settings/metadata/facilities': {
     path: '/settings/metadata/facilities',
