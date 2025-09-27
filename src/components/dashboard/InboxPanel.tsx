@@ -96,107 +96,77 @@ export const InboxPanel: React.FC = () => {
   const totalPendingItems = approvalItems.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <Card className="border-secondary/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Inbox className="h-5 w-5 text-secondary" />
-            Inbox & Approvals
-          </CardTitle>
-          <Badge variant="secondary" className="bg-secondary/10">
-            {totalPendingItems} pending
-          </Badge>
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Tasks requiring your immediate action
-        </p>
+    <Card className="border-border/50">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Inbox className="h-4 w-4 text-muted-foreground" />
+          Pending Actions
+          {totalPendingItems > 0 && (
+            <Badge variant="secondary" className="ml-auto">
+              {totalPendingItems}
+            </Badge>
+          )}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {approvalItems.map((item) => (
-          <div
-            key={item.id}
-            className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-accent/50 ${getPriorityColor(item.priority)}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-background/80">
-                <item.icon className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{item.title}</span>
-                  {item.count > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {item.count}
-                    </Badge>
-                  )}
-                  {item.priority === "urgent" && (
-                    <Badge variant="destructive" className="text-xs">
-                      Urgent
-                    </Badge>
+      <CardContent className="space-y-2">
+        {approvalItems.map((item) => {
+          const isActive = item.count > 0;
+          const isUrgent = item.priority === "urgent";
+          
+          return (
+            <div
+              key={item.id}
+              className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+                isActive 
+                  ? 'bg-accent/40 hover:bg-accent/60 cursor-pointer' 
+                  : 'bg-muted/20'
+              }`}
+              onClick={isActive ? () => navigate(item.path) : undefined}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className={`h-4 w-4 ${
+                  isUrgent ? "text-red-500" : "text-muted-foreground"
+                }`} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{item.title}</span>
+                    {isUrgent && isActive && (
+                      <span className="text-xs text-red-600 font-medium">Urgent</span>
+                    )}
+                  </div>
+                  {!isActive && (
+                    <span className="text-xs text-muted-foreground">All clear</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {item.description}
-                </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {item.count > 0 ? (
-                <Button
-                  size="sm"
-                  variant={getActionVariant(item.priority) as any}
-                  onClick={() => navigate(item.path)}
-                  className="text-xs"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {item.action}
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  All clear
-                </span>
+              {isActive && (
+                <Badge variant={isUrgent ? "destructive" : "secondary"} className="animate-fade-in">
+                  {item.count}
+                </Badge>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
-        {/* No pending items state */}
+        {/* All clear state */}
         {totalPendingItems === 0 && (
           <div className="text-center py-6">
-            <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-green-600">All caught up!</p>
-            <p className="text-xs text-muted-foreground">
-              No pending approvals at this time
-            </p>
+            <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
+            <p className="text-sm text-green-600 font-medium">All caught up!</p>
           </div>
         )}
 
-        {/* Quick actions footer */}
+        {/* Quick action */}
         {totalPendingItems > 0 && (
-          <div className="pt-3 border-t space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Quick actions:</span>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate("/approvals")}
-                className="text-xs flex-1"
-              >
-                <Inbox className="h-3 w-3 mr-1" />
-                View All
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate("/approvals?urgent=true")}
-                className="text-xs flex-1"
-              >
-                <Clock className="h-3 w-3 mr-1" />
-                Urgent Only
-              </Button>
-            </div>
+          <div className="pt-3 mt-4 border-t border-border/50">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/approvals")}
+              className="w-full text-xs"
+            >
+              View All Approvals
+            </Button>
           </div>
         )}
       </CardContent>
