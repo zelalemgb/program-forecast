@@ -27,9 +27,11 @@ interface Scenario {
 interface ForecastHistory {
   id: string;
   name: string;
-  type: string;
+  scope: string;
+  program: string;
+  totalProducts: number;
+  procurementValue: number;
   status: string;
-  accuracy?: number;
   updated: string;
 }
 
@@ -170,7 +172,7 @@ const Wizard: React.FC<{ scenario: ScenarioType; onClose: () => void }> = ({ sce
   );
 };
 
-const HistoryList: React.FC<{
+const HistoryTable: React.FC<{
   items: ForecastHistory[];
   onOpen: (id: string) => void;
   onViewAll?: () => void;
@@ -189,26 +191,48 @@ const HistoryList: React.FC<{
         {items.length === 0 ? (
           <div className="text-sm text-muted-foreground">No forecasts yet</div>
         ) : (
-          <div className="space-y-4">
-            {items.slice(0, 5).map(item => (
-              <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="text-sm font-medium">
-                    {item.name} 
-                    <span className="text-xs text-muted-foreground ml-2">
-                      · {item.type} · {item.status}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Updated {item.updated}
-                    {item.accuracy && ` · Accuracy ${item.accuracy}%`}
-                  </div>
-                </div>
-                <Button size="sm" onClick={() => onOpen(item.id)}>
-                  Open
-                </Button>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Forecast Title</th>
+                  <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Scope</th>
+                  <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Program</th>
+                  <th className="text-right py-2 px-1 text-sm font-medium text-muted-foreground">Products</th>
+                  <th className="text-right py-2 px-1 text-sm font-medium text-muted-foreground">Value (ETB)</th>
+                  <th className="text-center py-2 px-1 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-center py-2 px-1 text-sm font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.slice(0, 5).map(item => (
+                  <tr key={item.id} className="border-b hover:bg-accent/50">
+                    <td className="py-3 px-1">
+                      <div className="font-medium text-sm">{item.name}</div>
+                      <div className="text-xs text-muted-foreground">Updated {item.updated}</div>
+                    </td>
+                    <td className="py-3 px-1 text-sm">{item.scope}</td>
+                    <td className="py-3 px-1 text-sm">{item.program}</td>
+                    <td className="py-3 px-1 text-sm text-right">{item.totalProducts}</td>
+                    <td className="py-3 px-1 text-sm text-right">{item.procurementValue.toLocaleString()}</td>
+                    <td className="py-3 px-1 text-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                        item.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        item.status === 'Submitted' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-1 text-center">
+                      <Button size="sm" variant="outline" onClick={() => onOpen(item.id)}>
+                        Open
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>
@@ -248,9 +272,10 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   const safeScenarioSelected = onScenarioSelected ?? (() => undefined);
 
   const history: ForecastHistory[] = historyItems ?? [
-    { id: 'F-102', name: 'RMNCH Q3', type: 'Program', status: 'Approved', accuracy: 82, updated: '3 days ago' },
-    { id: 'F-101', name: 'Facility RRF Aug', type: 'CDSS', status: 'Submitted', accuracy: 88, updated: '2 weeks ago' },
-    { id: 'F-100', name: 'Malaria Jun–Aug', type: 'Program', status: 'Draft', updated: '1 month ago' }
+    { id: 'F-102', name: 'RMNCH Q3 2024', scope: 'Facility', program: 'RMNCH', totalProducts: 45, procurementValue: 2850000, status: 'Approved', updated: '3 days ago' },
+    { id: 'F-101', name: 'Facility RRF Aug 2024', scope: 'Facility', program: 'CDSS', totalProducts: 32, procurementValue: 1950000, status: 'Submitted', updated: '2 weeks ago' },
+    { id: 'F-100', name: 'Malaria Jun–Aug 2024', scope: 'Regional', program: 'Malaria', totalProducts: 28, procurementValue: 3200000, status: 'Draft', updated: '1 month ago' },
+    { id: 'F-099', name: 'EPI Campaign Q2 2024', scope: 'National', program: 'EPI', totalProducts: 15, procurementValue: 1200000, status: 'Approved', updated: '2 months ago' }
   ];
 
   const handleNewForecast = () => {
@@ -295,7 +320,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
 
         {/* Main Content Grid */}
         <div className="space-y-6">
-          <HistoryList
+          <HistoryTable
             items={history}
             onOpen={safeOpenForecast}
             onViewAll={safeViewAllForecasts}
