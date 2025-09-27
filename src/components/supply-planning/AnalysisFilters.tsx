@@ -69,6 +69,7 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
 
   // Fetch products when account type changes
   useEffect(() => {
+    console.log('Account type changed to:', accountType);
     if (accountType && accountType !== 'all') {
       fetchProductsForAccountType(accountType);
     } else {
@@ -92,23 +93,43 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
 
   const fetchProductsForAccountType = async (accountTypeId: string) => {
     setLoading(true);
+    console.log('Fetching products for account type:', accountTypeId);
     try {
-      const { data, error } = await supabase
+      // First get the product IDs from account_type_products
+      const { data: accountProducts, error: accountError } = await supabase
         .from('account_type_products')
-        .select(`
-          product_reference!inner(
-            id,
-            canonical_name,
-            program,
-            form,
-            strength
-          )
-        `)
+        .select('product_id')
         .eq('account_type_id', accountTypeId);
       
-      if (error) throw error;
-      const products = data?.map(item => item.product_reference) || [];
-      setAvailableProducts(products);
+      if (accountError) {
+        console.error('Error fetching account type products:', accountError);
+        throw accountError;
+      }
+      
+      console.log('Account type products:', accountProducts);
+      
+      if (!accountProducts || accountProducts.length === 0) {
+        console.log('No products found for this account type');
+        setAvailableProducts([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Then get the product details
+      const productIds = accountProducts.map(item => item.product_id);
+      const { data: products, error: productsError } = await supabase
+        .from('product_reference')
+        .select('id, canonical_name, program, form, strength')
+        .in('id', productIds)
+        .eq('active', true);
+      
+      if (productsError) {
+        console.error('Error fetching product details:', productsError);
+        throw productsError;
+      }
+      
+      console.log('Filtered products:', products);
+      setAvailableProducts(products || []);
     } catch (error) {
       console.error('Error fetching products for account type:', error);
       setAvailableProducts([]);
