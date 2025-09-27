@@ -110,7 +110,7 @@ export const navigationPages: Record<string, NavigationPage> = {
     description: 'Upload and manage forecast data',
     category: 'data-capture',
     breadcrumbLabel: 'Forecast Upload',
-    showInSidebar: true,
+    showInSidebar: false,
   },
 
   // Forecasting
@@ -180,7 +180,7 @@ export const navigationPages: Record<string, NavigationPage> = {
     description: 'Analyze facility-level trends and patterns',
     category: 'analytics',
     breadcrumbLabel: 'Facility Trends',
-    showInSidebar: true,
+    showInSidebar: false,
   },
   '/analytics/regional': {
     path: '/analytics/regional',
@@ -188,7 +188,7 @@ export const navigationPages: Record<string, NavigationPage> = {
     description: 'Regional and national trend analysis',
     category: 'analytics',
     breadcrumbLabel: 'Regional Trends',
-    showInSidebar: true,
+    showInSidebar: false,
   },
   '/analytics/accuracy': {
     path: '/analytics/accuracy',
@@ -196,7 +196,7 @@ export const navigationPages: Record<string, NavigationPage> = {
     description: 'Measure and analyze forecast accuracy',
     category: 'analytics',
     breadcrumbLabel: 'Forecast Accuracy',
-    showInSidebar: true,
+    showInSidebar: false,
   },
 
   // Settings

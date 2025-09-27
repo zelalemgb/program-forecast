@@ -16,20 +16,15 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   LayoutDashboard,
   Camera,
-  Upload,
   Database,
   TrendingUp,
-  FileText,
-  Download,
   ShoppingCart,
   Banknote,
   BarChart3,
   Map,
-  Target,
-  MessageSquare,
   Settings,
   Users,
   BookOpen,
@@ -86,7 +81,6 @@ interface ItemWithComingSoon extends Item {
 
 const dataCapture: ItemWithComingSoon[] = [
   { title: "Inventory Management", url: "/dagu", icon: Database },
-  { title: "Forecast Upload", url: "/forecast-upload", icon: Upload },
   { title: "Snap-to-Stock", url: "/snap-to-stock", icon: Camera, comingSoon: true },
 ];
 
@@ -98,16 +92,6 @@ const forecasting: Item[] = [
 const supplyPlanning: Item[] = [
   { title: "Supply Planning", url: "/supply-planning", icon: ShoppingCart },
   { title: "CDSS Budget Alignment", url: "/budget-alignment", icon: Banknote },
-];
-
-const analytics: Item[] = [
-  { title: "Facility Trends", url: "/analytics/facility", icon: BarChart3 },
-  { title: "Regional/National Trends", url: "/analytics/regional", icon: Map },
-  { title: "Forecast Accuracy", url: "/analytics/accuracy", icon: Target },
-];
-
-const aiAssistant: Item[] = [
-  { title: "AI Assistant", url: "/ai-assistant", icon: MessageSquare },
 ];
 
 const settings: Item[] = [
@@ -261,8 +245,6 @@ const AppSidebar = () => {
         {permissions.canViewOwnFacility && <Group label="Data Capture" items={dataCapture} />}
         {permissions.canGenerateForecast && <Group label="Forecasting" items={forecasting} />}
         {permissions.canViewAnalytics && <Group label="Supply Planning" items={supplyPlanning} />}
-        {permissions.canViewAnalytics && <Group label="Analytics & Reports" items={analytics} />}
-        <Group label="" items={aiAssistant} />
         {(permissions.canManageSystem || permissions.isFacilityLevel) && <Group label="Settings" items={settings} />}
         {adminItems.length > 0 && <Group label="Admin" items={adminItems} />}
         <Group label="Help & Training" items={helpTraining} />
