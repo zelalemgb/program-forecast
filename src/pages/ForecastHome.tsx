@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  TrendingUp, 
-  Target, 
-  Database, 
+import KPICards, { KPIItem } from '@/components/home/KPICards';
+import QuickActions, { ActionConfig, QuickTaskAction } from '@/components/home/QuickActions';
+import StockExchangeBoard, { StockPost } from '@/components/home/StockExchangeBoard';
+import {
+  TrendingUp,
+  Target,
+  Database,
   Activity,
   Plus,
   FileText,
@@ -27,13 +30,6 @@ interface Scenario {
   time: string;
 }
 
-interface KPIData {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  color: string;
-}
-
 interface ForecastHistory {
   id: string;
   name: string;
@@ -47,6 +43,30 @@ interface DataQualityIssue {
   id: string;
   label: string;
   fix: string;
+}
+
+interface ForecastAccuracyPoint {
+  cycle: string;
+  mape: number;
+}
+
+interface ForecastHomeProps {
+  onOpenForecast?: (id: string) => void;
+  onViewAllForecasts?: () => void;
+  onNewForecast?: () => void;
+  onGenerateRRF?: () => void;
+  onStartCDSSForecast?: () => void;
+  onStartNonCDSSForecast?: () => void;
+  onStartProgramForecast?: () => void;
+  onImportForecast?: () => void;
+  onFixDataIssue?: (id: string) => void;
+  onCreateStockPost?: () => void;
+  onScenarioSelected?: (scenario: ScenarioType) => void;
+  kpiItems?: KPIItem[];
+  historyItems?: ForecastHistory[];
+  dataQualityIssues?: DataQualityIssue[];
+  accuracySeries?: ForecastAccuracyPoint[];
+  stockExchangePosts?: StockPost[];
 }
 
 // Data
@@ -171,27 +191,19 @@ const Wizard: React.FC<{ scenario: ScenarioType; onClose: () => void }> = ({ sce
   );
 };
 
-const KPICard: React.FC<{ kpi: KPIData }> = ({ kpi }) => (
-  <Card>
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-2xl font-semibold">{kpi.value}</div>
-          <div className="text-sm text-muted-foreground">{kpi.label}</div>
-        </div>
-        <kpi.icon className={`h-8 w-8 ${kpi.color}`} />
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const HistoryList: React.FC<{ items: ForecastHistory[]; onOpen: (id: string) => void }> = ({ items, onOpen }) => {
+const HistoryList: React.FC<{
+  items: ForecastHistory[];
+  onOpen: (id: string) => void;
+  onViewAll?: () => void;
+}> = ({ items, onOpen, onViewAll }) => {
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Recent Forecasts</CardTitle>
-          <Button variant="link" className="text-sm">View all</Button>
+          <Button variant="link" className="text-sm" onClick={onViewAll}>
+            View all
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -289,79 +301,93 @@ const AccuracyCard: React.FC<{ series: Array<{cycle: string; mape: number}> }> =
   );
 };
 
-const QuickActions: React.FC<{
-  onNew: () => void;
-  onRRF: () => void;
-  onCDSS: () => void;
-  onNonCDSS: () => void;
-  onProgram: () => void;
-  onImport: () => void;
-}> = ({ onNew, onRRF, onCDSS, onNonCDSS, onProgram, onImport }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={onNew} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Forecast
-          </Button>
-          <Button variant="outline" onClick={onRRF} className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Generate RRF
-          </Button>
-          <Button variant="outline" onClick={onCDSS}>
-            CDSS Forecast
-          </Button>
-          <Button variant="outline" onClick={onNonCDSS}>
-            Non-CDSS Forecast
-          </Button>
-          <Button variant="outline" onClick={onProgram}>
-            Program Forecast
-          </Button>
-          <Button variant="outline" onClick={onImport} className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Import Forecast
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const ForecastHome: React.FC = () => {
+const ForecastHome: React.FC<ForecastHomeProps> = ({
+  onOpenForecast,
+  onViewAllForecasts,
+  onNewForecast,
+  onGenerateRRF,
+  onStartCDSSForecast,
+  onStartNonCDSSForecast,
+  onStartProgramForecast,
+  onImportForecast,
+  onFixDataIssue,
+  onCreateStockPost,
+  onScenarioSelected,
+  kpiItems,
+  historyItems,
+  dataQualityIssues: dataQualityIssuesProp,
+  accuracySeries: accuracySeriesProp,
+  stockExchangePosts,
+}) => {
   const navigate = useNavigate();
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType | null>(null);
 
-  const kpis: KPIData[] = [
-    { label: 'Forecasts Done', value: '12', icon: TrendingUp, color: 'text-blue-600' },
-    { label: 'Avg. Accuracy', value: '84%', icon: Target, color: 'text-green-600' },
-    { label: 'Data Completeness', value: '92%', icon: Database, color: 'text-purple-600' },
-    { label: 'Programs Covered', value: '3', icon: Activity, color: 'text-orange-600' }
+  const safeOpenForecast = onOpenForecast ?? (() => undefined);
+  const safeViewAllForecasts = onViewAllForecasts ?? (() => undefined);
+  const safeOnNewForecast = onNewForecast ?? (() => undefined);
+  const safeGenerateRRF = onGenerateRRF ?? (() => undefined);
+  const safeStartCDSS = onStartCDSSForecast ?? (() => undefined);
+  const safeStartNonCDSS = onStartNonCDSSForecast ?? (() => undefined);
+  const safeStartProgram = onStartProgramForecast ?? (() => undefined);
+  const safeImportForecast = onImportForecast ?? (() => undefined);
+  const safeFixDataIssue = onFixDataIssue ?? (() => undefined);
+  const safeCreateStockPost = onCreateStockPost ?? (() => undefined);
+  const safeScenarioSelected = onScenarioSelected ?? (() => undefined);
+
+  const kpis: KPIItem[] = kpiItems ?? [
+    { label: 'Forecasts Done', value: '12', Icon: TrendingUp, color: 'text-blue-600' },
+    { label: 'Avg. Accuracy', value: '84%', Icon: Target, color: 'text-green-600' },
+    { label: 'Data Completeness', value: '92%', Icon: Database, color: 'text-purple-600' },
+    { label: 'Programs Covered', value: '3', Icon: Activity, color: 'text-orange-600' }
   ];
 
-  const history: ForecastHistory[] = [
+  const history: ForecastHistory[] = historyItems ?? [
     { id: 'F-102', name: 'RMNCH Q3', type: 'Program', status: 'Approved', accuracy: 82, updated: '3 days ago' },
     { id: 'F-101', name: 'Facility RRF Aug', type: 'CDSS', status: 'Submitted', accuracy: 88, updated: '2 weeks ago' },
     { id: 'F-100', name: 'Malaria Jun–Aug', type: 'Program', status: 'Draft', updated: '1 month ago' }
   ];
 
-  const dataQualityIssues: DataQualityIssue[] = [
+  const dataQualityIssues: DataQualityIssue[] = dataQualityIssuesProp ?? [
     { id: 'dq1', label: '2 months missing consumption for Oxytocin', fix: 'Add data' },
     { id: 'dq2', label: 'Negative stock for Ceftriaxone (-4)', fix: 'Open stock card' }
   ];
 
-  const accuracySeries = [
+  const accuracySeries: ForecastAccuracyPoint[] = accuracySeriesProp ?? [
     { cycle: 'Q1', mape: 18 },
     { cycle: 'Q2', mape: 15 },
     { cycle: 'Q3', mape: 14 }
   ];
 
+  const stockExchangeData: StockPost[] = stockExchangePosts ?? [
+    {
+      id: 'se-001',
+      type: 'excess',
+      facility: 'Central Hospital',
+      product: 'Amoxicillin 500mg',
+      qty: 240,
+      unit: 'blisters',
+      expiry: 'Dec 2024',
+      contact: 'pharmacy@central.gov',
+      notes: 'Batch expiring in 6 months',
+      createdAt: '2024-02-10'
+    },
+    {
+      id: 'se-002',
+      type: 'need',
+      facility: 'East District Clinic',
+      product: 'Oxytocin 10IU',
+      qty: 120,
+      unit: 'vials',
+      contact: 'matron@eastclinic.gov',
+      notes: 'Support required before next delivery cycle',
+      createdAt: '2024-02-08'
+    }
+  ];
+
   const handleNewForecast = () => {
     setShowIntentModal(true);
+    safeOnNewForecast();
   };
 
   const handleScenarioSelect = (scenario: ScenarioType) => {
@@ -372,11 +398,40 @@ const ForecastHome: React.FC = () => {
       setSelectedScenario(scenario);
       setShowIntentModal(false);
     }
+    safeScenarioSelected(scenario);
   };
 
   const handleWizardClose = () => {
     setSelectedScenario(null);
   };
+
+  const quickActionCards: ActionConfig[] = [
+    {
+      title: 'Guided Forecast Wizard',
+      description: 'Launch a scenario-based workflow with guardrails.',
+      icon: BarChart3,
+      color: 'bg-violet-500/10 text-violet-600',
+      stats: 'Scope programs, data sources, and assumptions',
+      onClick: handleNewForecast,
+    },
+    {
+      title: 'Forecast History',
+      description: 'Review, approve, or reopen previous forecasts.',
+      icon: Activity,
+      color: 'bg-slate-500/10 text-slate-600',
+      stats: 'Keep teams aligned on the latest runs',
+      onClick: safeViewAllForecasts,
+    },
+  ];
+
+  const quickTaskButtons: QuickTaskAction[] = [
+    { title: 'New Forecast', icon: Plus, variant: 'default', onClick: handleNewForecast },
+    { title: 'Generate RRF', icon: FileText, variant: 'outline', onClick: safeGenerateRRF },
+    { title: 'CDSS Forecast', icon: Target, variant: 'outline', onClick: safeStartCDSS },
+    { title: 'Non-CDSS Forecast', icon: Activity, variant: 'outline', onClick: safeStartNonCDSS },
+    { title: 'Program Forecast', icon: Database, variant: 'outline', onClick: safeStartProgram },
+    { title: 'Import Forecast', icon: Upload, variant: 'outline', onClick: safeImportForecast },
+  ];
 
   return (
     <>
@@ -396,27 +451,20 @@ const ForecastHome: React.FC = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {kpis.map((kpi, index) => (
-            <KPICard key={index} kpi={kpi} />
-          ))}
-        </div>
+        <KPICards items={kpis} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - History and Actions */}
           <div className="lg:col-span-2 space-y-6">
-            <HistoryList 
-              items={history} 
-              onOpen={(id) => alert(`Open forecast ${id}`)} 
+            <HistoryList
+              items={history}
+              onOpen={safeOpenForecast}
+              onViewAll={safeViewAllForecasts}
             />
             <QuickActions
-              onNew={handleNewForecast}
-              onRRF={() => alert('Generate RRF')}
-              onCDSS={() => alert('CDSS Forecast')}
-              onNonCDSS={() => alert('Non-CDSS Forecast')}
-              onProgram={() => alert('Program Forecast: Malaria, RMNCH, HIV, EPI, Lab')}
-              onImport={() => alert('Import from CSV/DHIS2')}
+              actions={quickActionCards}
+              quickTasks={quickTaskButtons}
             />
           </div>
 
@@ -425,9 +473,10 @@ const ForecastHome: React.FC = () => {
             <DataQualityCard
               issues={dataQualityIssues}
               score={91}
-              onFix={(id) => alert(`Fix ${id}`)}
+              onFix={safeFixDataIssue}
             />
             <AccuracyCard series={accuracySeries} />
+            <StockExchangeBoard posts={stockExchangeData} onCreate={safeCreateStockPost} />
           </div>
         </div>
       </div>
