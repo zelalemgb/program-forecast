@@ -50,7 +50,7 @@ const CriticalQuickActions: React.FC = () => {
         {
           title: "Receive Stock",
           icon: Download,
-          path: "/dagu?tab=receiving",
+          path: "/receive-stock",
           description: "Process incoming stock deliveries",
           variant: "default"
         },
@@ -168,7 +168,7 @@ const CriticalQuickActions: React.FC = () => {
       {
         title: "Receive Stock",
         icon: Download,
-        path: "/dagu?tab=receiving",
+        path: "/receive-stock",
         description: "Process incoming stock deliveries",
         variant: "default"
       },
