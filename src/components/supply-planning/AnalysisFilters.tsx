@@ -191,7 +191,7 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h3 className="text-sm font-medium">Analysis Configuration</h3>
-          <p className="text-xs text-muted-foreground">Configure what to include in your supply planning analysis</p>
+          <p className="text-xs text-muted-foreground">Configure filters and click Load Products to analyze data</p>
         </div>
         {hasFilters && (
           <button
@@ -204,103 +204,65 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
         )}
       </div>
       
-      {/* Step-by-step filter flow */}
-      <div className="space-y-4">
-        {/* Step 1: Period Configuration */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Compact Filter Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Time Period Filters */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-primary">Time Period</Label>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">1</div>
-              <Label className="text-sm font-medium">Analysis Period Type</Label>
-            </div>
             <Select value={periodType} onValueChange={onPeriodTypeChange}>
-              <SelectTrigger className="h-9 bg-background border-2">
-                <SelectValue placeholder="Choose period type" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Period type" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
-                <SelectItem value="monthly">Monthly Analysis (12 periods)</SelectItem>
-                <SelectItem value="bi-monthly">Bi-monthly Analysis (6 periods)</SelectItem>
-                <SelectItem value="quarterly">Quarterly Analysis (4 periods)</SelectItem>
-                <SelectItem value="biannually">Bi-annual Analysis (2 periods)</SelectItem>
+                <SelectItem value="monthly">Monthly (12 periods)</SelectItem>
+                <SelectItem value="bi-monthly">Bi-monthly (6 periods)</SelectItem>
+                <SelectItem value="quarterly">Quarterly (4 periods)</SelectItem>
+                <SelectItem value="biannually">Bi-annual (2 periods)</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">2</div>
-              <Label className="text-sm font-medium">Starting Period</Label>
-            </div>
+            
             <Select value={startingPeriod} onValueChange={onStartingPeriodChange}>
-              <SelectTrigger className="h-9 bg-background border-2">
-                <SelectValue placeholder="Choose starting period" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Starting period" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
-                <SelectItem value="hamle-2017">Start from Hamle 2017 EC</SelectItem>
-                <SelectItem value="hamle-2018">Start from Hamle 2018 EC</SelectItem>
-                <SelectItem value="hamle-2019">Start from Hamle 2019 EC</SelectItem>
+                <SelectItem value="hamle-2017">Hamle 2017 EC</SelectItem>
+                <SelectItem value="hamle-2018">Hamle 2018 EC</SelectItem>
+                <SelectItem value="hamle-2019">Hamle 2019 EC</SelectItem>
               </SelectContent>
             </Select>
+            
             <div className="text-xs text-muted-foreground">
-              Will generate {periods.length} {periodType} periods
+              {periods.length} {periodType} periods
             </div>
           </div>
         </div>
 
-        {/* Step 3: Product Selection */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">3</div>
-            <Label className="text-sm font-medium">Select Product Type</Label>
-          </div>
-          <Select value={productType} onValueChange={onProductTypeChange}>
-            <SelectTrigger className="h-9 bg-background border-2">
-              <SelectValue placeholder="Choose product category" />
-            </SelectTrigger>
-            <SelectContent className="bg-background border shadow-lg z-50">
-              <SelectItem value="all">All Products</SelectItem>
-              <SelectItem value="medicines">Medicines</SelectItem>
-              <SelectItem value="medical_supplies">Medical Supplies</SelectItem>
-              <SelectItem value="laboratory">Laboratory</SelectItem>
-              <SelectItem value="vaccines">Vaccines</SelectItem>
-              <SelectItem value="equipment">Equipment</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Step 4: Target Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Product & Program Filters */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-primary">Product Scope</Label>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">4</div>
-              <Label className="text-sm font-medium">Target Account Type</Label>
-            </div>
-            <Select value={accountType} onValueChange={onAccountTypeChange}>
-              <SelectTrigger className="h-9 bg-background border-2">
-                <SelectValue placeholder="Choose account type" />
+            <Select value={productType} onValueChange={onProductTypeChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Product type" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
-                <SelectItem value="all">All Account Types</SelectItem>
-                {accountTypes.map((accountType) => (
-                  <SelectItem key={accountType.id} value={accountType.id}>
-                    {accountType.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Products</SelectItem>
+                <SelectItem value="medicines">Medicines</SelectItem>
+                <SelectItem value="medical_supplies">Medical Supplies</SelectItem>
+                <SelectItem value="laboratory">Laboratory</SelectItem>
+                <SelectItem value="vaccines">Vaccines</SelectItem>
+                <SelectItem value="equipment">Equipment</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">5</div>
-              <Label className="text-sm font-medium">Health Program Focus</Label>
-            </div>
+            
             <Select value={program} onValueChange={onProgramChange}>
-              <SelectTrigger className="h-9 bg-background border-2">
-                <SelectValue placeholder="Choose health program" />
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Health program" />
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
-                <SelectItem value="all">All Health Programs</SelectItem>
+                <SelectItem value="all">All Programs</SelectItem>
                 <SelectItem value="maternal_health">Maternal Health</SelectItem>
                 <SelectItem value="child_health">Child Health</SelectItem>
                 <SelectItem value="reproductive_health">Reproductive Health</SelectItem>
@@ -312,92 +274,113 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
                 <SelectItem value="emergency">Emergency Response</SelectItem>
               </SelectContent>
             </Select>
+          </div>
         </div>
 
-        {/* Step 6: Specific Drug Selection */}
+        {/* Account Type Filter */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">6</div>
-            <Label className="text-sm font-medium">Add Specific Drugs (Optional)</Label>
+          <Label className="text-sm font-medium text-primary">Account Type</Label>
+          <div className="space-y-2">
+            <Select value={accountType} onValueChange={onAccountTypeChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Account type" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                <SelectItem value="all">All Account Types</SelectItem>
+                {accountTypes.map((accountType) => (
+                  <SelectItem key={accountType.id} value={accountType.id}>
+                    {accountType.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          
-          <div className="space-y-3">
-            <div className="relative">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={loading ? "Loading products..." : "Search for specific drugs to include..."}
-                  value={drugSearchTerm}
-                  onChange={(e) => handleDrugSearch(e.target.value)}
-                  disabled={loading}
-                  className="pl-9 h-9 border-2"
-                />
-              </div>
-              
-              {/* Search Results Dropdown */}
-              {searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
-                  {searchResults.map((product, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleAddDrug(product.canonical_name)}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 border-b border-border last:border-b-0"
-                    >
-                      <Plus className="h-3 w-3 text-muted-foreground" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">{product.canonical_name}</span>
-                        {(product.form || product.strength) && (
-                          <span className="text-xs text-muted-foreground">
-                            {[product.form, product.strength].filter(Boolean).join(" ")}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+        </div>
+      </div>
 
-            {/* Selected Drugs */}
-            {selectedDrugs.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Selected Drugs:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedDrugs.map((drug, index) => (
-                    <Badge key={index} variant="outline" className="text-xs px-2 py-1 flex items-center gap-1">
-                      {drug}
-                      <button
-                        onClick={() => handleRemoveDrug(drug)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+      {/* Drug Selection Section */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium text-primary">Specific Products (Optional)</Label>
+          {selectedDrugs.length > 0 && (
+            <Badge variant="outline" className="text-xs">
+              {selectedDrugs.length} selected
+            </Badge>
+          )}
+        </div>
+        
+        <div className="space-y-3">
+          <div className="relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={loading ? "Loading products..." : "Search for specific products..."}
+                value={drugSearchTerm}
+                onChange={(e) => handleDrugSearch(e.target.value)}
+                disabled={loading}
+                className="pl-9 h-8 text-xs"
+              />
+            </div>
+            
+            {/* Search Results Dropdown */}
+            {searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-md shadow-lg max-h-32 overflow-y-auto">
+                {searchResults.map((product, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAddDrug(product.canonical_name)}
+                    className="w-full px-3 py-2 text-left text-xs hover:bg-muted/50 flex items-center gap-2 border-b border-border last:border-b-0"
+                  >
+                    <Plus className="h-3 w-3 text-muted-foreground" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{product.canonical_name}</span>
+                      {(product.form || product.strength) && (
+                        <span className="text-xs text-muted-foreground">
+                          {[product.form, product.strength].filter(Boolean).join(" ")}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </div>
+
+          {/* Selected Drugs */}
+          {selectedDrugs.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {selectedDrugs.map((drug, index) => (
+                <Badge key={index} variant="outline" className="text-xs px-2 py-1 flex items-center gap-1">
+                  {drug}
+                  <button
+                    onClick={() => handleRemoveDrug(drug)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Load Products Button */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-2">
           <Button 
             onClick={onLoadProducts}
-            className="w-full sm:w-auto px-8 py-2 bg-primary hover:bg-primary/90"
+            className="px-8 py-2 h-9"
             disabled={!hasFilters && selectedDrugs.length === 0}
           >
             Load Products
           </Button>
         </div>
       </div>
-      </div>
 
       {/* Active filters summary */}
       {hasFilters && (
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">Active Configuration:</Label>
-          <div className="flex flex-wrap gap-2">
+        <div className="space-y-2 border-t pt-4">
+          <Label className="text-xs font-medium text-muted-foreground">Active Filters:</Label>
+          <div className="flex flex-wrap gap-1">
             {periodType !== 'monthly' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
                 {periodType} periods
@@ -405,7 +388,7 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
             )}
             {startingPeriod !== 'hamle-2017' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
-                Starting {startingPeriod.replace('-', ' ')}
+                Start: {startingPeriod.replace('-', ' ')}
               </Badge>
             )}
             {productType !== 'all' && (
@@ -415,17 +398,17 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
             )}
             {accountType !== 'all' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
-                {accountType.replace('_', ' ')} accounts
+                {accountTypes.find(at => at.id === accountType)?.name || accountType}
               </Badge>
             )}
             {program !== 'all' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
-                {program.replace('_', ' ')} program
+                {program.replace('_', ' ')}
               </Badge>
             )}
             {selectedDrugs.length > 0 && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
-                {selectedDrugs.length} specific drug{selectedDrugs.length > 1 ? 's' : ''}
+                {selectedDrugs.length} specific product{selectedDrugs.length > 1 ? 's' : ''}
               </Badge>
             )}
           </div>
