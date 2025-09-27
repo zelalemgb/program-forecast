@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import QuickActions, { ActionConfig, QuickTaskAction } from '@/components/home/QuickActions';
+import QuickActions, { QuickAction } from '@/components/home/QuickActions';
 import {
   Target,
   Database,
@@ -273,7 +273,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
     setSelectedScenario(null);
   };
 
-  const quickActionCards: ActionConfig[] = [
+  const quickActions: QuickAction[] = [
     {
       title: 'Guided Forecast Wizard',
       description: 'Launch a scenario-based workflow with guardrails.',
@@ -281,6 +281,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
       color: 'bg-violet-500/10 text-violet-600',
       stats: 'Scope programs, data sources, and assumptions',
       onClick: handleNewForecast,
+      type: 'card'
     },
     {
       title: 'Forecast History',
@@ -289,15 +290,13 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
       color: 'bg-slate-500/10 text-slate-600',
       stats: 'Keep teams aligned on the latest runs',
       onClick: safeViewAllForecasts,
+      type: 'card'
     },
-  ];
-
-  const quickTaskButtons: QuickTaskAction[] = [
-    { title: 'Generate RRF', icon: FileText, variant: 'outline', onClick: safeGenerateRRF },
-    { title: 'CDSS Forecast', icon: Target, variant: 'outline', onClick: safeStartCDSS },
-    { title: 'Non-CDSS Forecast', icon: Activity, variant: 'outline', onClick: safeStartNonCDSS },
-    { title: 'Program Forecast', icon: Database, variant: 'outline', onClick: safeStartProgram },
-    { title: 'Import Forecast', icon: Upload, variant: 'outline', onClick: safeImportForecast },
+    { title: 'Generate RRF', icon: FileText, variant: 'outline', onClick: safeGenerateRRF, type: 'button' },
+    { title: 'CDSS Forecast', icon: Target, variant: 'outline', onClick: safeStartCDSS, type: 'button' },
+    { title: 'Non-CDSS Forecast', icon: Activity, variant: 'outline', onClick: safeStartNonCDSS, type: 'button' },
+    { title: 'Program Forecast', icon: Database, variant: 'outline', onClick: safeStartProgram, type: 'button' },
+    { title: 'Import Forecast', icon: Upload, variant: 'outline', onClick: safeImportForecast, type: 'button' },
   ];
 
   return (
@@ -319,8 +318,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
             onViewAll={safeViewAllForecasts}
           />
           <QuickActions
-            actions={quickActionCards}
-            quickTasks={quickTaskButtons}
+            actions={quickActions}
           />
         </div>
       </div>

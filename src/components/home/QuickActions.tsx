@@ -18,31 +18,24 @@ import type { LucideIcon } from "lucide-react";
 
 type ButtonVariant = "default" | "secondary" | "outline" | "destructive" | "ghost" | "link";
 
-interface ActionConfig {
+interface QuickAction {
   title: string;
-  description: string;
+  description?: string;
   icon: LucideIcon;
   color?: string;
   stats?: string;
   path?: string;
   onClick?: () => void;
-}
-
-interface QuickTaskAction {
-  title: string;
-  icon: LucideIcon;
   variant?: ButtonVariant;
-  path?: string;
-  onClick?: () => void;
+  type?: 'card' | 'button';
 }
 
 interface Props {
   onAnnounce?: () => void;
-  actions?: ActionConfig[];
-  quickTasks?: QuickTaskAction[];
+  actions?: QuickAction[];
 }
 
-const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
+const QuickActions: React.FC<Props> = ({ onAnnounce, actions }) => {
   const navigate = useNavigate();
   const { userRole } = useUserRole();
   const { balances, loading: inventoryLoading } = useInventoryData(userRole?.facility_id);
@@ -63,14 +56,15 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
     return { lowStock, stockouts, goodStock };
   }, [balances]);
 
-  const defaultActions: ActionConfig[] = React.useMemo(() => [
+  const defaultActions: QuickAction[] = React.useMemo(() => [
     {
       title: "Inventory Management",
       description: "Check stock levels and manage inventory",
       icon: Package,
       path: "/dagu",
       color: "bg-blue-500/10 text-blue-600",
-      stats: inventoryLoading ? "Loading..." : `${inventoryStats.stockouts} stockouts, ${inventoryStats.lowStock} low stock`
+      stats: inventoryLoading ? "Loading..." : `${inventoryStats.stockouts} stockouts, ${inventoryStats.lowStock} low stock`,
+      type: 'card'
     },
     {
       title: "Forecast Analysis",
@@ -78,7 +72,8 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
       icon: TrendingUp,
       path: "/forecast-analysis",
       color: "bg-green-500/10 text-green-600",
-      stats: "View trends and predictions"
+      stats: "View trends and predictions",
+      type: 'card'
     },
     {
       title: "Supply Requests",
@@ -86,7 +81,8 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
       icon: FileText,
       path: "/requests",
       color: "bg-purple-500/10 text-purple-600",
-      stats: "Submit procurement requests"
+      stats: "Submit procurement requests",
+      type: 'card'
     },
     {
       title: "Budget Alignment",
@@ -94,35 +90,35 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
       icon: BarChart3,
       path: "/budget-alignment",
       color: "bg-orange-500/10 text-orange-600",
-      stats: "CDSS budget optimization"
-    }
-  ], [inventoryStats.lowStock, inventoryStats.stockouts, inventoryLoading]);
-
-  const defaultQuickTasks: QuickTaskAction[] = React.useMemo(() => [
+      stats: "CDSS budget optimization",
+      type: 'card'
+    },
     {
       title: "New Request",
       icon: Plus,
       path: "/requests/new",
-      variant: "default"
+      variant: "default",
+      type: 'button'
     },
     {
       title: "Stock Search",
       icon: Search,
       path: "/dagu",
-      variant: "outline"
+      variant: "outline",
+      type: 'button'
     },
     {
       title: "Reports",
       icon: BarChart3,
       path: "/forecast-analysis",
-      variant: "outline"
+      variant: "outline",
+      type: 'button'
     }
-  ], []);
+  ], [inventoryStats.lowStock, inventoryStats.stockouts, inventoryLoading]);
 
   const resolvedActions = actions && actions.length > 0 ? actions : defaultActions;
-  const resolvedQuickTasks = quickTasks && quickTasks.length > 0 ? quickTasks : defaultQuickTasks;
 
-  const handleActionClick = (action: ActionConfig) => {
+  const handleActionClick = (action: QuickAction) => {
     if (action.onClick) {
       action.onClick();
       return;
@@ -133,30 +129,24 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
     }
   };
 
-  const handleQuickTaskClick = (task: QuickTaskAction) => {
-    if (task.onClick) {
-      task.onClick();
-      return;
-    }
-
-    if (task.path) {
-      navigate(task.path);
-    }
-  };
+  // Separate actions by type
+  const cardActions = resolvedActions.filter(action => action.type === 'card' || !action.type);
+  const buttonActions = resolvedActions.filter(action => action.type === 'button');
 
   return (
     <div className="space-y-6">
-      {resolvedActions.length > 0 && (
-        <Card className="surface">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card className="surface">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Card-style actions */}
+          {cardActions.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {resolvedActions.map((action) => (
+              {cardActions.map((action) => (
                 <div
                   key={action.title}
                   className="p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
@@ -168,9 +158,11 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm">{action.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {action.description}
-                      </p>
+                      {action.description && (
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {action.description}
+                        </p>
+                      )}
                       {action.stats && (
                         <p className="text-xs text-muted-foreground font-medium">
                           {action.stats}
@@ -181,33 +173,30 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {resolvedQuickTasks.length > 0 && (
-        <Card className="surface">
-          <CardHeader>
-            <CardTitle className="text-base">Quick Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {resolvedQuickTasks.map((action) => (
-                <Button
-                  key={action.title}
-                  variant={action.variant}
-                  size="sm"
-                  onClick={() => handleQuickTaskClick(action)}
-                  className="flex items-center gap-2"
-                >
-                  <action.icon className="h-4 w-4" />
-                  {action.title}
-                </Button>
-              ))}
+          {/* Button-style actions */}
+          {buttonActions.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-3 text-muted-foreground">Quick Tasks</h4>
+              <div className="flex flex-wrap gap-2">
+                {buttonActions.map((action) => (
+                  <Button
+                    key={action.title}
+                    variant={action.variant ?? "outline"}
+                    size="sm"
+                    onClick={() => handleActionClick(action)}
+                    className="flex items-center gap-2"
+                  >
+                    <action.icon className="h-4 w-4" />
+                    {action.title}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Critical Alerts - if any stockouts */}
       {inventoryStats.stockouts > 0 && (
@@ -244,4 +233,4 @@ const QuickActions: React.FC<Props> = ({ onAnnounce, actions, quickTasks }) => {
 };
 
 export default QuickActions;
-export type { ActionConfig, QuickTaskAction };
+export type { QuickAction };
