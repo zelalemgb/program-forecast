@@ -14,6 +14,7 @@ export { default as Index } from './Index';
 export { default as Landing } from './Landing';
 export { default as NationalDashboard } from './NationalDashboard';
 export { default as NotFound } from './NotFound';
+export { default as IssueStock } from './IssueStock';
 export { default as Profile } from './Profile';
 export { default as PublicLanding } from './PublicLanding';
 export { default as RegionalDashboard } from './RegionalDashboard';

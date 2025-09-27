@@ -59,6 +59,7 @@ const ZoneDashboard = lazy(() => import("./pages/ZoneDashboard"));
 const RegionalDashboard = lazy(() => import("./pages/RegionalDashboard"));
 const NationalDashboard = lazy(() => import("./pages/NationalDashboard"));
 const ReceiveStock = lazy(() => import("./pages/ReceiveStock"));
+const IssueStock = lazy(() => import("./pages/IssueStock"));
 const RoleBasedRegistration = lazy(
   () => import("./pages/RoleBasedRegistration"),
 );
@@ -96,6 +97,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/supply-planning", Component: SupplyPlanning, isProtected: true },
   { path: "/budget-alignment", Component: BudgetAlignment, isProtected: true },
   { path: "/receive-stock", Component: ReceiveStock, isProtected: true },
+  { path: "/issue-stock", Component: IssueStock, isProtected: true },
   { path: "/validation", Component: Validation, isProtected: true },
   { path: "/profile", Component: Profile, isProtected: true },
   { path: "/register", Component: RegisterFacility, isProtected: true },
