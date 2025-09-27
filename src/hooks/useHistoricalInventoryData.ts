@@ -63,10 +63,7 @@ export const useHistoricalInventoryData = (
 
   const fetchHistoricalData = async () => {
     console.log('fetchHistoricalData called with:', { facilityId, accountType, productType, program, selectedDrugs });
-    if (!facilityId) {
-      console.log('No facility ID provided, skipping data fetch');
-      return;
-    }
+    const facilityProvided = !!facilityId;
     
     try {
       console.log('Starting data fetch...');
@@ -146,19 +143,21 @@ export const useHistoricalInventoryData = (
         return;
       }
 
-      // Build the consumption analytics query
-      let query = supabase
-        .from('consumption_analytics')
-        .select('*')
-        .eq('facility_id', facilityId)
-        .in('product_id', filteredProductIds)
-        .gte('period_start', previousPeriods[0]?.start)
-        .lte('period_end', previousPeriods[previousPeriods.length - 1]?.end);
+      // Build the consumption analytics query only if facility is provided
+      let consumptionData: any[] = [];
+      if (facilityProvided) {
+        let query = supabase
+          .from('consumption_analytics')
+          .select('*')
+          .eq('facility_id', facilityId as number)
+          .in('product_id', filteredProductIds)
+          .gte('period_start', previousPeriods[0]?.start)
+          .lte('period_end', previousPeriods[previousPeriods.length - 1]?.end);
 
-      const { data: consumptionData, error: consumptionError } = await query
-        .order('period_start', { ascending: true });
-
-      if (consumptionError) throw consumptionError;
+        const { data, error: consumptionError } = await query.order('period_start', { ascending: true });
+        if (consumptionError) throw consumptionError;
+        consumptionData = data || [];
+      }
 
       console.log('Consumption data found:', consumptionData?.length || 0, 'records');
 
