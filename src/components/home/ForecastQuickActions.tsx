@@ -235,8 +235,6 @@ const CriticalQuickActions: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          <h3 className="text-lg text-muted-foreground font-medium">Quick Tasks</h3>
-          
           <div className="flex flex-wrap gap-3">
             {quickTasks.map((task, index) => {
               const Icon = task.icon;
