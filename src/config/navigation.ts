@@ -122,6 +122,14 @@ export const navigationPages: Record<string, NavigationPage> = {
     breadcrumbLabel: 'Run Forecast',
     showInSidebar: true,
   },
+  '/forecast-home': {
+    path: '/forecast-home',
+    title: 'Forecast Overview',
+    description: 'Overview page for forecasting workflows and quick actions',
+    category: 'forecasting',
+    breadcrumbLabel: 'Forecast Overview',
+    showInSidebar: true,
+  },
   '/dashboard': {
     path: '/dashboard',
     title: 'Validate Excel Forecast',
@@ -226,6 +234,15 @@ export const navigationPages: Record<string, NavigationPage> = {
     breadcrumbLabel: 'Products',
     showInSidebar: false,
   },
+  '/settings/metadata/account-types': {
+    path: '/settings/metadata/account-types',
+    title: 'Account Types Management',
+    description: 'Manage facility account types and classifications',
+    parent: '/settings/metadata',
+    category: 'settings',
+    breadcrumbLabel: 'Account Types',
+    showInSidebar: false,
+  },
   '/settings/metadata/regional-hubs': {
     path: '/settings/metadata/regional-hubs',
     title: 'EPSS Regional Hubs',
@@ -233,6 +250,15 @@ export const navigationPages: Record<string, NavigationPage> = {
     parent: '/settings/metadata',
     category: 'settings',
     breadcrumbLabel: 'Regional Hubs',
+    showInSidebar: false,
+  },
+  '/settings/metadata/areas': {
+    path: '/settings/metadata/areas',
+    title: 'Administrative Areas',
+    description: 'Configure administrative areas and hierarchies',
+    parent: '/settings/metadata',
+    category: 'settings',
+    breadcrumbLabel: 'Administrative Areas',
     showInSidebar: false,
   },
   '/settings/metadata/bulk-import': {
@@ -317,6 +343,13 @@ export const navigationPages: Record<string, NavigationPage> = {
     title: 'Register Facility',
     description: 'Register a new health facility',
     breadcrumbLabel: 'Register',
+    showInSidebar: false,
+  },
+  '/role-registration': {
+    path: '/role-registration',
+    title: 'Role Registration',
+    description: 'Register for a role in the forecasting platform',
+    breadcrumbLabel: 'Role Registration',
     showInSidebar: false,
   },
   '/approvals': {
