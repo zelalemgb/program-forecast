@@ -42,6 +42,12 @@ export const useForecastSummary = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  interface SaveForecastSummaryResponse {
+    summary: ForecastSummary;
+    forecast_rows: any[];
+    summary_items: ForecastSummaryItem[];
+  }
+
   const saveForecastSummary = async (
     forecastData: any[],
     summaryData: {
@@ -58,72 +64,34 @@ export const useForecastSummary = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Calculate totals
-      const totalValue = forecastData.reduce((sum, item) => 
-        sum + (item.forecastedQuantity || 0) * (item.unitPrice || 0), 0
-      );
+      const currentYear = new Date().getFullYear().toString();
 
-      // Create forecast summary
-      const { data: summary, error: summaryError } = await supabase
-        .from('forecast_summaries')
-        .insert({
-          user_id: user.id,
+      const { data, error } = await supabase.rpc('save_forecast_summary', {
+        summary_data: {
           name: summaryData.name,
           description: summaryData.description,
           facility_name: summaryData.facility_name,
           account_type: summaryData.account_type,
           forecast_duration: summaryData.forecast_duration,
-          total_line_items: forecastData.length,
-          original_total_value: totalValue,
-          current_total_value: totalValue,
           available_budget: summaryData.available_budget,
-        })
-        .select()
-        .single();
+        },
+        items_data: forecastData.map(item => ({
+          product_name: item.productName,
+          forecasted_quantity: item.forecastedQuantity,
+          unit_price: item.unitPrice,
+          program: summaryData.account_type || 'general',
+          year: currentYear,
+        })),
+      });
 
-      if (summaryError) throw summaryError;
-
-      // Save forecast rows first
-      const { data: forecastRows, error: rowsError } = await supabase
-        .from('forecast_rows')
-        .insert(
-          forecastData.map(item => ({
-            user_id: user.id,
-            program: summaryData.account_type || 'general',
-            product_list: item.productName,
-            forecasted_quantity: item.forecastedQuantity,
-            unit_price: item.unitPrice,
-            forecasted_total: (item.forecastedQuantity || 0) * (item.unitPrice || 0),
-            year: new Date().getFullYear().toString(),
-          }))
-        )
-        .select();
-
-      if (rowsError) throw rowsError;
-
-      // Create summary items linking to forecast rows
-      if (forecastRows) {
-        const summaryItems = forecastRows.map((row, index) => ({
-          forecast_summary_id: summary.id,
-          forecast_row_id: row.id,
-          current_quantity: forecastData[index].forecastedQuantity || 0,
-          current_price: forecastData[index].unitPrice || 0,
-          current_total: (forecastData[index].forecastedQuantity || 0) * (forecastData[index].unitPrice || 0),
-        }));
-
-        const { error: itemsError } = await supabase
-          .from('forecast_summary_items')
-          .insert(summaryItems);
-
-        if (itemsError) throw itemsError;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Forecast summary saved successfully",
       });
 
-      return summary;
+      return (data as SaveForecastSummaryResponse)?.summary;
     } catch (error: any) {
       toast({
         title: "Error",
