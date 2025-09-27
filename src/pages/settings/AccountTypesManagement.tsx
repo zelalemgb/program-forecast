@@ -88,7 +88,7 @@ const AccountTypesManagement: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from("product_reference")
-        .select("id, canonical_name, program, ven_classification")
+        .select("id, canonical_name, program, ven_classification, form, strength")
         .eq("active", true)
         .order("canonical_name");
 
@@ -438,26 +438,31 @@ const AccountTypesManagement: React.FC = () => {
                                   >
                                     {product.canonical_name}
                                   </label>
-                                  <div className="flex gap-2">
-                                    {product.program && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {product.program}
-                                      </Badge>
-                                    )}
-                                    {product.ven_classification && (
-                                      <Badge 
-                                        variant="outline" 
-                                        className={`text-xs ${
-                                          product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
-                                          product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
-                                          product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
-                                          'border-gray-300'
-                                        }`}
-                                      >
-                                        {product.ven_classification}
-                                      </Badge>
-                                    )}
-                                  </div>
+                                   <div className="flex gap-2 flex-wrap">
+                                     {product.program && (
+                                       <Badge variant="secondary" className="text-xs">
+                                         {product.program}
+                                       </Badge>
+                                     )}
+                                     {product.ven_classification && (
+                                       <Badge 
+                                         variant="outline" 
+                                         className={`text-xs ${
+                                           product.ven_classification === 'V' ? 'border-green-500 text-green-700' :
+                                           product.ven_classification === 'E' ? 'border-blue-500 text-blue-700' :
+                                           product.ven_classification === 'N' ? 'border-gray-500 text-gray-700' :
+                                           'border-gray-300'
+                                         }`}
+                                       >
+                                         {product.ven_classification}
+                                       </Badge>
+                                     )}
+                                     {(product.form || product.strength) && (
+                                       <Badge variant="outline" className="text-xs">
+                                         {[product.form, product.strength].filter(Boolean).join(" ")}
+                                       </Badge>
+                                     )}
+                                   </div>
                                 </div>
                               </div>
                             ))}
@@ -539,18 +544,34 @@ const AccountTypesManagement: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">Product List</h4>
                         <div className="flex items-center gap-2">
-                          <Select value={selectedProductToAdd} onValueChange={setSelectedProductToAdd}>
-                            <SelectTrigger className="w-64">
-                              <SelectValue placeholder="Select product to add" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableProducts.map((product) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {product.canonical_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                           <Select value={selectedProductToAdd} onValueChange={setSelectedProductToAdd}>
+                             <SelectTrigger className="w-80">
+                               <SelectValue placeholder="Select product to add" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <ScrollArea className="h-60">
+                                 {availableProducts.map((product) => (
+                                   <SelectItem key={product.id} value={product.id}>
+                                     <div className="flex flex-col">
+                                       <span className="font-medium">{product.canonical_name}</span>
+                                       <div className="flex gap-1 mt-1">
+                                         {product.program && (
+                                           <Badge variant="secondary" className="text-xs">
+                                             {product.program}
+                                           </Badge>
+                                         )}
+                                         {(product.form || product.strength) && (
+                                           <Badge variant="outline" className="text-xs">
+                                             {[product.form, product.strength].filter(Boolean).join(" ")}
+                                           </Badge>
+                                         )}
+                                       </div>
+                                     </div>
+                                   </SelectItem>
+                                 ))}
+                               </ScrollArea>
+                             </SelectContent>
+                           </Select>
                           <Button 
                             size="sm" 
                             onClick={handleAddProductToAccountType}
