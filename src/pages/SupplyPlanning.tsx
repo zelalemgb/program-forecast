@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download, HelpCircle } from "lucide-react";
 import { RefinedForecastWizard } from "@/components/forecast/RefinedForecastWizard";
-import { PeriodSelector } from "@/components/supply-planning/PeriodSelector";
+
 
 import { HistoricalInventoryTable } from "@/components/supply-planning/HistoricalInventoryTable";
 import { ForecastTable } from "@/components/supply-planning/ForecastTable";
@@ -100,6 +100,8 @@ const SupplyPlanning: React.FC = () => {
   };
 
   const handleClearFilters = () => {
+    setPeriodType("monthly");
+    setStartingPeriod("hamle-2017");
     setProductType("all");
     setAccountType("all");
     setProgram("all");
@@ -138,30 +140,22 @@ const SupplyPlanning: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      {/* Compact Controls */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
-          <PeriodSelector
-            periodType={periodType}
-            startingPeriod={startingPeriod}
-            onPeriodTypeChange={setPeriodType}
-            onStartingPeriodChange={setStartingPeriod}
-            periods={periods}
-          />
-        </div>
-
-        {/* Analysis Filters */}
-        <div className="p-4 bg-muted/20 rounded-lg">
-          <AnalysisFilters
-            productType={productType}
-            accountType={accountType}
-            program={program}
-            onProductTypeChange={setProductType}
-            onAccountTypeChange={setAccountType}
-            onProgramChange={setProgram}
-            onClearFilters={handleClearFilters}
-          />
-        </div>
+      {/* Analysis Configuration */}
+      <div className="p-4 bg-muted/20 rounded-lg">
+        <AnalysisFilters
+          periodType={periodType}
+          startingPeriod={startingPeriod}
+          productType={productType}
+          accountType={accountType}
+          program={program}
+          onPeriodTypeChange={setPeriodType}
+          onStartingPeriodChange={setStartingPeriod}
+          onProductTypeChange={setProductType}
+          onAccountTypeChange={setAccountType}
+          onProgramChange={setProgram}
+          onClearFilters={handleClearFilters}
+          periods={periods}
+        />
       </div>
 
       <div className="space-y-8 mt-6">

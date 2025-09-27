@@ -5,25 +5,35 @@ import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 
 interface AnalysisFiltersProps {
+  periodType: string;
+  startingPeriod: string;
   productType: string;
   accountType: string;
   program: string;
+  onPeriodTypeChange: (value: string) => void;
+  onStartingPeriodChange: (value: string) => void;
   onProductTypeChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
   onProgramChange: (value: string) => void;
   onClearFilters: () => void;
+  periods: string[];
 }
 
 export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
+  periodType,
+  startingPeriod,
   productType,
   accountType,
   program,
+  onPeriodTypeChange,
+  onStartingPeriodChange,
   onProductTypeChange,
   onAccountTypeChange,
   onProgramChange,
-  onClearFilters
+  onClearFilters,
+  periods
 }) => {
-  const hasFilters = productType !== 'all' || accountType !== 'all' || program !== 'all';
+  const hasFilters = periodType !== 'monthly' || startingPeriod !== 'hamle-2017' || productType !== 'all' || accountType !== 'all' || program !== 'all';
 
   return (
     <div className="space-y-4">
@@ -45,10 +55,51 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
       
       {/* Step-by-step filter flow */}
       <div className="space-y-4">
-        {/* Step 1: Product Selection */}
+        {/* Step 1: Period Configuration */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">1</div>
+              <Label className="text-sm font-medium">Analysis Period Type</Label>
+            </div>
+            <Select value={periodType} onValueChange={onPeriodTypeChange}>
+              <SelectTrigger className="h-9 bg-background border-2">
+                <SelectValue placeholder="Choose period type" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                <SelectItem value="monthly">Monthly Analysis (12 periods)</SelectItem>
+                <SelectItem value="bi-monthly">Bi-monthly Analysis (6 periods)</SelectItem>
+                <SelectItem value="quarterly">Quarterly Analysis (4 periods)</SelectItem>
+                <SelectItem value="biannually">Bi-annual Analysis (2 periods)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">2</div>
+              <Label className="text-sm font-medium">Starting Period</Label>
+            </div>
+            <Select value={startingPeriod} onValueChange={onStartingPeriodChange}>
+              <SelectTrigger className="h-9 bg-background border-2">
+                <SelectValue placeholder="Choose starting period" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                <SelectItem value="hamle-2017">Start from Hamle 2017 EC</SelectItem>
+                <SelectItem value="hamle-2018">Start from Hamle 2018 EC</SelectItem>
+                <SelectItem value="hamle-2019">Start from Hamle 2019 EC</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              Will generate {periods.length} {periodType} periods
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Product Selection */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">1</div>
+            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">3</div>
             <Label className="text-sm font-medium">Select Product Type</Label>
           </div>
           <Select value={productType} onValueChange={onProductTypeChange}>
@@ -66,11 +117,11 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
           </Select>
         </div>
 
-        {/* Step 2: Target Selection */}
+        {/* Step 4: Target Selection */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">2</div>
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">4</div>
               <Label className="text-sm font-medium">Target Account Type</Label>
             </div>
             <Select value={accountType} onValueChange={onAccountTypeChange}>
@@ -89,7 +140,7 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
 
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">3</div>
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">5</div>
               <Label className="text-sm font-medium">Health Program Focus</Label>
             </div>
             <Select value={program} onValueChange={onProgramChange}>
@@ -116,8 +167,18 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
       {/* Active filters summary */}
       {hasFilters && (
         <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">Active Filters:</Label>
+          <Label className="text-xs font-medium text-muted-foreground">Active Configuration:</Label>
           <div className="flex flex-wrap gap-2">
+            {periodType !== 'monthly' && (
+              <Badge variant="secondary" className="text-xs px-2 py-1">
+                {periodType} periods
+              </Badge>
+            )}
+            {startingPeriod !== 'hamle-2017' && (
+              <Badge variant="secondary" className="text-xs px-2 py-1">
+                Starting {startingPeriod.replace('-', ' ')}
+              </Badge>
+            )}
             {productType !== 'all' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
                 {productType.replace('_', ' ')}
