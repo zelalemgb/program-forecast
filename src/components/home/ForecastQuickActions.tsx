@@ -55,10 +55,10 @@ const CriticalQuickActions: React.FC = () => {
           variant: "default"
         },
         {
-          title: "Issue Stock to Wards",
+          title: "Request from Wards",
           icon: Upload,
           path: "/dagu",
-          description: "Distribute stock to departments",
+          description: "Review ward requisitions",
           badge: requests.length,
           onClick: () => setShowOutstandingModal(true)
         },
@@ -69,9 +69,15 @@ const CriticalQuickActions: React.FC = () => {
           description: "Request supplies from EPSS"
         },
         {
+          title: "Generate Forecast",
+          icon: TrendingUp,
+          path: "/run-forecast",
+          description: "Create demand forecasts"
+        },
+        {
           title: "View Reports",
           icon: FileText,
-          path: "/run-forecast",
+          path: "/forecast-analysis",
           description: "Generate and view reports"
         },
         {
@@ -167,10 +173,10 @@ const CriticalQuickActions: React.FC = () => {
         variant: "default"
       },
       {
-        title: "Issue Stock to Wards",
+        title: "Request from Wards",
         icon: Upload,
         path: "/dagu",
-        description: "Distribute stock to departments",
+        description: "Review ward requisitions",
         badge: requests.length,
         onClick: () => setShowOutstandingModal(true)
       },
@@ -181,9 +187,15 @@ const CriticalQuickActions: React.FC = () => {
         description: "Request supplies from EPSS"
       },
       {
+        title: "Generate Forecast",
+        icon: TrendingUp,
+        path: "/run-forecast",
+        description: "Create demand forecasts"
+      },
+      {
         title: "View Reports",
         icon: FileText,
-        path: "/run-forecast",
+        path: "/forecast-analysis",
         description: "Generate and view reports"
       },
       {
