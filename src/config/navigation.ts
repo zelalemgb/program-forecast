@@ -124,10 +124,10 @@ export const navigationPages: Record<string, NavigationPage> = {
   },
   '/forecast-home': {
     path: '/forecast-home',
-    title: 'Forecast Overview',
+    title: 'Forecasting Home',
     description: 'Overview page for forecasting workflows and quick actions',
     category: 'forecasting',
-    breadcrumbLabel: 'Forecast Overview',
+    breadcrumbLabel: 'Forecasting Home',
     showInSidebar: true,
   },
   '/dashboard': {

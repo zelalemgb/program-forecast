@@ -4,15 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import KPICards, { KPIItem } from '@/components/home/KPICards';
 import QuickActions, { ActionConfig, QuickTaskAction } from '@/components/home/QuickActions';
 import StockExchangeBoard, { StockPost } from '@/components/home/StockExchangeBoard';
 import {
-  TrendingUp,
   Target,
   Database,
   Activity,
-  Plus,
   FileText,
   Upload,
   AlertTriangle,
@@ -62,7 +59,6 @@ interface ForecastHomeProps {
   onFixDataIssue?: (id: string) => void;
   onCreateStockPost?: () => void;
   onScenarioSelected?: (scenario: ScenarioType) => void;
-  kpiItems?: KPIItem[];
   historyItems?: ForecastHistory[];
   dataQualityIssues?: DataQualityIssue[];
   accuracySeries?: ForecastAccuracyPoint[];
@@ -313,7 +309,6 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   onFixDataIssue,
   onCreateStockPost,
   onScenarioSelected,
-  kpiItems,
   historyItems,
   dataQualityIssues: dataQualityIssuesProp,
   accuracySeries: accuracySeriesProp,
@@ -334,13 +329,6 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   const safeFixDataIssue = onFixDataIssue ?? (() => undefined);
   const safeCreateStockPost = onCreateStockPost ?? (() => undefined);
   const safeScenarioSelected = onScenarioSelected ?? (() => undefined);
-
-  const kpis: KPIItem[] = kpiItems ?? [
-    { label: 'Forecasts Done', value: '12', Icon: TrendingUp, color: 'text-blue-600' },
-    { label: 'Avg. Accuracy', value: '84%', Icon: Target, color: 'text-green-600' },
-    { label: 'Data Completeness', value: '92%', Icon: Database, color: 'text-purple-600' },
-    { label: 'Programs Covered', value: '3', Icon: Activity, color: 'text-orange-600' }
-  ];
 
   const history: ForecastHistory[] = historyItems ?? [
     { id: 'F-102', name: 'RMNCH Q3', type: 'Program', status: 'Approved', accuracy: 82, updated: '3 days ago' },
@@ -425,7 +413,6 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   ];
 
   const quickTaskButtons: QuickTaskAction[] = [
-    { title: 'New Forecast', icon: Plus, variant: 'default', onClick: handleNewForecast },
     { title: 'Generate RRF', icon: FileText, variant: 'outline', onClick: safeGenerateRRF },
     { title: 'CDSS Forecast', icon: Target, variant: 'outline', onClick: safeStartCDSS },
     { title: 'Non-CDSS Forecast', icon: Activity, variant: 'outline', onClick: safeStartNonCDSS },
@@ -442,16 +429,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
       </Helmet>
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Forecasting Home</h1>
-          <Button onClick={handleNewForecast} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Forecast
-          </Button>
-        </div>
-
-        {/* KPI Cards */}
-        <KPICards items={kpis} />
+        {/* KPI Cards removed as requested */}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
