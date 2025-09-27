@@ -1,52 +1,137 @@
+import { Suspense, lazy } from "react";
+import type { ComponentType } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Validation from "./pages/Validation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NavigationProvider } from "@/context/NavigationContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import CDSSDashboard from "./pages/CDSSDashboard";
-import Profile from "./pages/Profile";
-import RegisterFacility from "./pages/RegisterFacility";
-import Approvals from "./pages/Approvals";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import MetadataOrganization from "./pages/settings/MetadataOrganization";
-import FacilitiesManagement from "./pages/settings/FacilitiesManagement";
-import ProductsManagement from "./pages/settings/ProductsManagement";
-import BulkImport from "./pages/settings/BulkImport";
-import RegionalHubsManagement from "./pages/settings/RegionalHubsManagement";
-import AccountTypesManagement from "./pages/settings/AccountTypesManagement";
-import AreasManagement from "./pages/settings/AreasManagement";
-import Requests from "./pages/Requests";
-import RequestWizard from "./pages/RequestWizard";
-import RequestDetail from "./pages/RequestDetail";
-import ForecastWorkbench from "./pages/ForecastWorkbench";
-import RunForecast from "./pages/RunForecast";
-import Dagu from "./pages/Dagu";
-import SupplyPlanning from "./pages/SupplyPlanning";
-import BudgetAlignment from "./pages/BudgetAlignment";
-import Guides from "./pages/Guides";
-import Videos from "./pages/Videos";
-import ForecastAnalysis from "./pages/ForecastAnalysis";
-import ForecastHome from "./pages/ForecastHome";
-import SavedForecasts from "./pages/SavedForecasts";
-import UserManagement from "./pages/UserManagement";
-import WoredasDashboard from "./pages/WoredasDashboard";
-import ZoneDashboard from "./pages/ZoneDashboard";
-import RegionalDashboard from "./pages/RegionalDashboard";
-import NationalDashboard from "./pages/NationalDashboard";
-import RoleBasedRegistration from "./pages/RoleBasedRegistration";
-import FacilityDashboard from "./pages/FacilityDashboard";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/layout/AppSidebar";
 import UnifiedTopBar from "@/components/layout/UnifiedTopBar";
+
+const Auth = lazy(() => import("./pages/Auth"));
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Validation = lazy(() => import("./pages/Validation"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CDSSDashboard = lazy(() => import("./pages/CDSSDashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const RegisterFacility = lazy(() => import("./pages/RegisterFacility"));
+const Approvals = lazy(() => import("./pages/Approvals"));
+const SuperAdminDashboard = lazy(() => import("./pages/SuperAdminDashboard"));
+const MetadataOrganization = lazy(
+  () => import("./pages/settings/MetadataOrganization"),
+);
+const FacilitiesManagement = lazy(
+  () => import("./pages/settings/FacilitiesManagement"),
+);
+const ProductsManagement = lazy(
+  () => import("./pages/settings/ProductsManagement"),
+);
+const BulkImport = lazy(() => import("./pages/settings/BulkImport"));
+const RegionalHubsManagement = lazy(
+  () => import("./pages/settings/RegionalHubsManagement"),
+);
+const AccountTypesManagement = lazy(
+  () => import("./pages/settings/AccountTypesManagement"),
+);
+const AreasManagement = lazy(() => import("./pages/settings/AreasManagement"));
+const Requests = lazy(() => import("./pages/Requests"));
+const RequestWizard = lazy(() => import("./pages/RequestWizard"));
+const RequestDetail = lazy(() => import("./pages/RequestDetail"));
+const ForecastWorkbench = lazy(() => import("./pages/ForecastWorkbench"));
+const RunForecast = lazy(() => import("./pages/RunForecast"));
+const Dagu = lazy(() => import("./pages/Dagu"));
+const SupplyPlanning = lazy(() => import("./pages/SupplyPlanning"));
+const BudgetAlignment = lazy(() => import("./pages/BudgetAlignment"));
+const Guides = lazy(() => import("./pages/Guides"));
+const Videos = lazy(() => import("./pages/Videos"));
+const ForecastAnalysis = lazy(() => import("./pages/ForecastAnalysis"));
+const ForecastHome = lazy(() => import("./pages/ForecastHome"));
+const SavedForecasts = lazy(() => import("./pages/SavedForecasts"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const WoredasDashboard = lazy(() => import("./pages/WoredasDashboard"));
+const ZoneDashboard = lazy(() => import("./pages/ZoneDashboard"));
+const RegionalDashboard = lazy(() => import("./pages/RegionalDashboard"));
+const NationalDashboard = lazy(() => import("./pages/NationalDashboard"));
+const RoleBasedRegistration = lazy(
+  () => import("./pages/RoleBasedRegistration"),
+);
+const FacilityDashboard = lazy(() => import("./pages/FacilityDashboard"));
+
+type RouteConfig = {
+  path: string;
+  Component: ComponentType;
+  isProtected?: boolean;
+};
+
+const routeConfig: RouteConfig[] = [
+  { path: "/", Component: Index, isProtected: true },
+  { path: "/auth", Component: Auth },
+  { path: "/role-registration", Component: RoleBasedRegistration, isProtected: true },
+  { path: "/facility-dashboard", Component: FacilityDashboard, isProtected: true },
+  { path: "/woreda-dashboard", Component: WoredasDashboard, isProtected: true },
+  { path: "/zone-dashboard", Component: ZoneDashboard, isProtected: true },
+  { path: "/regional-dashboard", Component: RegionalDashboard, isProtected: true },
+  { path: "/national-dashboard", Component: NationalDashboard, isProtected: true },
+  { path: "/dashboard", Component: Dashboard, isProtected: true },
+  { path: "/cdss-dashboard", Component: CDSSDashboard, isProtected: true },
+  { path: "/forecast", Component: RunForecast, isProtected: true },
+  { path: "/forecast-home", Component: ForecastHome, isProtected: true },
+  { path: "/forecast-analysis", Component: ForecastAnalysis, isProtected: true },
+  { path: "/saved-forecasts", Component: SavedForecasts, isProtected: true },
+  { path: "/forecast-workbench", Component: ForecastWorkbench, isProtected: true },
+  { path: "/dagu", Component: Dagu, isProtected: true },
+  { path: "/supply-planning", Component: SupplyPlanning, isProtected: true },
+  { path: "/budget-alignment", Component: BudgetAlignment, isProtected: true },
+  { path: "/validation", Component: Validation, isProtected: true },
+  { path: "/profile", Component: Profile, isProtected: true },
+  { path: "/register", Component: RegisterFacility, isProtected: true },
+  { path: "/approvals", Component: Approvals, isProtected: true },
+  { path: "/admin", Component: SuperAdminDashboard, isProtected: true },
+  { path: "/user-management", Component: UserManagement, isProtected: true },
+  { path: "/settings/metadata", Component: MetadataOrganization, isProtected: true },
+  {
+    path: "/settings/metadata/facilities",
+    Component: FacilitiesManagement,
+    isProtected: true,
+  },
+  {
+    path: "/settings/metadata/products",
+    Component: ProductsManagement,
+    isProtected: true,
+  },
+  {
+    path: "/settings/metadata/account-types",
+    Component: AccountTypesManagement,
+    isProtected: true,
+  },
+  {
+    path: "/settings/metadata/regional-hubs",
+    Component: RegionalHubsManagement,
+    isProtected: true,
+  },
+  {
+    path: "/settings/metadata/areas",
+    Component: AreasManagement,
+    isProtected: true,
+  },
+  {
+    path: "/settings/metadata/bulk-import",
+    Component: BulkImport,
+    isProtected: true,
+  },
+  { path: "/requests", Component: Requests, isProtected: true },
+  { path: "/requests/new", Component: RequestWizard, isProtected: true },
+  { path: "/requests/:id", Component: RequestDetail, isProtected: true },
+  { path: "/help/guides", Component: Guides, isProtected: true },
+  { path: "/help/videos", Component: Videos, isProtected: true },
+  { path: "*", Component: NotFound },
+];
 
 const queryClient = new QueryClient();
 
@@ -63,187 +148,27 @@ const AppShell: React.FC = () => {
           {user && !isAuth && <UnifiedTopBar />}
           
           <main className="flex-1 overflow-x-auto">
-            <Routes>
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/role-registration" element={
-                <ProtectedRoute>
-                  <RoleBasedRegistration />
-                </ProtectedRoute>
-              } />
-              
-              {/* Protected Routes */}
-              <Route path="/facility-dashboard" element={
-                <ProtectedRoute>
-                  <FacilityDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/woreda-dashboard" element={
-                <ProtectedRoute>
-                  <WoredasDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/zone-dashboard" element={
-                <ProtectedRoute>
-                  <ZoneDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/regional-dashboard" element={
-                <ProtectedRoute>
-                  <RegionalDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/national-dashboard" element={
-                <ProtectedRoute>
-                  <NationalDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/cdss-dashboard" element={
-                <ProtectedRoute>
-                  <CDSSDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/forecast" element={
-                <ProtectedRoute>
-                  <RunForecast />
-                </ProtectedRoute>
-              } />
-               <Route path="/forecast-home" element={
-                <ProtectedRoute>
-                  <ForecastHome />
-                </ProtectedRoute>
-              } />
-              <Route path="/forecast-analysis" element={
-                <ProtectedRoute>
-                  <ForecastAnalysis />
-                </ProtectedRoute>
-              } />
-              <Route path="/saved-forecasts" element={
-                <ProtectedRoute>
-                  <SavedForecasts />
-                </ProtectedRoute>
-              } />
-              <Route path="/forecast-workbench" element={
-                <ProtectedRoute>
-                  <ForecastWorkbench />
-                </ProtectedRoute>
-              } />
-              <Route path="/dagu" element={
-                <ProtectedRoute>
-                  <Dagu />
-                </ProtectedRoute>
-              } />
-              <Route path="/supply-planning" element={
-                <ProtectedRoute>
-                  <SupplyPlanning />
-                </ProtectedRoute>
-              } />
-              <Route path="/budget-alignment" element={
-                <ProtectedRoute>
-                  <BudgetAlignment />
-                </ProtectedRoute>
-              } />
-              <Route path="/validation" element={
-                <ProtectedRoute>
-                  <Validation />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/register" element={
-                <ProtectedRoute>
-                  <RegisterFacility />
-                </ProtectedRoute>
-              } />
-              <Route path="/approvals" element={
-                <ProtectedRoute>
-                  <Approvals />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <SuperAdminDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/user-management" element={
-                <ProtectedRoute>
-                  <UserManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata" element={
-                <ProtectedRoute>
-                  <MetadataOrganization />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/facilities" element={
-                <ProtectedRoute>
-                  <FacilitiesManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/products" element={
-                <ProtectedRoute>
-                  <ProductsManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/account-types" element={
-                <ProtectedRoute>
-                  <AccountTypesManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/regional-hubs" element={
-                <ProtectedRoute>
-                  <RegionalHubsManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/areas" element={
-                <ProtectedRoute>
-                  <AreasManagement />
-                </ProtectedRoute>
-              } />
-              <Route path="/settings/metadata/bulk-import" element={
-                <ProtectedRoute>
-                  <BulkImport />
-                </ProtectedRoute>
-              } />
-              <Route path="/requests" element={
-                <ProtectedRoute>
-                  <Requests />
-                </ProtectedRoute>
-              } />
-              <Route path="/requests/new" element={
-                <ProtectedRoute>
-                  <RequestWizard />
-                </ProtectedRoute>
-              } />
-              <Route path="/requests/:id" element={
-                <ProtectedRoute>
-                  <RequestDetail />
-                </ProtectedRoute>
-              } />
-              <Route path="/help/guides" element={
-                <ProtectedRoute>
-                  <Guides />
-                </ProtectedRoute>
-              } />
-              <Route path="/help/videos" element={
-                <ProtectedRoute>
-                  <Videos />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense
+              fallback={
+                <div className="flex w-full justify-center py-10 text-sm text-muted-foreground">
+                  Loading...
+                </div>
+              }
+            >
+              <Routes>
+                {routeConfig.map(({ path, Component, isProtected }) => {
+                  const element = isProtected ? (
+                    <ProtectedRoute>
+                      <Component />
+                    </ProtectedRoute>
+                  ) : (
+                    <Component />
+                  );
+
+                  return <Route key={path} path={path} element={element} />;
+                })}
+              </Routes>
+            </Suspense>
           </main>
 
           {user && !isAuth && (
