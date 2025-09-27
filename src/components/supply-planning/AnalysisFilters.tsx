@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { X, Plus, Search } from 'lucide-react';
 
 interface AnalysisFiltersProps {
   periodType: string;
@@ -17,6 +19,8 @@ interface AnalysisFiltersProps {
   onProgramChange: (value: string) => void;
   onClearFilters: () => void;
   periods: string[];
+  selectedDrugs?: string[];
+  onDrugsChange?: (drugs: string[]) => void;
 }
 
 export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
@@ -31,9 +35,60 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
   onAccountTypeChange,
   onProgramChange,
   onClearFilters,
-  periods
+  periods,
+  selectedDrugs = [],
+  onDrugsChange
 }) => {
-  const hasFilters = periodType !== 'monthly' || startingPeriod !== 'hamle-2017' || productType !== 'all' || accountType !== 'all' || program !== 'all';
+  const [drugSearchTerm, setDrugSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  
+  const hasFilters = periodType !== 'monthly' || startingPeriod !== 'hamle-2017' || productType !== 'all' || accountType !== 'all' || program !== 'all' || selectedDrugs.length > 0;
+
+  // Mock drug database - in real app, this would come from your backend
+  const availableDrugs = [
+    'Paracetamol 500mg Tablets',
+    'Amoxicillin 250mg Capsules',
+    'ORS Sachets',
+    'Albendazole 400mg Tablets',
+    'Artesunate + Amodiaquine',
+    'Ciprofloxacin 500mg Tablets',
+    'Cotrimoxazole 480mg Tablets',
+    'Dextrose 5% Solution',
+    'Ferrous Sulfate 200mg Tablets',
+    'Gentamicin 80mg/2ml Injection',
+    'Ibuprofen 400mg Tablets',
+    'Metronidazole 250mg Tablets',
+    'Normal Saline 0.9%',
+    'Oral Contraceptive Pills',
+    'Tetanus Toxoid Vaccine'
+  ];
+
+  const handleDrugSearch = (searchTerm: string) => {
+    setDrugSearchTerm(searchTerm);
+    if (searchTerm.length > 1) {
+      const filtered = availableDrugs.filter(drug => 
+        drug.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !selectedDrugs.includes(drug)
+      );
+      setSearchResults(filtered.slice(0, 5)); // Show top 5 results
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleAddDrug = (drug: string) => {
+    if (onDrugsChange && !selectedDrugs.includes(drug)) {
+      onDrugsChange([...selectedDrugs, drug]);
+    }
+    setDrugSearchTerm('');
+    setSearchResults([]);
+  };
+
+  const handleRemoveDrug = (drugToRemove: string) => {
+    if (onDrugsChange) {
+      onDrugsChange(selectedDrugs.filter(drug => drug !== drugToRemove));
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -160,8 +215,66 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
                 <SelectItem value="emergency">Emergency Response</SelectItem>
               </SelectContent>
             </Select>
+        </div>
+
+        {/* Step 6: Specific Drug Selection */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">6</div>
+            <Label className="text-sm font-medium">Add Specific Drugs (Optional)</Label>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search for specific drugs to include..."
+                  value={drugSearchTerm}
+                  onChange={(e) => handleDrugSearch(e.target.value)}
+                  className="pl-9 h-9 border-2"
+                />
+              </div>
+              
+              {/* Search Results Dropdown */}
+              {searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  {searchResults.map((drug, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAddDrug(drug)}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 border-b border-border last:border-b-0"
+                    >
+                      <Plus className="h-3 w-3 text-muted-foreground" />
+                      {drug}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Selected Drugs */}
+            {selectedDrugs.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Selected Drugs:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedDrugs.map((drug, index) => (
+                    <Badge key={index} variant="outline" className="text-xs px-2 py-1 flex items-center gap-1">
+                      {drug}
+                      <button
+                        onClick={() => handleRemoveDrug(drug)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Active filters summary */}
@@ -192,6 +305,11 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
             {program !== 'all' && (
               <Badge variant="secondary" className="text-xs px-2 py-1">
                 {program.replace('_', ' ')} program
+              </Badge>
+            )}
+            {selectedDrugs.length > 0 && (
+              <Badge variant="secondary" className="text-xs px-2 py-1">
+                {selectedDrugs.length} specific drug{selectedDrugs.length > 1 ? 's' : ''}
               </Badge>
             )}
           </div>

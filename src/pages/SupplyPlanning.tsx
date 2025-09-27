@@ -27,6 +27,7 @@ const SupplyPlanning: React.FC = () => {
   const [productType, setProductType] = useState<string>("all");
   const [accountType, setAccountType] = useState<string>("all");
   const [program, setProgram] = useState<string>("all");
+  const [selectedDrugs, setSelectedDrugs] = useState<string[]>([]);
 
   // Get user's facility
   const { facility } = useCurrentFacility();
@@ -105,6 +106,7 @@ const SupplyPlanning: React.FC = () => {
     setProductType("all");
     setAccountType("all");
     setProgram("all");
+    setSelectedDrugs([]);
   };
 
   const handleImportFromExcel = () => {
@@ -155,6 +157,8 @@ const SupplyPlanning: React.FC = () => {
           onProgramChange={setProgram}
           onClearFilters={handleClearFilters}
           periods={periods}
+          selectedDrugs={selectedDrugs}
+          onDrugsChange={setSelectedDrugs}
         />
       </div>
 
