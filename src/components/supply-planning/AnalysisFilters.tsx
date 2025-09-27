@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X, Plus, Search } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AccountType {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface Product {
+  id: string;
+  canonical_name: string;
+  program?: string;
+  form?: string;
+  strength?: string;
+}
 
 interface AnalysisFiltersProps {
   periodType: string;
@@ -40,35 +55,93 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
   onDrugsChange
 }) => {
   const [drugSearchTerm, setDrugSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
   
   const hasFilters = periodType !== 'monthly' || startingPeriod !== 'hamle-2017' || productType !== 'all' || accountType !== 'all' || program !== 'all' || selectedDrugs.length > 0;
 
-  // Mock drug database - in real app, this would come from your backend
-  const availableDrugs = [
-    'Paracetamol 500mg Tablets',
-    'Amoxicillin 250mg Capsules',
-    'ORS Sachets',
-    'Albendazole 400mg Tablets',
-    'Artesunate + Amodiaquine',
-    'Ciprofloxacin 500mg Tablets',
-    'Cotrimoxazole 480mg Tablets',
-    'Dextrose 5% Solution',
-    'Ferrous Sulfate 200mg Tablets',
-    'Gentamicin 80mg/2ml Injection',
-    'Ibuprofen 400mg Tablets',
-    'Metronidazole 250mg Tablets',
-    'Normal Saline 0.9%',
-    'Oral Contraceptive Pills',
-    'Tetanus Toxoid Vaccine'
-  ];
+  // Fetch account types on component mount
+  useEffect(() => {
+    fetchAccountTypes();
+  }, []);
+
+  // Fetch products when account type changes
+  useEffect(() => {
+    if (accountType && accountType !== 'all') {
+      fetchProductsForAccountType(accountType);
+    } else {
+      fetchAllProducts();
+    }
+  }, [accountType]);
+
+  const fetchAccountTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('account_types')
+        .select('id, name, description')
+        .order('name');
+      
+      if (error) throw error;
+      setAccountTypes(data || []);
+    } catch (error) {
+      console.error('Error fetching account types:', error);
+    }
+  };
+
+  const fetchProductsForAccountType = async (accountTypeId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('account_type_products')
+        .select(`
+          product_reference!inner(
+            id,
+            canonical_name,
+            program,
+            form,
+            strength
+          )
+        `)
+        .eq('account_type_id', accountTypeId);
+      
+      if (error) throw error;
+      const products = data?.map(item => item.product_reference) || [];
+      setAvailableProducts(products);
+    } catch (error) {
+      console.error('Error fetching products for account type:', error);
+      setAvailableProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllProducts = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('product_reference')
+        .select('id, canonical_name, program, form, strength')
+        .eq('active', true)
+        .order('canonical_name');
+      
+      if (error) throw error;
+      setAvailableProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching all products:', error);
+      setAvailableProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDrugSearch = (searchTerm: string) => {
     setDrugSearchTerm(searchTerm);
     if (searchTerm.length > 1) {
-      const filtered = availableDrugs.filter(drug => 
-        drug.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !selectedDrugs.includes(drug)
+      const filtered = availableProducts.filter(product => 
+        product.canonical_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !selectedDrugs.includes(product.canonical_name)
       );
       setSearchResults(filtered.slice(0, 5)); // Show top 5 results
     } else {
@@ -76,9 +149,9 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
     }
   };
 
-  const handleAddDrug = (drug: string) => {
-    if (onDrugsChange && !selectedDrugs.includes(drug)) {
-      onDrugsChange([...selectedDrugs, drug]);
+  const handleAddDrug = (drugName: string) => {
+    if (onDrugsChange && !selectedDrugs.includes(drugName)) {
+      onDrugsChange([...selectedDrugs, drugName]);
     }
     setDrugSearchTerm('');
     setSearchResults([]);
@@ -185,10 +258,11 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               </SelectTrigger>
               <SelectContent className="bg-background border shadow-lg z-50">
                 <SelectItem value="all">All Account Types</SelectItem>
-                <SelectItem value="public">Public Facilities</SelectItem>
-                <SelectItem value="private">Private Facilities</SelectItem>
-                <SelectItem value="ngo">NGO Facilities</SelectItem>
-                <SelectItem value="faith_based">Faith-based Facilities</SelectItem>
+                {accountTypes.map((accountType) => (
+                  <SelectItem key={accountType.id} value={accountType.id}>
+                    {accountType.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -229,9 +303,10 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search for specific drugs to include..."
+                  placeholder={loading ? "Loading products..." : "Search for specific drugs to include..."}
                   value={drugSearchTerm}
                   onChange={(e) => handleDrugSearch(e.target.value)}
+                  disabled={loading}
                   className="pl-9 h-9 border-2"
                 />
               </div>
@@ -239,14 +314,21 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               {/* Search Results Dropdown */}
               {searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
-                  {searchResults.map((drug, index) => (
+                  {searchResults.map((product, index) => (
                     <button
                       key={index}
-                      onClick={() => handleAddDrug(drug)}
+                      onClick={() => handleAddDrug(product.canonical_name)}
                       className="w-full px-3 py-2 text-left text-sm hover:bg-muted/50 flex items-center gap-2 border-b border-border last:border-b-0"
                     >
                       <Plus className="h-3 w-3 text-muted-foreground" />
-                      {drug}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{product.canonical_name}</span>
+                        {(product.form || product.strength) && (
+                          <span className="text-xs text-muted-foreground">
+                            {[product.form, product.strength].filter(Boolean).join(" ")}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>
