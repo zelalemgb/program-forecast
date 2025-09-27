@@ -32,7 +32,8 @@ export const useHistoricalInventoryData = (
   startingPeriod: string = 'hamle-2017',
   productType: string = 'all',
   accountType: string = 'all',
-  program: string = 'all'
+  program: string = 'all',
+  selectedDrugs: string[] = []
 ) => {
   const [historicalData, setHistoricalData] = useState<HistoricalInventoryData[]>([]);
   const [forecastData, setForecastData] = useState<ForecastData[]>([]);
@@ -65,47 +66,97 @@ export const useHistoricalInventoryData = (
       setLoading(true);
       setError(null);
 
+      // First, get the list of product IDs to filter by if account type is selected
+      let allowedProductIds: string[] = [];
+      
+      if (accountType && accountType !== 'all') {
+        const { data: accountTypeProducts, error: accountTypeError } = await supabase
+          .from('account_type_products')
+          .select('product_id')
+          .eq('account_type_id', accountType);
+        
+        if (accountTypeError) throw accountTypeError;
+        allowedProductIds = accountTypeProducts?.map(item => item.product_id) || [];
+        
+        // If no products found for this account type, return empty data
+        if (allowedProductIds.length === 0) {
+          setHistoricalData([]);
+          setForecastData([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Generate date ranges for one year prior to starting period
       const previousYear = parseInt(startingPeriod.split('-')[1]) - 1;
       const previousPeriods = generatePeriodDates(periodType, `hamle-${previousYear}`);
 
-      // Fetch consumption analytics for the previous year with filters
+      // First fetch products to get their names and filter data
+      let productData: Record<string, any> = {};
+      
+      // Get product information based on filters
+      let productQuery = supabase
+        .from('product_reference')
+        .select('id, canonical_name, program, product_type, form, strength')
+        .eq('active', true);
+
+      // Apply account type filter if specified
+      if (allowedProductIds.length > 0) {
+        productQuery = productQuery.in('id', allowedProductIds);
+      }
+
+      // Apply product type filter if specified
+      if (productType !== 'all') {
+        productQuery = productQuery.eq('product_type', productType);
+      }
+
+      // Apply program filter if specified
+      if (program !== 'all') {
+        productQuery = productQuery.eq('program', program);
+      }
+
+      const { data: products, error: productError } = await productQuery;
+      if (productError) throw productError;
+
+      // Create a map of product data for easy lookup
+      products?.forEach(product => {
+        productData[product.id] = product;
+      });
+
+      // Filter by selected drugs if any are specified
+      let filteredProductIds = Object.keys(productData);
+      if (selectedDrugs.length > 0) {
+        filteredProductIds = filteredProductIds.filter(id => 
+          selectedDrugs.includes(productData[id]?.canonical_name || '')
+        );
+      }
+
+      // If no products match our filters, return empty data
+      if (filteredProductIds.length === 0) {
+        setHistoricalData([]);
+        setForecastData([]);
+        setLoading(false);
+        return;
+      }
+
+      // Build the consumption analytics query
       let query = supabase
         .from('consumption_analytics')
         .select('*')
         .eq('facility_id', facilityId)
+        .in('product_id', filteredProductIds)
         .gte('period_start', previousPeriods[0]?.start)
         .lte('period_end', previousPeriods[previousPeriods.length - 1]?.end);
-
-      // Apply filters if they're not 'all'
-      if (productType !== 'all') {
-        // Note: This would require a join with product_reference table in a real implementation
-        // For now, we'll filter after fetching the data
-      }
 
       const { data: consumptionData, error: consumptionError } = await query
         .order('period_start', { ascending: true });
 
       if (consumptionError) throw consumptionError;
 
-      // Apply client-side filters for demo purposes
-      let filteredData = consumptionData || [];
-      
-      if (productType !== 'all') {
-        // In a real implementation, you'd join with product_reference table
-        // For demo, we'll simulate filtering by product type
-        filteredData = filteredData.filter(() => Math.random() > 0.3); // Random filtering for demo
-      }
-
-      if (program !== 'all') {
-        // In a real implementation, you'd filter by program
-        filteredData = filteredData.filter(() => Math.random() > 0.2); // Random filtering for demo
-      }
-
       // Transform consumption data into historical inventory format
-      const historical: HistoricalInventoryData[] = filteredData.map(item => ({
+      const historical: HistoricalInventoryData[] = (consumptionData || []).map(item => ({
         product_id: item.product_id,
-        product_name: `Product ${item.product_id.slice(-6)}`,
+        product_name: productData[item.product_id]?.canonical_name || `Product ${item.product_id.slice(-6)}`,
         period_start: item.period_start,
         period_end: item.period_end,
         beginning_balance: 0, // Would need to calculate from transactions
@@ -170,7 +221,7 @@ export const useHistoricalInventoryData = (
 
   useEffect(() => {
     fetchHistoricalData();
-  }, [facilityId, periodType, startingPeriod, productType, accountType, program]);
+  }, [facilityId, periodType, startingPeriod, productType, accountType, program, selectedDrugs]);
 
   return {
     historicalData,

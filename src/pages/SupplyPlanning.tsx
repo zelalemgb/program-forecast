@@ -38,7 +38,7 @@ const SupplyPlanning: React.FC = () => {
     forecastData, 
     loading, 
     error 
-  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod, productType, accountType, program);
+  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod, productType, accountType, program, selectedDrugs);
 
   // Generate periods based on selection
   const generatePeriods = () => {
