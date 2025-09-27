@@ -57,10 +57,9 @@ const CriticalQuickActions: React.FC = () => {
         {
           title: "Request from Wards",
           icon: Upload,
-          path: "/dagu",
+          path: "/issue-stock",
           description: "Review ward requisitions",
-          badge: requests.length,
-          onClick: () => setShowOutstandingModal(true)
+          badge: requests.length
         },
         {
           title: "Submit Procurement Request",
@@ -172,14 +171,13 @@ const CriticalQuickActions: React.FC = () => {
         description: "Process incoming stock deliveries",
         variant: "default"
       },
-      {
-        title: "Request from Wards",
-        icon: Upload,
-        path: "/dagu",
-        description: "Review ward requisitions",
-        badge: requests.length,
-        onClick: () => setShowOutstandingModal(true)
-      },
+        {
+          title: "Request from Wards",
+          icon: Upload,
+          path: "/issue-stock",
+          description: "Review ward requisitions",
+          badge: requests.length
+        },
       {
         title: "Submit Procurement Request",
         icon: Send,
