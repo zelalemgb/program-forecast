@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { TodayTriagePanel } from "@/components/dashboard/TodayTriagePanel";
 import { InboxPanel } from "@/components/dashboard/InboxPanel";
-import { TodayQuickStats } from "@/components/inventory/TodayQuickStats";
+import { FacilityKeyMetrics } from "@/components/dashboard/FacilityKeyMetrics";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface SecondaryAction {
@@ -75,6 +75,8 @@ export default function FacilityDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         
+        {/* Key Facility Metrics */}
+        <FacilityKeyMetrics />
 
         {/* Primary Triage Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
