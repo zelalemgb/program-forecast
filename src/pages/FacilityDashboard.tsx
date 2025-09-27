@@ -82,8 +82,6 @@ export default function FacilityDashboard() {
           <InboxPanel />
         </div>
 
-        {/* Today's Stats Overview */}
-        <TodayQuickStats />
 
         {/* Secondary Actions */}
         <Card className="border-muted/40">
