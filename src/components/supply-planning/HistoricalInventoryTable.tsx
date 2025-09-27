@@ -132,12 +132,20 @@ export const HistoricalInventoryTable: React.FC<HistoricalInventoryTableProps> =
                               {periodData?.losses_wastage || '-'}
                             </TableCell>
                             <TableCell className="text-right text-xs border-r font-medium">
-                              {periodData?.consumption || '-'}
+                              {periodData?.no_data ? (
+                                <span className="text-muted-foreground text-xs">No data</span>
+                              ) : (
+                                periodData?.consumption || '-'
+                              )}
                             </TableCell>
                           </>
                         ) : (
                           <TableCell className="text-right text-xs border-r font-medium text-primary">
-                            {periodData?.consumption || '-'}
+                            {periodData?.no_data ? (
+                              <span className="text-muted-foreground text-xs">No data</span>
+                            ) : (
+                              periodData?.consumption || '-'
+                            )}
                           </TableCell>
                         )}
                       </React.Fragment>

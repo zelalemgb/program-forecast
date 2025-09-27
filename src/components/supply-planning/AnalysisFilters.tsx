@@ -36,6 +36,7 @@ interface AnalysisFiltersProps {
   periods: string[];
   selectedDrugs?: string[];
   onDrugsChange?: (drugs: string[]) => void;
+  onLoadProducts?: () => void;
 }
 
 export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
@@ -52,7 +53,8 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
   onClearFilters,
   periods,
   selectedDrugs = [],
-  onDrugsChange
+  onDrugsChange,
+  onLoadProducts
 }) => {
   const [drugSearchTerm, setDrugSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -376,6 +378,17 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Load Products Button */}
+        <div className="flex justify-center pt-4">
+          <Button 
+            onClick={onLoadProducts}
+            className="w-full sm:w-auto px-8 py-2 bg-primary hover:bg-primary/90"
+            disabled={!hasFilters && selectedDrugs.length === 0}
+          >
+            Load Products
+          </Button>
         </div>
       </div>
       </div>

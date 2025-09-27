@@ -37,8 +37,9 @@ const SupplyPlanning: React.FC = () => {
     historicalData, 
     forecastData, 
     loading, 
-    error 
-  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod, productType, accountType, program, selectedDrugs);
+    error,
+    refreshData
+  } = useHistoricalInventoryData(facility?.facility_id, periodType, startingPeriod, productType, accountType, program, selectedDrugs, false);
 
   // Generate periods based on selection
   const generatePeriods = () => {
@@ -123,6 +124,10 @@ const SupplyPlanning: React.FC = () => {
     input.click();
   };
 
+  const handleLoadProducts = () => {
+    refreshData();
+  };
+
   const actions = (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="sm">
@@ -159,6 +164,7 @@ const SupplyPlanning: React.FC = () => {
           periods={periods}
           selectedDrugs={selectedDrugs}
           onDrugsChange={setSelectedDrugs}
+          onLoadProducts={handleLoadProducts}
         />
       </div>
 

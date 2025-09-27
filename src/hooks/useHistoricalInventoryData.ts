@@ -15,6 +15,7 @@ export interface HistoricalInventoryData {
   stockout_days: number;
   losses_wastage: number;
   consumption: number;
+  no_data?: boolean;
 }
 
 export interface ForecastData {
@@ -33,7 +34,8 @@ export const useHistoricalInventoryData = (
   productType: string = 'all',
   accountType: string = 'all',
   program: string = 'all',
-  selectedDrugs: string[] = []
+  selectedDrugs: string[] = [],
+  autoFetch: boolean = false
 ) => {
   const [historicalData, setHistoricalData] = useState<HistoricalInventoryData[]>([]);
   const [forecastData, setForecastData] = useState<ForecastData[]>([]);
@@ -156,28 +158,29 @@ export const useHistoricalInventoryData = (
 
       console.log('Consumption data found:', consumptionData?.length || 0, 'records');
 
-      // If no consumption data is found, create sample data for demo purposes
-      let finalData = consumptionData || [];
+      // If no consumption data is found, show empty state with message
+      let finalData: any[] = consumptionData || [];
       if (finalData.length === 0 && filteredProductIds.length > 0) {
-        console.log('No consumption data found, generating sample data for', filteredProductIds.length, 'products');
+        console.log('No consumption data found for', filteredProductIds.length, 'products');
         
-        // Generate sample consumption data for the filtered products
+        // Create placeholder entries to show products with no data
         finalData = [];
         filteredProductIds.forEach(productId => {
           previousPeriods.forEach((period, index) => {
             finalData.push({
-              id: `sample-${productId}-${index}`,
+              id: `no-data-${productId}-${index}`,
               facility_id: facilityId,
               product_id: productId,
               period_start: period.start,
               period_end: period.end,
-              consumption_quantity: Math.floor(Math.random() * 100) + 20, // Random consumption 20-120
-              adjustments: Math.floor(Math.random() * 10),
-              wastage: Math.floor(Math.random() * 5),
-              stockout_days: Math.floor(Math.random() * 3),
-              amc: Math.floor(Math.random() * 50) + 10, // Average monthly consumption
+              consumption_quantity: 0,
+              adjustments: 0,
+              wastage: 0,
+              stockout_days: 0,
+              amc: 0,
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
+              no_data: true // Flag to indicate no actual data
             });
           });
         });
@@ -189,15 +192,16 @@ export const useHistoricalInventoryData = (
         product_name: productData[item.product_id]?.canonical_name || `Product ${item.product_id.slice(-6)}`,
         period_start: item.period_start,
         period_end: item.period_end,
-        beginning_balance: 0, // Would need to calculate from transactions
-        receipts: 0, // Would need to aggregate receipt transactions
+        beginning_balance: 0,
+        receipts: 0,
         issues: item.consumption_quantity || 0,
         adjustments: item.adjustments || 0,
-        transfers_out: 0, // Would need to aggregate transfer transactions
-        ending_balance: 0, // Would need to calculate
+        transfers_out: 0,
+        ending_balance: 0,
         stockout_days: item.stockout_days || 0,
         losses_wastage: item.wastage || 0,
-        consumption: item.consumption_quantity || 0
+        consumption: item.consumption_quantity || 0,
+        no_data: item.no_data || false
       }));
 
       setHistoricalData(historical);
@@ -250,8 +254,10 @@ export const useHistoricalInventoryData = (
   };
 
   useEffect(() => {
-    fetchHistoricalData();
-  }, [facilityId, periodType, startingPeriod, productType, accountType, program, selectedDrugs]);
+    if (autoFetch) {
+      fetchHistoricalData();
+    }
+  }, [facilityId, periodType, startingPeriod, productType, accountType, program, selectedDrugs, autoFetch]);
 
   return {
     historicalData,

@@ -86,7 +86,11 @@ export const ForecastTable: React.FC<ForecastTableProps> = ({
                     return (
                       <React.Fragment key={periodIndex}>
                         <TableCell className="text-right text-xs font-medium text-primary">
-                          {forecast?.predicted_consumption || '-'}
+                          {forecast?.predicted_consumption === 0 ? (
+                            <span className="text-muted-foreground text-xs">No consumption data available</span>
+                          ) : (
+                            forecast?.predicted_consumption || '-'
+                          )}
                         </TableCell>
                         <TableCell className="text-center text-xs border-r">
                           {forecast ? (
