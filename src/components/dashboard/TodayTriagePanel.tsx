@@ -167,53 +167,67 @@ export const TodayTriagePanel: React.FC = () => {
   }
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          Today's Issues
-        </CardTitle>
+    <Card className="border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-primary" />
+            Today's Triage
+          </CardTitle>
+          <div className="text-sm text-muted-foreground">
+            {new Date().toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })}
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Critical issues requiring immediate attention
+        </p>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {triageItems.map((item) => {
-          const isActive = item.count > 0;
-          return (
-            <div
-              key={item.id}
-              className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-accent/40 hover:bg-accent/60 cursor-pointer' 
-                  : 'bg-muted/20'
-              }`}
-              onClick={isActive ? () => navigate(item.path) : undefined}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className={`h-4 w-4 ${
-                  item.priority === "critical" ? "text-red-500" :
-                  item.priority === "high" ? "text-orange-500" :
-                  item.priority === "medium" ? "text-yellow-600" :
-                  "text-muted-foreground"
-                }`} />
-                <div>
-                  <span className="text-sm font-medium">{item.title}</span>
-                  {!isActive && (
-                    <span className="text-xs text-muted-foreground ml-2">All clear</span>
-                  )}
-                </div>
+      <CardContent className="space-y-3">
+        {triageItems.map((item) => (
+          <div
+            key={item.id}
+            className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-accent/50 ${getPriorityColor(item.priority)}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-background/80">
+                <item.icon className="h-4 w-4" />
               </div>
-              {isActive && (
-                <Badge variant="secondary" className="animate-fade-in">
-                  {item.count}
-                </Badge>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{item.title}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {item.count}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {item.count > 0 && (
+                <Button
+                  size="sm"
+                  variant={getActionVariant(item.priority) as any}
+                  onClick={() => navigate(item.path)}
+                  className="text-xs"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  {item.action}
+                </Button>
               )}
             </div>
-          );
-        })}
+          </div>
+        ))}
         
-        {/* Clean summary */}
-        <div className="pt-3 mt-4 border-t border-border/50">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Total issues</span>
+        {/* Summary footer */}
+        <div className="pt-3 border-t">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Total issues:</span>
             <span className="font-medium">
               {triageItems.reduce((sum, item) => sum + item.count, 0)}
             </span>
