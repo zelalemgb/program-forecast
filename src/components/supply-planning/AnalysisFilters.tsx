@@ -257,23 +257,33 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               </SelectContent>
             </Select>
             
-            <Select value={program} onValueChange={onProgramChange}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Health program" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border shadow-lg z-50">
-                <SelectItem value="all">All Programs</SelectItem>
-                <SelectItem value="maternal_health">Maternal Health</SelectItem>
-                <SelectItem value="child_health">Child Health</SelectItem>
-                <SelectItem value="reproductive_health">Reproductive Health</SelectItem>
-                <SelectItem value="malaria">Malaria Prevention</SelectItem>
-                <SelectItem value="tuberculosis">Tuberculosis Control</SelectItem>
-                <SelectItem value="hiv_aids">HIV/AIDS Prevention</SelectItem>
-                <SelectItem value="nutrition">Nutrition Programs</SelectItem>
-                <SelectItem value="immunization">Immunization</SelectItem>
-                <SelectItem value="emergency">Emergency Response</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={program} onValueChange={onProgramChange}>
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectValue placeholder="Health program" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="all">All Programs</SelectItem>
+                  <SelectItem value="maternal_health">Maternal Health</SelectItem>
+                  <SelectItem value="child_health">Child Health</SelectItem>
+                  <SelectItem value="reproductive_health">Reproductive Health</SelectItem>
+                  <SelectItem value="malaria">Malaria Prevention</SelectItem>
+                  <SelectItem value="tuberculosis">Tuberculosis Control</SelectItem>
+                  <SelectItem value="hiv_aids">HIV/AIDS Prevention</SelectItem>
+                  <SelectItem value="nutrition">Nutrition Programs</SelectItem>
+                  <SelectItem value="immunization">Immunization</SelectItem>
+                  <SelectItem value="emergency">Emergency Response</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button 
+                onClick={onLoadProducts}
+                className="px-4 h-8 text-xs"
+                disabled={!hasFilters && selectedDrugs.length === 0}
+              >
+                Load Products
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -362,17 +372,6 @@ export const AnalysisFilters: React.FC<AnalysisFiltersProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        {/* Load Products Button */}
-        <div className="flex justify-center pt-2">
-          <Button 
-            onClick={onLoadProducts}
-            className="px-8 py-2 h-9"
-            disabled={!hasFilters && selectedDrugs.length === 0}
-          >
-            Load Products
-          </Button>
         </div>
       </div>
 
