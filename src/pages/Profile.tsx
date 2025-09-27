@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserFacility } from "@/hooks/useUserFacility";
+import FacilityCompletenessCard from "@/components/profile/FacilityCompletenessCard";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -46,6 +47,7 @@ const Profile: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { facilityName, facilityType, role, adminLevel, locationDisplay, loading: facilityLoading } = useUserFacility();
+  const [userFacilityId, setUserFacilityId] = React.useState<number | null>(null);
 
   // Profile form state
   const [fullName, setFullName] = React.useState<string>("");
@@ -72,6 +74,23 @@ const Profile: React.FC = () => {
       navigate("/auth");
       return;
     }
+    
+    // Load user's facility ID from user_roles
+    const loadUserRole = async () => {
+      try {
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('facility_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (userRole?.facility_id) {
+          setUserFacilityId(userRole.facility_id);
+        }
+      } catch (error) {
+        console.error('Error loading user role:', error);
+      }
+    };
     
     // Load profile data from profiles table
     const loadProfile = async () => {
@@ -142,6 +161,7 @@ const Profile: React.FC = () => {
       }
     };
     
+    loadUserRole();
     loadProfile();
     loadRegions();
   }, [user, navigate]);
@@ -596,6 +616,11 @@ const Profile: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Facility Profile Completeness Card */}
+        {userFacilityId && (
+          <FacilityCompletenessCard facilityId={userFacilityId} />
+        )}
       </section>
     </main>
   );
