@@ -236,25 +236,25 @@ const CriticalQuickActions: React.FC = () => {
           </div>
         </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {quickTasks.map((task) => {
             const Icon = task.icon;
             return (
               <Button
                 key={task.title}
                 variant={task.variant || "outline"}
-                className="h-auto p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow"
+                className="h-auto min-h-[120px] p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow w-full"
                 onClick={() => handleTaskClick(task)}
               >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span className="font-medium text-sm">{task.title}</span>
+                <div className="flex items-start justify-between w-full mb-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Icon className="w-5 h-5 shrink-0 text-primary" />
+                    <span className="font-medium text-sm leading-tight break-words">{task.title}</span>
                   </div>
                   {task.badge && task.badge > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="ml-auto flex items-center gap-1 text-xs"
+                      className="shrink-0 flex items-center gap-1 text-xs"
                     >
                       <AlertTriangle className="w-3 h-3" />
                       {task.badge}
@@ -262,7 +262,7 @@ const CriticalQuickActions: React.FC = () => {
                   )}
                 </div>
                 {task.description && (
-                  <span className="text-xs text-muted-foreground w-full">
+                  <span className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
                     {task.description}
                   </span>
                 )}
