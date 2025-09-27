@@ -37,10 +37,8 @@ export const TodayTriagePanel: React.FC = () => {
       return {
         stockouts: 0,
         lowStock: 0,
-        incomingASN: 0,
         nearExpiry: 0,
-        overStock: 0,
-        cycleDue: 0
+        overStock: 0
       };
     }
 
@@ -50,20 +48,16 @@ export const TodayTriagePanel: React.FC = () => {
     ).length;
     
     // Mock calculations for demo - in real app these would come from different tables
-    const incomingASN = 3; // From ASN table
     const nearExpiry = Math.floor(balances.length * 0.05); // 5% near expiry
     const overStock = balances.filter(b => 
       b.current_stock > (b.max_level || 1000)
     ).length;
-    const cycleDue = Math.floor(balances.length * 0.1); // 10% due for cycle count
 
     return {
       stockouts,
       lowStock,
-      incomingASN,
       nearExpiry,
-      overStock,
-      cycleDue
+      overStock
     };
   }, [balances]);
 
@@ -89,16 +83,6 @@ export const TodayTriagePanel: React.FC = () => {
       path: "/dagu?filter=lowstock"
     },
     {
-      id: "incoming",
-      title: "Incoming ASN",
-      count: triageStats.incomingASN,
-      priority: "medium",
-      icon: Truck,
-      description: "Advance shipment notifications",
-      action: "Prepare",
-      path: "/dagu?filter=incoming"
-    },
-    {
       id: "nearExpiry",
       title: "Near Expiry",
       count: triageStats.nearExpiry,
@@ -117,16 +101,6 @@ export const TodayTriagePanel: React.FC = () => {
       description: "Items above maximum level",
       action: "Review",
       path: "/dagu?filter=overstock"
-    },
-    {
-      id: "cycleDue",
-      title: "Cycle Count Due",
-      count: triageStats.cycleDue,
-      priority: "medium",
-      icon: Calendar,
-      description: "Items due for physical count",
-      action: "Schedule",
-      path: "/dagu?filter=cycle"
     }
   ];
 

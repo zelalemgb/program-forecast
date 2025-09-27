@@ -53,17 +53,6 @@ export const InboxPanel: React.FC = () => {
       icon: FileText
     },
     {
-      id: "variance",
-      type: "Variance",
-      title: "Cycle Variances",
-      count: 1,
-      priority: "normal",
-      description: "Physical count discrepancies",
-      action: "Investigate",
-      path: "/approvals?type=variance",
-      icon: TrendingUp
-    },
-    {
       id: "transfer",
       type: "Transfer",
       title: "Transfer Requests",
