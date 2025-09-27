@@ -44,7 +44,7 @@ const QuickTasks: React.FC = () => {
               title: "Receive EPSS Stock",
               description: "Process incoming deliveries from EPSS",
               icon: Truck,
-              path: "/inventory",
+              path: "/dashboard", // Inventory management section
               priority: "high",
               category: "daily"
             },
@@ -53,7 +53,7 @@ const QuickTasks: React.FC = () => {
               title: "Approve Dept. Requests",
               description: "Review and approve product requests from departments",
               icon: CheckCircle,
-              path: "/requests",
+              path: "/requests", // Request system
               priority: "high",
               category: "daily"
             },
@@ -62,7 +62,7 @@ const QuickTasks: React.FC = () => {
               title: "Generate RRF",
               description: "Create report & requisition forms for program drugs",
               icon: FileText,
-              path: "/forecast-home",
+              path: "/forecast-home", // Forecasting home
               priority: "medium",
               category: "weekly"
             },
@@ -71,7 +71,7 @@ const QuickTasks: React.FC = () => {
               title: "Ask Forlab.AI",
               description: "Get AI assistance for inventory management",
               icon: MessageSquare,
-              path: "#",
+              path: "#ai-assistant", // Special handling for AI Assistant
               priority: "low",
               category: "daily"
             }
@@ -234,8 +234,14 @@ const QuickTasks: React.FC = () => {
       const aiSection = document.querySelector('[data-ai-assistant]');
       if (aiSection) {
         aiSection.scrollIntoView({ behavior: 'smooth' });
+        // Also focus on the AI input if it exists
+        const aiInput = aiSection.querySelector('input');
+        if (aiInput) {
+          setTimeout(() => aiInput.focus(), 300);
+        }
       }
     } else {
+      // Navigate to the specified path
       navigate(task.path);
     }
   };
