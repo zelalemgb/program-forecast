@@ -64,9 +64,17 @@ const AppShell: React.FC = () => {
           
           <main className="flex-1 overflow-x-auto">
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/role-registration" element={<RoleBasedRegistration />} />
+              <Route path="/role-registration" element={
+                <ProtectedRoute>
+                  <RoleBasedRegistration />
+                </ProtectedRoute>
+              } />
               
               {/* Protected Routes */}
               <Route path="/facility-dashboard" element={
