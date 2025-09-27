@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useOutstandingRequests } from "@/hooks/useOutstandingRequests";
+import OutstandingRequestsModal from "./OutstandingRequestsModal";
 import {
   Package,
   Download,
@@ -14,7 +17,8 @@ import {
   TrendingUp,
   Users,
   Globe,
-  Building
+  Building,
+  AlertTriangle
 } from "lucide-react";
 
 interface QuickTask {
@@ -23,55 +27,55 @@ interface QuickTask {
   path: string;
   description?: string;
   variant?: "default" | "outline" | "secondary";
+  badge?: number;
+  onClick?: () => void;
 }
 
 const CriticalQuickActions: React.FC = () => {
   const navigate = useNavigate();
   const { userRole } = useUserRole();
+  const { requests } = useOutstandingRequests();
+  const [showOutstandingModal, setShowOutstandingModal] = useState(false);
 
   const getTasksByRole = (): QuickTask[] => {
     const role = userRole?.role;
     const adminLevel = userRole?.admin_level;
 
-    // Facility Logistic Officer tasks
+    // Facility Logistic Officer tasks - reordered as requested
     if (role === "viewer" && adminLevel === "logistic_officer") {
       return [
         {
-          title: "Request EPSS Stock",
-          icon: Send,
-          path: "/requests",
-          description: "Submit stock requests to EPSS",
+          title: "Receive Stock",
+          icon: Download,
+          path: "/dagu",
+          description: "Process incoming stock deliveries",
           variant: "default"
         },
         {
-          title: "Receive EPSS Stock",
-          icon: Download,
-          path: "/dagu",
-          description: "Process incoming stock deliveries"
-        },
-        {
-          title: "Approve Dept. Requests",
-          icon: CheckCircle,
-          path: "/approvals",
-          description: "Review department requisitions"
-        },
-        {
-          title: "Transfer Stock",
-          icon: ArrowRightLeft,
-          path: "/dagu",
-          description: "Transfer to other facilities"
-        },
-        {
-          title: "Generate RRF",
-          icon: FileText,
-          path: "/run-forecast",
-          description: "Create program drug reports"
-        },
-        {
-          title: "Issue to Departments",
+          title: "Issue Stock to Wards",
           icon: Upload,
           path: "/dagu",
-          description: "Distribute stock internally"
+          description: "Distribute stock to departments",
+          badge: requests.length,
+          onClick: () => setShowOutstandingModal(true)
+        },
+        {
+          title: "Submit Procurement Request",
+          icon: Send,
+          path: "/requests",
+          description: "Request supplies from EPSS"
+        },
+        {
+          title: "View Reports",
+          icon: FileText,
+          path: "/run-forecast",
+          description: "Generate and view reports"
+        },
+        {
+          title: "View Dashboard",
+          icon: TrendingUp,
+          path: "/dashboard",
+          description: "Access your dashboard"
         }
       ];
     }
@@ -182,8 +186,17 @@ const CriticalQuickActions: React.FC = () => {
 
   const quickTasks = getTasksByRole();
 
-  const handleTaskClick = (path: string) => {
-    navigate(path);
+  const handleTaskClick = (task: QuickTask) => {
+    if (task.onClick) {
+      task.onClick();
+    } else {
+      navigate(task.path);
+    }
+  };
+
+  const handleApproveRequest = (requestId: string) => {
+    // Handle quick approval
+    console.log('Quick approving request:', requestId);
   };
 
   const getRoleTitle = () => {
@@ -203,30 +216,42 @@ const CriticalQuickActions: React.FC = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-2">
-          <Package className="w-5 h-5" />
-          <CardTitle className="text-lg">{getRoleTitle()}</CardTitle>
-        </div>
-      </CardHeader>
+    <>
+      <Card className="w-full">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            <CardTitle className="text-lg">{getRoleTitle()}</CardTitle>
+          </div>
+        </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {quickTasks.map((task) => {
             const Icon = task.icon;
             return (
               <Button
                 key={task.title}
                 variant={task.variant || "outline"}
-                className="h-auto p-4 flex flex-col items-start gap-2 text-left justify-start"
-                onClick={() => handleTaskClick(task.path)}
+                className="h-auto p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow"
+                onClick={() => handleTaskClick(task)}
               >
-                <div className="flex items-center gap-2 w-full">
-                  <Icon className="w-5 h-5 shrink-0" />
-                  <span className="font-medium text-sm">{task.title}</span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="font-medium text-sm">{task.title}</span>
+                  </div>
+                  {task.badge && task.badge > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto flex items-center gap-1 text-xs"
+                    >
+                      <AlertTriangle className="w-3 h-3" />
+                      {task.badge}
+                    </Badge>
+                  )}
                 </div>
                 {task.description && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground w-full">
                     {task.description}
                   </span>
                 )}
@@ -235,7 +260,14 @@ const CriticalQuickActions: React.FC = () => {
           })}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+      
+      <OutstandingRequestsModal
+        open={showOutstandingModal}
+        onOpenChange={setShowOutstandingModal}
+        onApproveRequest={handleApproveRequest}
+      />
+    </>
   );
 };
 

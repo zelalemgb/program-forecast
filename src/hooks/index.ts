@@ -12,6 +12,7 @@ export { useRoleBasedInventoryData } from './useRoleBasedInventoryData';
 export { useRolePermissions } from './useRolePermissions';
 export { useUserFacility } from './useUserFacility';
 export { useUserRole } from './useUserRole';
+export { useOutstandingRequests } from './useOutstandingRequests';
 
 // Re-export toast hook
 export { useToast } from './use-toast';
