@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Download, HelpCircle } from "lucide-react";
 import { RefinedForecastWizard } from "@/components/forecast/RefinedForecastWizard";
 import { PeriodSelector } from "@/components/supply-planning/PeriodSelector";
-import { SupplyPlanningControls } from "@/components/supply-planning/SupplyPlanningControls";
+
 import { HistoricalInventoryTable } from "@/components/supply-planning/HistoricalInventoryTable";
 import { ForecastTable } from "@/components/supply-planning/ForecastTable";
 import { AnalysisFilters } from "@/components/supply-planning/AnalysisFilters";
@@ -158,19 +158,12 @@ const SupplyPlanning: React.FC = () => {
       {/* Compact Controls */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
-          <div className="flex-1">
-            <PeriodSelector
-              periodType={periodType}
-              startingPeriod={startingPeriod}
-              onPeriodTypeChange={setPeriodType}
-              onStartingPeriodChange={setStartingPeriod}
-              periods={periods}
-            />
-          </div>
-          <SupplyPlanningControls
-            manualEntryMode={manualEntryMode}
-            onToggleManualEntry={handleClearAndManualEntry}
-            onImportFromExcel={handleImportFromExcel}
+          <PeriodSelector
+            periodType={periodType}
+            startingPeriod={startingPeriod}
+            onPeriodTypeChange={setPeriodType}
+            onStartingPeriodChange={setStartingPeriod}
+            periods={periods}
           />
         </div>
 
