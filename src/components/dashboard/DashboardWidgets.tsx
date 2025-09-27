@@ -86,6 +86,60 @@ const DashboardWidgets: React.FC = () => {
         </Card>
       </div>
 
+      {/* Key Commodities Status */}
+      <Card className="surface">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Key Commodities Status</CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard">View All</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 font-medium text-muted-foreground">Commodity</th>
+                  <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
+                  <th className="text-center py-2 font-medium text-muted-foreground">Stock Level</th>
+                  <th className="text-center py-2 font-medium text-muted-foreground">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: "Oxytocin", status: "ok", stock: "45 days", trend: "stable" },
+                  { name: "ORS", status: "warning", stock: "12 days", trend: "declining" },
+                  { name: "Amoxicillin", status: "critical", stock: "3 days", trend: "critical" },
+                  { name: "Vaccines", status: "ok", stock: "28 days", trend: "stable" },
+                  { name: "Paracetamol", status: "warning", stock: "8 days", trend: "declining" },
+                  { name: "Iron/Folic", status: "ok", stock: "60 days", trend: "increasing" }
+                ].map((item) => (
+                  <tr key={item.name} className="border-b border-border/40 hover:bg-muted/20">
+                    <td className="py-3 font-medium">{item.name}</td>
+                    <td className="py-3 text-center">
+                      <div className={`status-indicator status-${item.status} mx-auto`}></div>
+                    </td>
+                    <td className="py-3 text-center text-muted-foreground">{item.stock}</td>
+                    <td className="py-3 text-center">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        item.trend === 'increasing' ? 'bg-green-100 text-green-700' :
+                        item.trend === 'declining' ? 'bg-red-100 text-red-700' :
+                        item.trend === 'critical' ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.trend}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* AI Assistant */}
       <Card className="surface-brand">
         <CardHeader>
@@ -186,61 +240,8 @@ const DashboardWidgets: React.FC = () => {
           </Card>
         </div>
 
-        {/* Center & Right columns - Key commodities & Reports */}
+        {/* Center & Right columns - Reports */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Key Commodities */}
-          <Card className="surface">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Key Commodities Status</CardTitle>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/dashboard">View All</Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 font-medium text-muted-foreground">Commodity</th>
-                      <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
-                      <th className="text-center py-2 font-medium text-muted-foreground">Stock Level</th>
-                      <th className="text-center py-2 font-medium text-muted-foreground">Trend</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { name: "Oxytocin", status: "ok", stock: "45 days", trend: "stable" },
-                      { name: "ORS", status: "warning", stock: "12 days", trend: "declining" },
-                      { name: "Amoxicillin", status: "critical", stock: "3 days", trend: "critical" },
-                      { name: "Vaccines", status: "ok", stock: "28 days", trend: "stable" },
-                      { name: "Paracetamol", status: "warning", stock: "8 days", trend: "declining" },
-                      { name: "Iron/Folic", status: "ok", stock: "60 days", trend: "increasing" }
-                    ].map((item) => (
-                      <tr key={item.name} className="border-b border-border/40 hover:bg-muted/20">
-                        <td className="py-3 font-medium">{item.name}</td>
-                        <td className="py-3 text-center">
-                          <div className={`status-indicator status-${item.status} mx-auto`}></div>
-                        </td>
-                        <td className="py-3 text-center text-muted-foreground">{item.stock}</td>
-                        <td className="py-3 text-center">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            item.trend === 'increasing' ? 'bg-green-100 text-green-700' :
-                            item.trend === 'declining' ? 'bg-red-100 text-red-700' :
-                            item.trend === 'critical' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {item.trend}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Recent Reports */}
           <Card className="surface">
