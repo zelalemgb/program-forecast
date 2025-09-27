@@ -199,26 +199,45 @@ const DashboardWidgets: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { name: "Oxytocin", status: "ok", stock: "45 days", trend: "stable" },
-                  { name: "ORS", status: "warning", stock: "12 days", trend: "declining" },
-                  { name: "Amoxicillin", status: "critical", stock: "3 days", trend: "critical" },
-                  { name: "Vaccines", status: "ok", stock: "28 days", trend: "stable" },
-                  { name: "Paracetamol", status: "warning", stock: "8 days", trend: "declining" },
-                  { name: "Iron/Folic", status: "ok", stock: "60 days", trend: "increasing" }
-                ].map((item) => (
-                  <div key={item.name} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm">{item.name}</span>
-                      <div className={`status-indicator status-${item.status}`}></div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      <div>{item.stock} supply</div>
-                      <div className="capitalize">{item.trend}</div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 font-medium text-muted-foreground">Commodity</th>
+                      <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
+                      <th className="text-center py-2 font-medium text-muted-foreground">Stock Level</th>
+                      <th className="text-center py-2 font-medium text-muted-foreground">Trend</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { name: "Oxytocin", status: "ok", stock: "45 days", trend: "stable" },
+                      { name: "ORS", status: "warning", stock: "12 days", trend: "declining" },
+                      { name: "Amoxicillin", status: "critical", stock: "3 days", trend: "critical" },
+                      { name: "Vaccines", status: "ok", stock: "28 days", trend: "stable" },
+                      { name: "Paracetamol", status: "warning", stock: "8 days", trend: "declining" },
+                      { name: "Iron/Folic", status: "ok", stock: "60 days", trend: "increasing" }
+                    ].map((item) => (
+                      <tr key={item.name} className="border-b border-border/40 hover:bg-muted/20">
+                        <td className="py-3 font-medium">{item.name}</td>
+                        <td className="py-3 text-center">
+                          <div className={`status-indicator status-${item.status} mx-auto`}></div>
+                        </td>
+                        <td className="py-3 text-center text-muted-foreground">{item.stock}</td>
+                        <td className="py-3 text-center">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            item.trend === 'increasing' ? 'bg-green-100 text-green-700' :
+                            item.trend === 'declining' ? 'bg-red-100 text-red-700' :
+                            item.trend === 'critical' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {item.trend}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
