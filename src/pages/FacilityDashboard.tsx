@@ -1,603 +1,389 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
-  AlertTriangle, 
-  Package, 
-  TrendingUp, 
-  Truck, 
-  Calendar,
-  CheckCircle,
-  Clock,
-  ArrowRight
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import DataQualityPanel from "@/components/dashboard/DataQualityPanel";
-import BudgetSimulator from "@/components/dashboard/BudgetSimulator";
-import MultiFacilitySwitcher from "@/components/dashboard/MultiFacilitySwitcher";
+import React from "react";
 
-// Types
-interface IdName {
-  id: string;
-  name: string;
-}
+const scenarios = [
+  { key: "INV", title: "Facility – Inventory", desc: "Use issues/consumption from stock to forecast automatically.", time: "~2 min" },
+  { key: "PROGRAM", title: "Program (Morbidity)", desc: "Malaria, RMNCH, HIV, EPI templates with conversion factors.", time: "~3–5 min" },
+  { key: "CAMPAIGN", title: "Campaign/Event", desc: "Forecast for HIV testing month, Measles catch-up, etc.", time: "~5 min" },
+  { key: "NATIONAL", title: "National/Regional Roll-up", desc: "Aggregate facility data or morbidity estimates at scale.", time: "~10+ min" },
+  { key: "CUSTOM", title: "Custom Data Source", desc: "Upload CSV or connect DHIS2/service statistics.", time: "~3–5 min" }
+] as const;
 
-interface RiskItem {
-  productId: string;
-  productName: string;
-  soh: number;
-  amc: number;
-  daysOfStock: number;
-  priority: 'A' | 'B' | 'C';
-}
+type ScenarioKey = (typeof scenarios)[number]["key"];
 
-interface RiskMetric {
-  count: number;
-  items: RiskItem[];
-}
-
-interface IncomingShipment {
-  asn: string;
-  lines: { productId: string; productName: string; qty: number }[];
-}
-
-interface AlertChip {
-  label: string;
-  count: number;
-  type: 'near-expiry' | 'over-stock' | 'cycle-count';
-}
-
-interface TodayStripData {
-  stockoutsNow: RiskMetric;
-  lowStockRisk: RiskMetric;
-  incomingFromEPSS: IncomingShipment[];
-  alerts: AlertChip[];
-}
-
-interface RrfParams {
-  reviewCycle: 'M' | 'B' | 'Q';
-  leadTimeDays: number;
-  safetyDays: number;
-  horizonMonths: number;
-}
-
-interface RrfPreview {
-  requestId?: string;
-  items: { productId: string; productName: string; soh: number; amc: number; suggestedQty: number }[];
-}
-
-interface CommittedDemandConfig {
-  contractId?: string;
-  budget: number;
-  currency: string;
-  capped: boolean;
-}
-
-interface InventoryForecastCard {
-  productId: string;
-  productName: string;
-  next3Months: number[];
-  reason: string;
-}
-
-interface InventoryForecastData {
-  program: 'ALL' | 'LAB' | 'RMNCH' | 'EPI' | 'ART';
-  items: InventoryForecastCard[];
-}
-
-interface MorbidityForecastData {
-  condition: 'MALARIA' | 'TB' | 'HIV' | 'OTHER';
-  params: Record<string, number>;
-  outputs: { productId: string; productName: string; forecastQty: number }[];
-}
-
-interface QuickStartTemplate {
-  label: string;
-  templateKey: 'LAB_STARTER' | 'RMNCH_STARTER' | 'EPI_STARTER';
-  defaults: Record<string, number>;
-}
-
-interface SupplyScorecard {
-  facilityScore: number;
-  fillRate: number;
-  leadTimeDays: number;
-  stockAccuracy: number;
-  expiryRisk: number;
-  serviceLevel: number;
-}
-
-// UI Components
-const Section: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({ 
-  title, 
-  children, 
-  right 
-}) => (
-  <Card className="surface border-border/50">
-    <CardContent className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        {right}
-      </div>
-      {children}
-    </CardContent>
-  </Card>
+const BtnStyles: React.FC = () => (
+  <style>{`.btn{padding:.5rem .75rem;border-radius:.75rem;background:#111827;color:#fff;font-size:.875rem} .btn:hover{background:#000}`}</style>
 );
 
-const KPI: React.FC<{ label: string; value: string; hint?: string }> = ({ label, value, hint }) => (
-  <div className="flex flex-col space-y-1">
-    <div className="text-2xl font-semibold text-foreground">{value}</div>
-    <div className="text-muted-foreground text-sm">
-      {label}
-      {hint && <span className="text-muted-foreground/70"> · {hint}</span>}
+type IntentModalProps = {
+  onSelect: (key: ScenarioKey) => void;
+};
+
+function IntentModal({ onSelect }: IntentModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+      <div className="bg-white w-full max-w-3xl rounded-2xl p-6 shadow-xl">
+        <h2 className="text-xl font-semibold mb-4">What do you want to forecast today?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {scenarios.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => onSelect(s.key)}
+              className="p-4 rounded-xl border border-gray-200 hover:border-gray-400 text-left bg-gray-50 hover:bg-gray-100"
+            >
+              <div className="font-medium text-gray-900">{s.title}</div>
+              <div className="text-sm text-gray-600 mt-1">{s.desc}</div>
+              <div className="text-xs text-gray-400 mt-1">{s.time}</div>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 text-right">
+          <button className="btn" onClick={() => onSelect("INV")}>Skip (Expert Mode)</button>
+        </div>
+      </div>
     </div>
+  );
+}
+
+type WizardProps = {
+  scenario: ScenarioKey;
+  onClose: () => void;
+};
+
+function Wizard({ scenario, onClose }: WizardProps) {
+  const [step, setStep] = React.useState(1);
+  const next = () => setStep((s) => Math.min(5, s + 1));
+  const back = () => setStep((s) => Math.max(1, s - 1));
+
+  const StepBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">{children}</div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-white overflow-auto p-6 z-40">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">{scenario} Forecast Wizard</h2>
+          <button className="px-3 py-1 rounded-lg bg-gray-100" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <div
+              key={n}
+              className={`px-3 py-1 rounded-full ${step === n ? "bg-gray-900 text-white" : "bg-gray-100"}`}
+            >
+              Step {n}
+            </div>
+          ))}
+        </div>
+
+        {step === 1 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 1 – Scope</h3>
+            <p className="text-sm text-gray-600">Choose level (Facility/National), program, time horizon.</p>
+          </StepBox>
+        )}
+        {step === 2 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 2 – Data source</h3>
+            <p className="text-sm text-gray-600">Select inventory, service stats, morbidity, or upload CSV.</p>
+          </StepBox>
+        )}
+        {step === 3 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 3 – Assumptions</h3>
+            <p className="text-sm text-gray-600">
+              Lead time, service level, wastage, seasonality. Program templates add specific inputs (e.g., malaria positivity).
+            </p>
+          </StepBox>
+        )}
+        {step === 4 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 4 – Review & warnings</h3>
+            <p className="text-sm text-gray-600">Show formulas, data quality flags, missing data prompts.</p>
+          </StepBox>
+        )}
+        {step === 5 && (
+          <StepBox>
+            <h3 className="font-medium mb-2">Step 5 – Outputs & actions</h3>
+            <p className="text-sm text-gray-600">
+              Forecast table & charts, export RRF/procurement, budget simulator slider.
+            </p>
+          </StepBox>
+        )}
+
+        <div className="flex justify-between">
+          <button onClick={back} disabled={step === 1} className="px-4 py-2 bg-gray-100 rounded-xl">
+            Back
+          </button>
+          {step < 5 && (
+            <button onClick={next} className="btn">
+              Next
+            </button>
+          )}
+          {step === 5 && (
+            <button onClick={onClose} className="px-4 py-2 bg-emerald-600 text-white rounded-xl">
+              Save &amp; Close
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type KpiItem = {
+  label: string;
+  value: string;
+};
+
+const Kpi: React.FC<KpiItem> = ({ label, value }) => (
+  <div className="p-3 bg-white rounded-xl border border-gray-200">
+    <div className="text-2xl font-semibold text-gray-900">{value}</div>
+    <div className="text-sm text-gray-500">{label}</div>
   </div>
 );
 
-const ActionChip: React.FC<{ text: string; onClick?: () => void }> = ({ text, onClick }) => (
-  <Badge 
-    variant="secondary" 
-    className="cursor-pointer hover:bg-accent/80 transition-colors mr-2 mb-2"
-    onClick={onClick}
-  >
-    {text}
-  </Badge>
+const KpiStrip: React.FC<{ kpis: KpiItem[] }> = ({ kpis }) => (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {kpis.map((k, i) => (
+      <Kpi key={i} label={k.label} value={k.value} />
+    ))}
+  </div>
 );
 
-// Dashboard Sections
-const TodayStrip: React.FC<{
-  data: TodayStripData;
-  onOpenStockouts: () => void;
-  onOpenRiskList: () => void;
-  onOpenIncoming: () => void;
-  onOpenAlert: (chip: AlertChip) => void;
-}> = ({ data, onOpenStockouts, onOpenRiskList, onOpenIncoming, onOpenAlert }) => {
-  const incomingCount = data.incomingFromEPSS.reduce((acc, s) => acc + s.lines.length, 0);
-  
-  return (
-    <Section title="Today's Overview">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <Button
-          variant="outline"
-          onClick={onOpenStockouts}
-          className="h-auto p-4 text-left justify-start border-status-critical/20 bg-status-critical/5 hover:bg-status-critical/10"
-        >
-          <div className="flex items-center space-x-3 w-full">
-            <AlertTriangle className="h-5 w-5 text-status-critical" />
-            <KPI label="Stockouts now" value={`${data.stockoutsNow.count}`} hint="tap to view" />
-          </div>
-        </Button>
-        
-        <Button
-          variant="outline"
-          onClick={onOpenRiskList}
-          className="h-auto p-4 text-left justify-start border-status-warning/20 bg-status-warning/5 hover:bg-status-warning/10"
-        >
-          <div className="flex items-center space-x-3 w-full">
-            <Clock className="h-5 w-5 text-status-warning" />
-            <KPI label="Low stock risk (<15d)" value={`${data.lowStockRisk.count}`} hint="tap to view" />
-          </div>
-        </Button>
-        
-        <Button
-          variant="outline"
-          onClick={onOpenIncoming}
-          className="h-auto p-4 text-left justify-start border-status-ok/20 bg-status-ok/5 hover:bg-status-ok/10"
-        >
-          <div className="flex items-center space-x-3 w-full">
-            <Truck className="h-5 w-5 text-status-ok" />
-            <KPI label="Incoming this week" value={`${incomingCount}`} hint="tap to pre-fill GRN" />
-          </div>
-        </Button>
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
-        {data.alerts.map((alert) => (
-          <ActionChip
-            key={alert.label}
-            text={`${alert.label} (${alert.count})`}
-            onClick={() => onOpenAlert(alert)}
-          />
-        ))}
-      </div>
-    </Section>
-  );
+type ForecastHistory = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  accuracy?: number;
+  updated: string;
 };
 
-const RefillStrip: React.FC<{
-  onGenerateRRF: (params: RrfParams) => void;
-  onCommittedDemand: (cfg: CommittedDemandConfig) => void;
-  onTransferWizard: () => void;
-  lastPreview?: RrfPreview;
-}> = ({ onGenerateRRF, onCommittedDemand, onTransferWizard, lastPreview }) => {
-  const defaultParams: RrfParams = { reviewCycle: 'M', leadTimeDays: 30, safetyDays: 15, horizonMonths: 3 };
-  const defaultCommit: CommittedDemandConfig = { budget: 250000, currency: 'ETB', capped: true };
-  
-  return (
-    <Section title="Refill & RRF">
-      <div className="flex flex-wrap gap-3 mb-4">
-        <Button onClick={() => onGenerateRRF(defaultParams)} className="bg-brand hover:bg-brand/90">
-          <Package className="h-4 w-4 mr-2" />
-          Generate RRF
-        </Button>
-        <Button variant="outline" onClick={() => onCommittedDemand(defaultCommit)}>
-          Committed-Demand Refill
-        </Button>
-        <Button variant="outline" onClick={onTransferWizard}>
-          <ArrowRight className="h-4 w-4 mr-2" />
-          Transfer Wizard
-        </Button>
-      </div>
-      
-      {lastPreview && (
-        <div className="border border-border rounded-lg p-4 bg-muted/30">
-          <div className="text-sm text-muted-foreground mb-3">Last RRF Preview</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-muted-foreground border-b border-border">
-                  <th className="text-left py-2">Product</th>
-                  <th className="text-right py-2">SOH</th>
-                  <th className="text-right py-2">AMC</th>
-                  <th className="text-right py-2">Suggested</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lastPreview.items.slice(0, 6).map((item) => (
-                  <tr key={item.productId} className="border-b border-border/50">
-                    <td className="py-2">{item.productName}</td>
-                    <td className="text-right py-2">{item.soh}</td>
-                    <td className="text-right py-2">{item.amc}</td>
-                    <td className="text-right py-2 font-medium">{item.suggestedQty}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </Section>
-  );
+type HistoryListProps = {
+  items: ForecastHistory[];
+  onOpen: (id: string) => void;
 };
 
-const ForecastStrip: React.FC<{
-  inventory: InventoryForecastData;
-  morbidity: MorbidityForecastData;
-  quickStarts: QuickStartTemplate[];
-  onUseForRRF: (productIds: string[]) => void;
-  onEditAssumptions: () => void;
-}> = ({ inventory, morbidity, quickStarts, onUseForRRF, onEditAssumptions }) => {
-  const [activeTab, setActiveTab] = useState<'INV' | 'MORB' | 'QS'>('INV');
-  
-  const TabButton: React.FC<{ id: 'INV' | 'MORB' | 'QS'; label: string }> = ({ id, label }) => (
-    <Button
-      variant={activeTab === id ? "default" : "outline"}
-      size="sm"
-      onClick={() => setActiveTab(id)}
-      className={cn(
-        "transition-all",
-        activeTab === id && "bg-brand hover:bg-brand/90"
-      )}
-    >
-      {label}
-    </Button>
-  );
-  
+function HistoryList({ items, onOpen }: HistoryListProps) {
   return (
-    <Section
-      title="Forecasting"
-      right={
-        <div className="flex items-center gap-2">
-          <TabButton id="INV" label="Inventory" />
-          <TabButton id="MORB" label="Program" />
-          <TabButton id="QS" label="Templates" />
-        </div>
-      }
-    >
-      {activeTab === 'INV' && (
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">Program: {inventory.program}</div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {inventory.items.slice(0, 6).map((card) => (
-              <Card key={card.productId} className="border-border/50">
-                <CardContent className="p-4">
-                  <div className="font-medium text-foreground mb-2">{card.productName}</div>
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Next 3 months: {card.next3Months.join(' → ')}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{card.reason}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={() => onUseForRRF(inventory.items.map(i => i.productId))}>
-              Use for RRF
-            </Button>
-            <Button variant="outline" onClick={onEditAssumptions}>
-              Edit Assumptions
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'MORB' && (
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            Condition: {morbidity.condition}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Inputs: {Object.entries(morbidity.params).map(([k, v]) => `${k}=${v}`).join(', ')}
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-muted-foreground border-b border-border">
-                  <th className="text-left py-2">Product</th>
-                  <th className="text-right py-2">Forecast Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {morbidity.outputs.slice(0, 8).map((output) => (
-                  <tr key={output.productId} className="border-b border-border/50">
-                    <td className="py-2">{output.productName}</td>
-                    <td className="text-right py-2 font-medium">{output.forecastQty}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Button onClick={() => onUseForRRF(morbidity.outputs.map(o => o.productId))}>
-            Apply to Forecast
-          </Button>
-        </div>
-      )}
-
-      {activeTab === 'QS' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickStarts.map((template) => (
-            <Card key={template.templateKey} className="border-border/50 hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <div className="font-medium text-foreground mb-2">{template.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  Defaults: {Object.keys(template.defaults).slice(0, 4).join(', ')}...
+    <div className="p-4 bg-white rounded-2xl border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-medium">Recent Forecasts</h3>
+        <button className="text-sm underline" onClick={() => window.alert("Open full history")}>View all</button>
+      </div>
+      {items.length === 0 ? (
+        <div className="text-sm text-gray-500">No forecasts yet</div>
+      ) : (
+        <div className="divide-y">
+          {items.slice(0, 5).map((it) => (
+            <div key={it.id} className="py-2 flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-900">
+                  {it.name} <span className="text-xs text-gray-500">· {it.type} · {it.status}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-xs text-gray-500">
+                  Updated {it.updated}
+                  {it.accuracy != null ? ` · Accuracy ${it.accuracy}%` : ""}
+                </div>
+              </div>
+              <button className="btn" onClick={() => onOpen(it.id)}>
+                Open
+              </button>
+            </div>
           ))}
         </div>
       )}
-    </Section>
+    </div>
   );
+}
+
+type DataQualityIssue = {
+  id: string;
+  label: string;
+  fix: string;
 };
 
-const SupplyHealth: React.FC<{ score: SupplyScorecard }> = ({ score }) => {
-  const pct = (n: number) => `${Math.round(n * 100)}%`;
-  const getScoreColor = () => {
-    if (score.facilityScore >= 85) return 'bg-status-ok';
-    if (score.facilityScore >= 60) return 'bg-status-warning';
-    return 'bg-status-critical';
-  };
-  
+type DataQualityCardProps = {
+  issues: DataQualityIssue[];
+  score: number;
+  onFix: (id: string) => void;
+};
+
+function DataQualityCard({ issues, score, onFix }: DataQualityCardProps) {
   return (
-    <Section title="Supply Chain Health">
-      <div className="space-y-4">
-        <div>
-          <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-            <div 
-              className={cn("h-full transition-all", getScoreColor())} 
-              style={{ width: `${score.facilityScore}%` }} 
-            />
-          </div>
-          <div className="mt-2 text-sm text-muted-foreground">
-            Facility Supply Score: <span className="font-medium text-foreground">{score.facilityScore}</span>/100
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <KPI label="Fill rate" value={pct(score.fillRate)} />
-          <KPI label="Lead time" value={`${score.leadTimeDays}d`} />
-          <KPI label="Stock accuracy" value={pct(score.stockAccuracy)} />
-          <KPI label="Expiry risk" value={pct(score.expiryRisk)} />
-          <KPI label="Service level (A)" value={pct(score.serviceLevel)} />
-        </div>
+    <div className="p-4 bg-white rounded-2xl border border-gray-200">
+      <h3 className="font-medium mb-2">Data Readiness</h3>
+      <div className="mb-2 text-sm text-gray-600">
+        Score: <span className="font-medium text-gray-900">{score}%</span>
       </div>
-    </Section>
-  );
-};
-
-const AssistantStrip: React.FC<{
-  onAsk: (prompt: string) => void;
-  suggestions: string[];
-}> = ({ onAsk, suggestions }) => {
-  const [query, setQuery] = useState("");
-  
-  return (
-    <Section title="Ask Forlab.ai Assistant">
-      <div className="space-y-4">
-        <div className="flex gap-3">
-          <Input
-            className="flex-1"
-            placeholder="Ask about RRF, forecast, near-expiry, budget…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onAsk(query);
-                setQuery("");
-              }
-            }}
-          />
-          <Button 
-            onClick={() => { onAsk(query); setQuery(""); }}
-            className="bg-brand hover:bg-brand/90"
-          >
-            Ask
-          </Button>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          {suggestions.map((suggestion, i) => (
-            <ActionChip
-              key={i}
-              text={suggestion}
-              onClick={() => onAsk(suggestion)}
-            />
+      {issues.length === 0 ? (
+        <div className="text-sm text-gray-500">All good 🎉</div>
+      ) : (
+        <div className="space-y-2">
+          {issues.map((i) => (
+            <div
+              key={i.id}
+              className="flex items-center justify-between p-2 bg-amber-50 border border-amber-200 rounded-xl"
+            >
+              <div className="text-sm text-amber-900">{i.label}</div>
+              <button className="btn" onClick={() => onFix(i.id)}>
+                {i.fix}
+              </button>
+            </div>
           ))}
         </div>
-      </div>
-    </Section>
+      )}
+    </div>
   );
+}
+
+type AccuracyPoint = {
+  cycle: string;
+  mape: number;
 };
 
-// Mock Data
-const exampleToday: TodayStripData = {
-  stockoutsNow: { 
-    count: 3, 
-    items: [
-      { productId: 'p1', productName: 'RDT Malaria', soh: 0, amc: 120, daysOfStock: 0, priority: 'A' },
-      { productId: 'p2', productName: 'ACT (Artemether-Lumefantrine)', soh: 0, amc: 80, daysOfStock: 0, priority: 'A' },
-      { productId: 'p3', productName: 'Paracetamol 500mg', soh: 0, amc: 300, daysOfStock: 0, priority: 'B' }
-    ]
-  },
-  lowStockRisk: { 
-    count: 6, 
-    items: [
-      { productId: 'p4', productName: 'Oxytocin inj', soh: 150, amc: 400, daysOfStock: 11, priority: 'A' },
-      { productId: 'p5', productName: 'HIV Test Kit', soh: 60, amc: 120, daysOfStock: 15, priority: 'A' }
-    ]
-  },
-  incomingFromEPSS: [
-    { 
-      asn: 'ASN-24873', 
-      lines: [
-        { productId: 'p4', productName: 'Oxytocin inj', qty: 200 }, 
-        { productId: 'p6', productName: 'Ceftriaxone 1g', qty: 100 }
-      ] 
-    },
-    { 
-      asn: 'ASN-24874', 
-      lines: [{ productId: 'p7', productName: 'Syringe 5ml', qty: 500 }] 
-    }
-  ],
-  alerts: [
-    { label: 'Near-expiry in 60 days', count: 7, type: 'near-expiry' },
-    { label: 'Over-stocked', count: 5, type: 'over-stock' },
-    { label: 'Cycle-count due (Lab)', count: 1, type: 'cycle-count' }
-  ]
+type AccuracyCardProps = {
+  series: AccuracyPoint[];
 };
 
-const exampleRrfPreview: RrfPreview = {
-  requestId: 'REQ-001',
-  items: [
-    { productId: 'p1', productName: 'RDT Malaria', soh: 0, amc: 120, suggestedQty: 450 },
-    { productId: 'p2', productName: 'ACT (AL)', soh: 20, amc: 80, suggestedQty: 250 },
-    { productId: 'p3', productName: 'Paracetamol 500mg', soh: 30, amc: 300, suggestedQty: 900 }
-  ]
+function AccuracyCard({ series }: AccuracyCardProps) {
+  return (
+    <div className="p-4 bg-white rounded-2xl border border-gray-200">
+      <h3 className="font-medium mb-2">Forecast Accuracy</h3>
+      <div className="text-xs text-gray-500 mb-2">MAPE by cycle</div>
+      <ul className="text-sm text-gray-700 space-y-1">
+        {series.map((s) => (
+          <li key={s.cycle} className="flex items-center justify-between">
+            <span>{s.cycle}</span>
+            <span className="font-medium">{s.mape}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+type QuickActionsProps = {
+  onNew: () => void;
+  onRRF: () => void;
+  onCDSS: () => void;
+  onNonCDSS: () => void;
+  onProgram: () => void;
+  onImport: () => void;
 };
 
-const exampleInventoryForecast: InventoryForecastData = {
-  program: 'RMNCH',
-  items: [
-    { productId: 'p4', productName: 'Oxytocin inj', next3Months: [420, 440, 460], reason: '↑ +5% seasonal trend' },
-    { productId: 'p8', productName: 'Magnesium sulphate', next3Months: [140, 145, 150], reason: 'Stable demand' },
-    { productId: 'p9', productName: 'Misoprostol 200mcg', next3Months: [220, 230, 240], reason: '↑ gradual uptake' }
-  ]
+function QuickActions({ onNew, onRRF, onCDSS, onNonCDSS, onProgram, onImport }: QuickActionsProps) {
+  const Btn: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
+    <button className="btn" onClick={onClick}>
+      {label}
+    </button>
+  );
+  return (
+    <div className="p-4 bg-white rounded-2xl border border-gray-200">
+      <h3 className="font-medium mb-3">Quick Actions</h3>
+      <div className="flex flex-wrap gap-2">
+        <Btn label="New Forecast" onClick={onNew} />
+        <Btn label="Generate RRF" onClick={onRRF} />
+        <Btn label="Conduct CDSS Forecast" onClick={onCDSS} />
+        <Btn label="Conduct Non‑CDSS Forecast" onClick={onNonCDSS} />
+        <Btn label="Conduct Program Forecast" onClick={onProgram} />
+        <Btn label="Import / Upload Forecast" onClick={onImport} />
+      </div>
+    </div>
+  );
+}
+
+type ForecastingHomeProps = {
+  onNew: () => void;
+  onOpenForecast: (id: string) => void;
 };
 
-const exampleMorbidity: MorbidityForecastData = {
-  condition: 'MALARIA',
-  params: { suspectedCases: 1200, testRate: 0.92, positivity: 0.18, treatmentRate: 0.98 },
-  outputs: [
-    { productId: 'p1', productName: 'RDT Malaria', forecastQty: 1104 },
-    { productId: 'p2', productName: 'ACT (AL)', forecastQty: 212 }
-  ]
-};
-
-const exampleQuickStarts: QuickStartTemplate[] = [
-  { label: 'Lab – CBC & Reagents starter', templateKey: 'LAB_STARTER', defaults: { months: 3, leadTimeDays: 30, serviceLevel: 0.9 } },
-  { label: 'RMNCH – Delivery bundle', templateKey: 'RMNCH_STARTER', defaults: { months: 3, leadTimeDays: 25, serviceLevel: 0.95 } },
-  { label: 'EPI – Cold chain essentials', templateKey: 'EPI_STARTER', defaults: { months: 6, leadTimeDays: 45, serviceLevel: 0.95 } },
-];
-
-const exampleScore: SupplyScorecard = {
-  facilityScore: 78,
-  fillRate: 0.86,
-  leadTimeDays: 18,
-  stockAccuracy: 0.93,
-  expiryRisk: 0.07,
-  serviceLevel: 0.88
-};
-
-const exampleSuggestions = [
-  'Why did paracetamol forecast increase this month?',
-  'Prepare RRF for RMNCH using last 6 months and 30-day lead time.',
-  'Show items I can transfer from OPD to IPD to avoid expiry.',
-  'Simulate 20% budget cut impact on A-class items.'
-];
-
-// Main Component
-export default function FacilityDashboard() {
-  const handleAction = (action: string, data?: any) => {
-    console.log(`Action: ${action}`, data);
-    // Toast notification would go here
-  };
+function ForecastingHome({ onNew, onOpenForecast }: ForecastingHomeProps) {
+  const kpis: KpiItem[] = [
+    { label: "Forecasts done", value: "12" },
+    { label: "Avg. Accuracy", value: "84%" },
+    { label: "Data Completeness", value: "92%" },
+    { label: "Programs Covered", value: "3" }
+  ];
+  const history: ForecastHistory[] = [
+    { id: "F-102", name: "RMNCH Q3", type: "Program", status: "Approved", accuracy: 82, updated: "3 days ago" },
+    { id: "F-101", name: "Facility RRF Aug", type: "CDSS", status: "Submitted", accuracy: 88, updated: "2 weeks ago" },
+    { id: "F-100", name: "Malaria Jun–Aug", type: "Program", status: "Draft", updated: "1 month ago" }
+  ];
+  const dq: DataQualityIssue[] = [
+    { id: "dq1", label: "2 months missing consumption for Oxytocin", fix: "Add data" },
+    { id: "dq2", label: "Negative stock for Ceftriaxone (-4)", fix: "Open stock card" }
+  ];
+  const mapeSeries: AccuracyPoint[] = [
+    { cycle: "Q1", mape: 18 },
+    { cycle: "Q2", mape: 15 },
+    { cycle: "Q3", mape: 14 }
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-wide space-y-6 py-6">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <BtnStyles />
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-baseline justify-between">
-          <h1 className="text-responsive-xl font-semibold text-foreground">Facility Dashboard</h1>
-          <div className="text-responsive-sm text-muted-foreground">
-            Unified health facility commodity management
-          </div>
+          <h1 className="text-2xl font-semibold text-gray-900">Forecasting – Home</h1>
+          <button className="btn" onClick={onNew}>
+            New Forecast
+          </button>
         </div>
-
-        {/* Multi-Facility Switcher - For district/regional managers */}
-        <MultiFacilitySwitcher />
-
-        <TodayStrip
-          data={exampleToday}
-          onOpenStockouts={() => handleAction('Open stockouts list')}
-          onOpenRiskList={() => handleAction('Open low-stock risk list')}
-          onOpenIncoming={() => handleAction('Open incoming shipments')}
-          onOpenAlert={(chip) => handleAction('Open alert', chip)}
-        />
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Main content area */}
-          <div className="xl:col-span-2 space-y-6">
-            <RefillStrip
-              onGenerateRRF={(params) => handleAction('Generate RRF', params)}
-              onCommittedDemand={(cfg) => handleAction('Committed-demand refill', cfg)}
-              onTransferWizard={() => handleAction('Open transfer wizard')}
-              lastPreview={exampleRrfPreview}
-            />
-
-            <ForecastStrip
-              inventory={exampleInventoryForecast}
-              morbidity={exampleMorbidity}
-              quickStarts={exampleQuickStarts}
-              onUseForRRF={(ids) => handleAction('Use products for RRF', ids)}
-              onEditAssumptions={() => handleAction('Edit assumptions')}
-            />
-
-            <SupplyHealth score={exampleScore} />
-
-            <AssistantStrip
-              onAsk={(query) => handleAction('Ask Forlab.ai', query)}
-              suggestions={exampleSuggestions}
+        <KpiStrip kpis={kpis} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 space-y-4">
+            <HistoryList items={history} onOpen={onOpenForecast} />
+            <QuickActions
+              onNew={onNew}
+              onRRF={() => window.alert("Generate RRF")}
+              onCDSS={() => window.alert("CDSS Forecast")}
+              onNonCDSS={() => window.alert("Non-CDSS Forecast")}
+              onProgram={() => window.alert("Program Forecast: Malaria, RMNCH, HIV, EPI, Lab")}
+              onImport={() => window.alert("Import from CSV/DHIS2")}
             />
           </div>
-
-          {/* Side panel */}
-          <div className="space-y-6">
-            <DataQualityPanel />
-            <BudgetSimulator />
+          <div className="space-y-4">
+            <DataQualityCard issues={dq} score={91} onFix={(id) => window.alert("Fix " + id)} />
+            <AccuracyCard series={mapeSeries} />
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+type FacilityDashboardMode = "home" | "wizard";
+
+export default function FacilityDashboard() {
+  const [mode, setMode] = React.useState<FacilityDashboardMode>("home");
+  const [scenario, setScenario] = React.useState<ScenarioKey | null>(null);
+
+  return (
+    <div>
+      {mode === "home" && (
+        <ForecastingHome
+          onNew={() => setMode("wizard")}
+          onOpenForecast={(id) => window.alert("Open forecast " + id)}
+        />
+      )}
+      {mode === "wizard" && (
+        <>
+          {!scenario && <IntentModal onSelect={(key) => setScenario(key)} />}
+          {scenario && (
+            <Wizard
+              scenario={scenario}
+              onClose={() => {
+                setScenario(null);
+                setMode("home");
+              }}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
