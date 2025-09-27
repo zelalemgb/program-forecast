@@ -58,6 +58,7 @@ const WoredasDashboard = lazy(() => import("./pages/WoredasDashboard"));
 const ZoneDashboard = lazy(() => import("./pages/ZoneDashboard"));
 const RegionalDashboard = lazy(() => import("./pages/RegionalDashboard"));
 const NationalDashboard = lazy(() => import("./pages/NationalDashboard"));
+const ReceiveStock = lazy(() => import("./pages/ReceiveStock"));
 const RoleBasedRegistration = lazy(
   () => import("./pages/RoleBasedRegistration"),
 );
@@ -94,6 +95,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/dagu", Component: Dagu, isProtected: true },
   { path: "/supply-planning", Component: SupplyPlanning, isProtected: true },
   { path: "/budget-alignment", Component: BudgetAlignment, isProtected: true },
+  { path: "/receive-stock", Component: ReceiveStock, isProtected: true },
   { path: "/validation", Component: Validation, isProtected: true },
   { path: "/profile", Component: Profile, isProtected: true },
   { path: "/register", Component: RegisterFacility, isProtected: true },

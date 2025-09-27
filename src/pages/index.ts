@@ -17,6 +17,7 @@ export { default as NotFound } from './NotFound';
 export { default as Profile } from './Profile';
 export { default as PublicLanding } from './PublicLanding';
 export { default as RegionalDashboard } from './RegionalDashboard';
+export { default as ReceiveStock } from './ReceiveStock';
 export { default as RegisterFacility } from './RegisterFacility';
 export { default as RequestDetail } from './RequestDetail';
 export { default as RequestWizard } from './RequestWizard';
