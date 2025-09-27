@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import type { ComponentType } from "react";
+import type { ComponentProps, ComponentType } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,12 +67,18 @@ type RouteConfig = {
   path: string;
   Component: ComponentType;
   isProtected?: boolean;
+  protectedRouteProps?: Partial<ComponentProps<typeof ProtectedRoute>>;
 };
 
 const routeConfig: RouteConfig[] = [
-  { path: "/", Component: Index, isProtected: true },
+  { path: "/", Component: Index },
   { path: "/auth", Component: Auth },
-  { path: "/role-registration", Component: RoleBasedRegistration, isProtected: true },
+  {
+    path: "/role-registration",
+    Component: RoleBasedRegistration,
+    isProtected: true,
+    protectedRouteProps: { requireAuth: false },
+  },
   { path: "/facility-dashboard", Component: FacilityDashboard, isProtected: true },
   { path: "/woreda-dashboard", Component: WoredasDashboard, isProtected: true },
   { path: "/zone-dashboard", Component: ZoneDashboard, isProtected: true },
@@ -156,17 +162,19 @@ const AppShell: React.FC = () => {
               }
             >
               <Routes>
-                {routeConfig.map(({ path, Component, isProtected }) => {
-                  const element = isProtected ? (
-                    <ProtectedRoute>
+                {routeConfig.map(
+                  ({ path, Component, isProtected, protectedRouteProps }) => {
+                    const element = isProtected ? (
+                      <ProtectedRoute {...protectedRouteProps}>
+                        <Component />
+                      </ProtectedRoute>
+                    ) : (
                       <Component />
-                    </ProtectedRoute>
-                  ) : (
-                    <Component />
-                  );
+                    );
 
-                  return <Route key={path} path={path} element={element} />;
-                })}
+                    return <Route key={path} path={path} element={element} />;
+                  },
+                )}
               </Routes>
             </Suspense>
           </main>
