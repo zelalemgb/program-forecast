@@ -86,7 +86,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/national-dashboard", Component: NationalDashboard, isProtected: true },
   { path: "/dashboard", Component: Dashboard, isProtected: true },
   { path: "/cdss-dashboard", Component: CDSSDashboard, isProtected: true },
-  { path: "/forecast", Component: RunForecast, isProtected: true },
+  { path: "/forecast", Component: ForecastHome, isProtected: true },
   { path: "/forecast-home", Component: ForecastHome, isProtected: true },
   { path: "/forecast-analysis", Component: ForecastAnalysis, isProtected: true },
   { path: "/saved-forecasts", Component: SavedForecasts, isProtected: true },

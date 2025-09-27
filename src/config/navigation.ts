@@ -114,20 +114,12 @@ export const navigationPages: Record<string, NavigationPage> = {
   },
 
   // Forecasting
-  '/forecast': {
-    path: '/forecast',
-    title: 'Run Forecast',
-    description: 'Execute forecasting algorithms and analyze results',
-    category: 'forecasting',
-    breadcrumbLabel: 'Run Forecast',
-    showInSidebar: true,
-  },
   '/forecast-home': {
     path: '/forecast-home',
-    title: 'Forecasting Home',
-    description: 'Overview page for forecasting workflows and quick actions',
+    title: 'Run Forecast',
+    description: 'Main forecasting dashboard with workflows and quick actions',
     category: 'forecasting',
-    breadcrumbLabel: 'Forecasting Home',
+    breadcrumbLabel: 'Run Forecast',
     showInSidebar: true,
   },
   '/dashboard': {
