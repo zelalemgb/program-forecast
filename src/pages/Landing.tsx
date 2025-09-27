@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardWidgets from "@/components/dashboard/DashboardWidgets";
-import ForecastQuickActions from "@/components/home/ForecastQuickActions";
+import CriticalQuickActions from "@/components/home/ForecastQuickActions";
 import { FacilityWorkflow } from "@/components/workflow/FacilityWorkflow";
 import { RegionalWorkflow } from "@/components/workflow/RegionalWorkflow";
 import { NationalWorkflow } from "@/components/workflow/NationalWorkflow";
@@ -76,8 +76,8 @@ const Landing: React.FC = () => {
 
 
 
-      {/* Quick Actions */}
-      <ForecastQuickActions />
+      {/* Critical Quick Actions */}
+      <CriticalQuickActions />
 
       {/* Role-based Content */}
       <div className="space-y-6">
