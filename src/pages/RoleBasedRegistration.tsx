@@ -32,9 +32,12 @@ interface Facility {
 interface Woreda {
   woreda_id: number;
   woreda_name: string;
+  zone_id?: number;
   zone?: {
+    zone_id?: number;
     zone_name: string;
     region?: {
+      region_id?: number;
       region_name: string;
     };
   };
@@ -43,7 +46,9 @@ interface Woreda {
 interface Zone {
   zone_id: number;
   zone_name: string;
+  region_id?: number;
   region?: {
+    region_id?: number;
     region_name: string;
   };
 }
@@ -412,6 +417,12 @@ const RoleBasedRegistration: React.FC = () => {
       return;
     }
 
+    const toNumberOrNull = (value: string | null | undefined) => {
+      if (!value) return null;
+      const parsed = parseInt(value, 10);
+      return Number.isNaN(parsed) ? null : parsed;
+    };
+
     setLoading(true);
     try {
       // Create user account
@@ -467,17 +478,27 @@ const RoleBasedRegistration: React.FC = () => {
         createdUserId = user.id;
       }
 
-      // Create profile
+      // Create or update profile with facility preference when available
       console.log('Creating profile for user:', createdUserId);
+      const preferredFacilityId =
+        selectedRoleInfo?.level === 'facility'
+          ? toNumberOrNull(selectedFacility)
+          : null;
+
+      const profilePayload: Record<string, unknown> = {
+        user_id: createdUserId,
+        full_name: fullName,
+        email,
+        phone_number: phoneNumber,
+      };
+
+      if (preferredFacilityId) {
+        profilePayload.preferred_facility_id = preferredFacilityId;
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          user_id: createdUserId,
-          full_name: fullName,
-          email: email,
-          phone_number: phoneNumber,
-          preferred_facility_id: (selectedRoleInfo?.level === 'facility' && selectedFacility) ? parseInt(selectedFacility) : null,
-        });
+        .upsert(profilePayload, { onConflict: 'user_id' });
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
@@ -491,15 +512,83 @@ const RoleBasedRegistration: React.FC = () => {
       // Create role request
       console.log('Creating role request for user:', createdUserId, 'role:', selectedRole);
       console.log('Selected locations - facility:', selectedFacility, 'woreda:', selectedWoreda, 'zone:', selectedZone, 'region:', selectedRegion);
-      
+
+      const selectedFacilityId = toNumberOrNull(selectedFacility);
+      const selectedFacilityData = selectedFacilityId
+        ? facilities.find(f => f.facility_id === selectedFacilityId)
+        : undefined;
+
+      let resolvedWoredaId: number | null = null;
+      let resolvedZoneId: number | null = null;
+      let resolvedRegionId: number | null = null;
+
+      if (selectedRoleInfo?.level === 'facility' && selectedFacilityData) {
+        resolvedWoredaId = selectedFacilityData.woreda_id ?? null;
+        resolvedZoneId = selectedFacilityData.woreda?.zone?.zone_id ?? null;
+        resolvedRegionId = selectedFacilityData.woreda?.zone?.region?.region_id ?? null;
+      }
+
+      if (selectedRoleInfo?.level === 'woreda' && selectedWoreda) {
+        const woredaId = toNumberOrNull(selectedWoreda);
+        if (woredaId !== null) {
+          resolvedWoredaId = woredaId;
+          const woredaData = woredas.find(w => w.woreda_id === woredaId);
+          const zoneIdFromWoreda = woredaData?.zone_id ?? woredaData?.zone?.zone_id;
+          if (zoneIdFromWoreda) {
+            resolvedZoneId = zoneIdFromWoreda;
+            const zoneData = zones.find(z => z.zone_id === zoneIdFromWoreda);
+            const regionIdFromZone = zoneData?.region_id ?? zoneData?.region?.region_id;
+            if (regionIdFromZone) {
+              resolvedRegionId = regionIdFromZone;
+            }
+          }
+        }
+      }
+
+      if (selectedRoleInfo?.level === 'zone' && selectedZone) {
+        const zoneId = toNumberOrNull(selectedZone);
+        if (zoneId !== null) {
+          resolvedZoneId = zoneId;
+          const zoneData = zones.find(z => z.zone_id === zoneId);
+          const regionIdFromZone = zoneData?.region_id ?? zoneData?.region?.region_id;
+          if (regionIdFromZone) {
+            resolvedRegionId = regionIdFromZone;
+          }
+        }
+      }
+
+      if (selectedRoleInfo?.level === 'regional' && selectedRegion) {
+        resolvedRegionId = toNumberOrNull(selectedRegion);
+      }
+
+      if (selectedRoleInfo?.level === 'national') {
+        resolvedWoredaId = null;
+        resolvedZoneId = null;
+        resolvedRegionId = null;
+      }
+
+      // Allow explicit selections to override derived values when provided
+      const overrideWoredaId = toNumberOrNull(selectedWoreda);
+      if (overrideWoredaId !== null) {
+        resolvedWoredaId = overrideWoredaId;
+      }
+      const overrideZoneId = toNumberOrNull(selectedZone);
+      if (overrideZoneId !== null) {
+        resolvedZoneId = overrideZoneId;
+      }
+      const overrideRegionId = toNumberOrNull(selectedRegion);
+      if (overrideRegionId !== null) {
+        resolvedRegionId = overrideRegionId;
+      }
+
       const roleRequestData = {
         user_id: createdUserId,
         requested_role: selectedRole as any,
         admin_level: selectedRoleInfo?.level as any,
-        facility_id: selectedFacility ? parseInt(selectedFacility) : null,
-        woreda_id: selectedWoreda ? parseInt(selectedWoreda) : null,
-        zone_id: selectedZone ? parseInt(selectedZone) : null,
-        region_id: selectedRegion ? parseInt(selectedRegion) : null,
+        facility_id: selectedRoleInfo?.level === 'facility' ? selectedFacilityId : null,
+        woreda_id: resolvedWoredaId,
+        zone_id: resolvedZoneId,
+        region_id: resolvedRegionId,
       };
 
       console.log('Role request data being submitted:', roleRequestData);
