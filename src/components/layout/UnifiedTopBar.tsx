@@ -1,10 +1,11 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Home, Slash, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, Slash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useNavigation } from "@/context/NavigationContext";
 import { getPageByPath } from "@/config/navigation";
+import UserProfileDropdown from "./UserProfileDropdown";
 import { cn } from "@/lib/utils";
 
 interface UnifiedTopBarProps {
@@ -115,17 +116,9 @@ export const UnifiedTopBar: React.FC<UnifiedTopBarProps> = ({ className }) => {
         </>
       )}
 
-      {/* User Profile Icon */}
+      {/* User Profile Dropdown */}
       <Separator orientation="vertical" className="h-5" />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigateWithHistory('/profile')}
-        className="h-8 w-8 p-0"
-        title="User Profile"
-      >
-        <User className="h-4 w-4" />
-      </Button>
+      <UserProfileDropdown />
     </div>
   );
 };
