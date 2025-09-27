@@ -5,15 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import QuickActions, { ActionConfig, QuickTaskAction } from '@/components/home/QuickActions';
-import StockExchangeBoard, { StockPost } from '@/components/home/StockExchangeBoard';
 import {
   Target,
   Database,
   Activity,
   FileText,
   Upload,
-  AlertTriangle,
-  CheckCircle,
   BarChart3
 } from 'lucide-react';
 
@@ -36,17 +33,6 @@ interface ForecastHistory {
   updated: string;
 }
 
-interface DataQualityIssue {
-  id: string;
-  label: string;
-  fix: string;
-}
-
-interface ForecastAccuracyPoint {
-  cycle: string;
-  mape: number;
-}
-
 interface ForecastHomeProps {
   onOpenForecast?: (id: string) => void;
   onViewAllForecasts?: () => void;
@@ -60,9 +46,6 @@ interface ForecastHomeProps {
   onCreateStockPost?: () => void;
   onScenarioSelected?: (scenario: ScenarioType) => void;
   historyItems?: ForecastHistory[];
-  dataQualityIssues?: DataQualityIssue[];
-  accuracySeries?: ForecastAccuracyPoint[];
-  stockExchangePosts?: StockPost[];
 }
 
 // Data
@@ -233,69 +216,6 @@ const HistoryList: React.FC<{
   );
 };
 
-const DataQualityCard: React.FC<{ issues: DataQualityIssue[]; score: number; onFix: (id: string) => void }> = ({ issues, score, onFix }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Database className="h-5 w-5" />
-          Data Readiness
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <div className="text-sm text-muted-foreground">Score: 
-            <span className="font-medium text-foreground ml-1">{score}%</span>
-          </div>
-        </div>
-        {issues.length === 0 ? (
-          <div className="flex items-center gap-2 text-sm text-emerald-600">
-            <CheckCircle className="h-4 w-4" />
-            All good!
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {issues.map(issue => (
-              <div key={issue.id} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  <div className="text-sm text-amber-900">{issue.label}</div>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => onFix(issue.id)}>
-                  {issue.fix}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const AccuracyCard: React.FC<{ series: Array<{cycle: string; mape: number}> }> = ({ series }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          Forecast Accuracy
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-xs text-muted-foreground mb-3">MAPE by cycle</div>
-        <div className="space-y-2">
-          {series.map(s => (
-            <div key={s.cycle} className="flex items-center justify-between">
-              <span className="text-sm">{s.cycle}</span>
-              <span className="font-medium">{s.mape}%</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const ForecastHome: React.FC<ForecastHomeProps> = ({
   onOpenForecast,
@@ -310,9 +230,6 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   onCreateStockPost,
   onScenarioSelected,
   historyItems,
-  dataQualityIssues: dataQualityIssuesProp,
-  accuracySeries: accuracySeriesProp,
-  stockExchangePosts,
 }) => {
   const navigate = useNavigate();
   const [showIntentModal, setShowIntentModal] = useState(false);
@@ -334,43 +251,6 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
     { id: 'F-102', name: 'RMNCH Q3', type: 'Program', status: 'Approved', accuracy: 82, updated: '3 days ago' },
     { id: 'F-101', name: 'Facility RRF Aug', type: 'CDSS', status: 'Submitted', accuracy: 88, updated: '2 weeks ago' },
     { id: 'F-100', name: 'Malaria Jun–Aug', type: 'Program', status: 'Draft', updated: '1 month ago' }
-  ];
-
-  const dataQualityIssues: DataQualityIssue[] = dataQualityIssuesProp ?? [
-    { id: 'dq1', label: '2 months missing consumption for Oxytocin', fix: 'Add data' },
-    { id: 'dq2', label: 'Negative stock for Ceftriaxone (-4)', fix: 'Open stock card' }
-  ];
-
-  const accuracySeries: ForecastAccuracyPoint[] = accuracySeriesProp ?? [
-    { cycle: 'Q1', mape: 18 },
-    { cycle: 'Q2', mape: 15 },
-    { cycle: 'Q3', mape: 14 }
-  ];
-
-  const stockExchangeData: StockPost[] = stockExchangePosts ?? [
-    {
-      id: 'se-001',
-      type: 'excess',
-      facility: 'Central Hospital',
-      product: 'Amoxicillin 500mg',
-      qty: 240,
-      unit: 'blisters',
-      expiry: 'Dec 2024',
-      contact: 'pharmacy@central.gov',
-      notes: 'Batch expiring in 6 months',
-      createdAt: '2024-02-10'
-    },
-    {
-      id: 'se-002',
-      type: 'need',
-      facility: 'East District Clinic',
-      product: 'Oxytocin 10IU',
-      qty: 120,
-      unit: 'vials',
-      contact: 'matron@eastclinic.gov',
-      notes: 'Support required before next delivery cycle',
-      createdAt: '2024-02-08'
-    }
   ];
 
   const handleNewForecast = () => {
@@ -432,30 +312,16 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
         {/* KPI Cards removed as requested */}
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - History and Actions */}
-          <div className="lg:col-span-2 space-y-6">
-            <HistoryList
-              items={history}
-              onOpen={safeOpenForecast}
-              onViewAll={safeViewAllForecasts}
-            />
-            <QuickActions
-              actions={quickActionCards}
-              quickTasks={quickTaskButtons}
-            />
-          </div>
-
-          {/* Right Column - Data Quality and Accuracy */}
-          <div className="space-y-6">
-            <DataQualityCard
-              issues={dataQualityIssues}
-              score={91}
-              onFix={safeFixDataIssue}
-            />
-            <AccuracyCard series={accuracySeries} />
-            <StockExchangeBoard posts={stockExchangeData} onCreate={safeCreateStockPost} />
-          </div>
+        <div className="space-y-6">
+          <HistoryList
+            items={history}
+            onOpen={safeOpenForecast}
+            onViewAll={safeViewAllForecasts}
+          />
+          <QuickActions
+            actions={quickActionCards}
+            quickTasks={quickTaskButtons}
+          />
         </div>
       </div>
 
