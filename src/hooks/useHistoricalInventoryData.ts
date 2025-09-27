@@ -161,15 +161,24 @@ export const useHistoricalInventoryData = (
 
       console.log('Consumption data found:', consumptionData?.length || 0, 'records');
 
-      // If no consumption data is found, show empty state with message
-      let finalData: any[] = consumptionData || [];
-      if (finalData.length === 0 && filteredProductIds.length > 0) {
-        console.log('No consumption data found for', filteredProductIds.length, 'products');
-        
-        // Create placeholder entries to show products with no data
-        finalData = [];
-        filteredProductIds.forEach(productId => {
-          previousPeriods.forEach((period, index) => {
+      // Always create entries for all filtered products, regardless of consumption data
+      let finalData: any[] = [];
+      
+      console.log('Creating entries for', filteredProductIds.length, 'products');
+      
+      filteredProductIds.forEach(productId => {
+        previousPeriods.forEach((period, index) => {
+          // Check if we have actual consumption data for this product and period
+          const existingData = consumptionData.find(item => 
+            item.product_id === productId && 
+            item.period_start === period.start
+          );
+          
+          if (existingData) {
+            // Use real data
+            finalData.push(existingData);
+          } else {
+            // Create placeholder entry to show product with no data
             finalData.push({
               id: `no-data-${productId}-${index}`,
               facility_id: facilityId,
@@ -185,9 +194,9 @@ export const useHistoricalInventoryData = (
               updated_at: new Date().toISOString(),
               no_data: true // Flag to indicate no actual data
             });
-          });
+          }
         });
-      }
+      });
 
       // Transform consumption data into historical inventory format
       const historical: HistoricalInventoryData[] = finalData.map(item => ({
