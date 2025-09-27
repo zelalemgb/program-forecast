@@ -274,24 +274,7 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   };
 
   const quickActions: QuickAction[] = [
-    {
-      title: 'Guided Forecast Wizard',
-      description: 'Launch a scenario-based workflow with guardrails.',
-      icon: BarChart3,
-      color: 'bg-violet-500/10 text-violet-600',
-      stats: 'Scope programs, data sources, and assumptions',
-      onClick: handleNewForecast,
-      type: 'card'
-    },
-    {
-      title: 'Forecast History',
-      description: 'Review, approve, or reopen previous forecasts.',
-      icon: Activity,
-      color: 'bg-slate-500/10 text-slate-600',
-      stats: 'Keep teams aligned on the latest runs',
-      onClick: safeViewAllForecasts,
-      type: 'card'
-    },
+    { title: 'Guided Forecast Wizard', icon: BarChart3, variant: 'default', onClick: handleNewForecast, type: 'button' },
     { title: 'Generate RRF', icon: FileText, variant: 'outline', onClick: safeGenerateRRF, type: 'button' },
     { title: 'CDSS Forecast', icon: Target, variant: 'outline', onClick: safeStartCDSS, type: 'button' },
     { title: 'Non-CDSS Forecast', icon: Activity, variant: 'outline', onClick: safeStartNonCDSS, type: 'button' },
