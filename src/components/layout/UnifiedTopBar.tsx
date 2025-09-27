@@ -7,6 +7,7 @@ import { useNavigation } from "@/context/NavigationContext";
 import { getPageByPath } from "@/config/navigation";
 import UserProfileDropdown from "./UserProfileDropdown";
 import { cn } from "@/lib/utils";
+import { UserContextIndicator } from "@/components/ui/user-context-indicator";
 
 interface UnifiedTopBarProps {
   className?: string;
@@ -78,7 +79,7 @@ export const UnifiedTopBar: React.FC<UnifiedTopBarProps> = ({ className }) => {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
             {breadcrumbs.map((page, index) => {
               const isLast = index === breadcrumbs.length - 1;
-              
+
               return (
                 <React.Fragment key={page.path}>
                   <button
@@ -105,6 +106,10 @@ export const UnifiedTopBar: React.FC<UnifiedTopBarProps> = ({ className }) => {
           </div>
         )}
       </div>
+
+      {/* Facility Context */}
+      <Separator orientation="vertical" className="h-5" />
+      <UserContextIndicator className="flex items-center gap-2 text-sm" />
 
       {/* Page Category Badge */}
       {currentPage?.category && (
