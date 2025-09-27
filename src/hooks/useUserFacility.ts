@@ -117,25 +117,25 @@ export const useUserFacility = (): UserFacilityInfo => {
     };
 
     const fetchFacilityWithHierarchy = async (facilityId: number): Promise<FacilityHierarchy | null> => {
-      const { data, error } = await supabase
-        .from('facility')
-        .select(
-          `
-            facility_name,
-            facility_type,
-            woreda:woreda_id (
-              woreda_name,
-              zone:zone_id (
-                zone_name,
-                region:region_id (
-                  region_name
+        const { data, error } = await supabase
+          .from('facility')
+          .select(
+            `
+              facility_name,
+              facility_type,
+              woreda!facility_woreda_id_fkey (
+                woreda_name,
+                zone!woreda_zone_id_fkey (
+                  zone_name,
+                  region!zone_region_id_fkey (
+                    region_name
+                  )
                 )
               )
-            )
-          `
-        )
-        .eq('facility_id', facilityId)
-        .maybeSingle();
+            `
+          )
+          .eq('facility_id', facilityId)
+          .maybeSingle();
 
       if (error) {
         throw error;

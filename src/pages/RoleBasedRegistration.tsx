@@ -21,8 +21,10 @@ interface Facility {
   woreda?: {
     woreda_name: string;
     zone?: {
+      zone_id: number;
       zone_name: string;
       region?: {
+        region_id: number;
         region_name: string;
       };
     };
