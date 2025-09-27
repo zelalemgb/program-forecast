@@ -70,119 +70,122 @@ export const useHistoricalInventoryData = (
       setLoading(true);
       setError(null);
 
-      // First, get the list of product IDs to filter by if account type is selected
-      let allowedProductIds: string[] = [];
-      
+      // Step 1: Build product query based on filters
+      console.log('Step 1: Building product query with filters');
+      let productQuery = supabase
+        .from('product_reference')
+        .select('id, canonical_name, program, product_type, form, strength')
+        .eq('active', true);
+
+      // Apply account type filter first (if selected)
       if (accountType && accountType !== 'all') {
+        console.log('Applying account type filter:', accountType);
         const { data: accountTypeProducts, error: accountTypeError } = await supabase
           .from('account_type_products')
           .select('product_id')
           .eq('account_type_id', accountType);
         
         if (accountTypeError) throw accountTypeError;
-        allowedProductIds = accountTypeProducts?.map(item => item.product_id) || [];
         
-        // If no products found for this account type, return empty data
+        const allowedProductIds = accountTypeProducts?.map(item => item.product_id) || [];
+        console.log('Account type products found:', allowedProductIds.length);
+        
         if (allowedProductIds.length === 0) {
+          console.log('No products found for account type, returning empty data');
           setHistoricalData([]);
           setForecastData([]);
           setLoading(false);
           return;
         }
-      }
-
-      // Generate date ranges for one year prior to starting period
-      const previousYear = parseInt(startingPeriod.split('-')[1]) - 1;
-      const previousPeriods = generatePeriodDates(periodType, `hamle-${previousYear}`);
-
-      // First fetch products to get their names and filter data
-      let productData: Record<string, any> = {};
-      
-      // Get product information based on filters
-      let productQuery = supabase
-        .from('product_reference')
-        .select('id, canonical_name, program, product_type, form, strength')
-        .eq('active', true);
-
-      // Apply account type filter if specified
-      if (allowedProductIds.length > 0) {
+        
         productQuery = productQuery.in('id', allowedProductIds);
       }
 
-      // Apply product type filter if specified
+      // Apply product type filter
       if (productType !== 'all') {
+        console.log('Applying product type filter:', productType);
         productQuery = productQuery.eq('product_type', productType);
       }
 
-      // Apply program filter if specified
+      // Apply program filter
       if (program !== 'all') {
+        console.log('Applying program filter:', program);
         productQuery = productQuery.eq('program', program);
       }
 
-      const { data: products, error: productError } = await productQuery;
+      // Execute product query
+      const { data: filteredProducts, error: productError } = await productQuery.order('canonical_name');
       if (productError) throw productError;
 
-      // Create a map of product data for easy lookup
-      products?.forEach(product => {
-        productData[product.id] = product;
-      });
+      console.log('Step 1 Complete: Found', filteredProducts?.length || 0, 'products after applying filters');
 
-      // Filter by selected drugs if any are specified
-      let filteredProductIds = Object.keys(productData);
+      // Step 2: Apply specific drug selection filter
+      let finalProducts = filteredProducts || [];
       if (selectedDrugs.length > 0) {
-        filteredProductIds = filteredProductIds.filter(id => 
-          selectedDrugs.includes(productData[id]?.canonical_name || '')
+        console.log('Step 2: Applying specific drug filter for', selectedDrugs.length, 'drugs');
+        finalProducts = finalProducts.filter(product => 
+          selectedDrugs.includes(product.canonical_name)
         );
+        console.log('Step 2 Complete: Filtered to', finalProducts.length, 'specific products');
       }
 
-      // If no products match our filters, return empty data
-      if (filteredProductIds.length === 0) {
+      if (finalProducts.length === 0) {
+        console.log('No products match the filter criteria');
         setHistoricalData([]);
         setForecastData([]);
         setLoading(false);
         return;
       }
 
-      // Build the consumption analytics query only if facility is provided
+      // Step 3: Get consumption data for the filtered products
+      console.log('Step 3: Fetching consumption data for', finalProducts.length, 'products');
+      const productIds = finalProducts.map(p => p.id);
+      const previousPeriods = generatePeriodDates(periodType, `hamle-${parseInt(startingPeriod.split('-')[1]) - 1}`);
+      
       let consumptionData: any[] = [];
-      if (facilityProvided) {
-        let query = supabase
+      if (facilityProvided && productIds.length > 0) {
+        const { data, error: consumptionError } = await supabase
           .from('consumption_analytics')
           .select('*')
           .eq('facility_id', facilityId as number)
-          .in('product_id', filteredProductIds)
+          .in('product_id', productIds)
           .gte('period_start', previousPeriods[0]?.start)
-          .lte('period_end', previousPeriods[previousPeriods.length - 1]?.end);
-
-        const { data, error: consumptionError } = await query.order('period_start', { ascending: true });
+          .lte('period_end', previousPeriods[previousPeriods.length - 1]?.end)
+          .order('period_start', { ascending: true });
+        
         if (consumptionError) throw consumptionError;
         consumptionData = data || [];
       }
 
+      console.log('Step 3 Complete: Found', consumptionData.length, 'consumption records');
+
       console.log('Consumption data found:', consumptionData?.length || 0, 'records');
 
-      // Always create entries for all filtered products, regardless of consumption data
+      // Step 4: Create complete dataset with products and their consumption data
+      console.log('Step 4: Creating complete dataset for tables');
       let finalData: any[] = [];
       
-      console.log('Creating entries for', filteredProductIds.length, 'products');
-      
-      filteredProductIds.forEach(productId => {
+      finalProducts.forEach(product => {
         previousPeriods.forEach((period, index) => {
           // Check if we have actual consumption data for this product and period
           const existingData = consumptionData.find(item => 
-            item.product_id === productId && 
+            item.product_id === product.id && 
             item.period_start === period.start
           );
           
           if (existingData) {
-            // Use real data
-            finalData.push(existingData);
-          } else {
-            // Create placeholder entry to show product with no data
+            // Use real consumption data
             finalData.push({
-              id: `no-data-${productId}-${index}`,
+              ...existingData,
+              product_name: product.canonical_name
+            });
+          } else {
+            // Create placeholder entry to show product with no consumption data
+            finalData.push({
+              id: `no-data-${product.id}-${index}`,
               facility_id: facilityId,
-              product_id: productId,
+              product_id: product.id,
+              product_name: product.canonical_name,
               period_start: period.start,
               period_end: period.end,
               consumption_quantity: 0,
@@ -198,10 +201,13 @@ export const useHistoricalInventoryData = (
         });
       });
 
-      // Transform consumption data into historical inventory format
+      console.log('Step 4 Complete: Created', finalData.length, 'data entries for tables');
+
+      // Step 5: Transform data for Historical Inventory Table
+      console.log('Step 5: Transforming data for tables');
       const historical: HistoricalInventoryData[] = finalData.map(item => ({
         product_id: item.product_id,
-        product_name: productData[item.product_id]?.canonical_name || `Product ${item.product_id.slice(-6)}`,
+        product_name: item.product_name || `Product ${item.product_id.slice(-6)}`,
         period_start: item.period_start,
         period_end: item.period_end,
         beginning_balance: 0,
@@ -218,8 +224,11 @@ export const useHistoricalInventoryData = (
 
       setHistoricalData(historical);
 
-      // Generate forecast data based on historical patterns
+      // Step 6: Generate forecast data based on historical patterns
+      console.log('Step 6: Generating forecast data');
       generateForecastData(historical);
+
+      console.log('Data loading complete!');
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch historical data');
