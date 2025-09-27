@@ -228,14 +228,12 @@ const CriticalQuickActions: React.FC = () => {
 
   return (
     <>
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            <CardTitle className="text-lg">{getRoleTitle()}</CardTitle>
-          </div>
-        </CardHeader>
-      <CardContent>
+      <div className="w-full space-y-4">
+        <div className="flex items-center gap-2 px-1">
+          <Package className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">{getRoleTitle()}</h2>
+        </div>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {quickTasks.map((task) => {
             const Icon = task.icon;
@@ -243,35 +241,39 @@ const CriticalQuickActions: React.FC = () => {
               <Button
                 key={task.title}
                 variant={task.variant || "outline"}
-                className="h-auto min-h-[120px] p-4 flex flex-col items-start gap-3 text-left justify-start relative hover:shadow-md transition-shadow w-full overflow-hidden"
+                className="h-auto min-h-[120px] p-6 flex flex-col items-center gap-3 text-center justify-center relative hover:shadow-lg transition-all duration-200 border-2 overflow-hidden group"
                 onClick={() => handleTaskClick(task)}
               >
-                <div className="flex items-start justify-between w-full mb-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <Icon className="w-5 h-5 shrink-0 text-primary" />
-                    <span className="font-medium text-sm leading-snug truncate">{task.title}</span>
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <div className="relative">
+                    <Icon className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
+                    {task.badge && task.badge > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 flex items-center gap-1 text-xs min-w-[20px] h-5"
+                      >
+                        <AlertTriangle className="w-3 h-3" />
+                        {task.badge}
+                      </Badge>
+                    )}
                   </div>
-                  {task.badge && task.badge > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="shrink-0 flex items-center gap-1 text-xs"
-                    >
-                      <AlertTriangle className="w-3 h-3" />
-                      {task.badge}
-                    </Badge>
-                  )}
+                  
+                  <div className="space-y-1 w-full">
+                    <span className="font-semibold text-sm leading-tight block">
+                      {task.title}
+                    </span>
+                    {task.description && (
+                      <span className="block text-xs text-muted-foreground leading-tight">
+                        {task.description}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {task.description && (
-                  <span className="block text-xs text-muted-foreground leading-relaxed truncate">
-                    {task.description}
-                  </span>
-                )}
               </Button>
             );
           })}
         </div>
-      </CardContent>
-      </Card>
+      </div>
       
       <OutstandingRequestsModal
         open={showOutstandingModal}
