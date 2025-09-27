@@ -29,6 +29,7 @@ interface ForecastHistory {
   name: string;
   scope: string;
   program: string;
+  duration: string;
   totalProducts: number;
   procurementValue: number;
   status: string;
@@ -198,6 +199,7 @@ const HistoryTable: React.FC<{
                   <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Forecast Title</th>
                   <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Scope</th>
                   <th className="text-left py-2 px-1 text-sm font-medium text-muted-foreground">Program</th>
+                  <th className="text-center py-2 px-1 text-sm font-medium text-muted-foreground">Duration</th>
                   <th className="text-right py-2 px-1 text-sm font-medium text-muted-foreground">Products</th>
                   <th className="text-right py-2 px-1 text-sm font-medium text-muted-foreground">Value (ETB)</th>
                   <th className="text-center py-2 px-1 text-sm font-medium text-muted-foreground">Status</th>
@@ -213,6 +215,7 @@ const HistoryTable: React.FC<{
                     </td>
                     <td className="py-3 px-1 text-sm">{item.scope}</td>
                     <td className="py-3 px-1 text-sm">{item.program}</td>
+                    <td className="py-3 px-1 text-sm text-center">{item.duration}</td>
                     <td className="py-3 px-1 text-sm text-right">{item.totalProducts}</td>
                     <td className="py-3 px-1 text-sm text-right">{item.procurementValue.toLocaleString()}</td>
                     <td className="py-3 px-1 text-center">
@@ -272,10 +275,10 @@ const ForecastHome: React.FC<ForecastHomeProps> = ({
   const safeScenarioSelected = onScenarioSelected ?? (() => undefined);
 
   const history: ForecastHistory[] = historyItems ?? [
-    { id: 'F-102', name: 'RMNCH Q3 2024', scope: 'Facility', program: 'RMNCH', totalProducts: 45, procurementValue: 2850000, status: 'Approved', updated: '3 days ago' },
-    { id: 'F-101', name: 'Facility RRF Aug 2024', scope: 'Facility', program: 'CDSS', totalProducts: 32, procurementValue: 1950000, status: 'Submitted', updated: '2 weeks ago' },
-    { id: 'F-100', name: 'Malaria Jun–Aug 2024', scope: 'Regional', program: 'Malaria', totalProducts: 28, procurementValue: 3200000, status: 'Draft', updated: '1 month ago' },
-    { id: 'F-099', name: 'EPI Campaign Q2 2024', scope: 'National', program: 'EPI', totalProducts: 15, procurementValue: 1200000, status: 'Approved', updated: '2 months ago' }
+    { id: 'F-102', name: 'RMNCH Q3 2024', scope: 'Facility', program: 'RMNCH', duration: '1 year', totalProducts: 45, procurementValue: 2850000, status: 'Approved', updated: '3 days ago' },
+    { id: 'F-101', name: 'Facility RRF Aug 2024', scope: 'Facility', program: 'CDSS', duration: '6 months', totalProducts: 32, procurementValue: 1950000, status: 'Submitted', updated: '2 weeks ago' },
+    { id: 'F-100', name: 'Malaria Jun–Aug 2024', scope: 'Regional', program: 'Malaria', duration: '3 months', totalProducts: 28, procurementValue: 3200000, status: 'Draft', updated: '1 month ago' },
+    { id: 'F-099', name: 'EPI Campaign Q2 2024', scope: 'National', program: 'EPI', duration: '2 years', totalProducts: 15, procurementValue: 1200000, status: 'Approved', updated: '2 months ago' }
   ];
 
   const handleNewForecast = () => {
