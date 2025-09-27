@@ -117,11 +117,11 @@ function Group({ label, items }: { label: string; items: (Item | ItemWithComingS
   const location = useLocation();
   const { state } = useSidebar();
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    isActive ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+    <SidebarGroup className="px-3 py-1">
+      {label && <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium mb-2">{label}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
@@ -179,10 +179,10 @@ function Group({ label, items }: { label: string; items: (Item | ItemWithComingS
             
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild className="w-full">
                   <NavLink to={item.url || "#"} end className={getNavCls}>
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>{item.title}</span>}
+                    <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                    {state !== "collapsed" && <span className="truncate">{item.title}</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -217,31 +217,37 @@ const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarRail />
-      <SidebarHeader className="p-0">
-        <div 
-          className="flex items-center gap-2 px-2 py-1.5 mx-2 hover:bg-muted/50 rounded-md transition-colors cursor-pointer relative z-10"
-          title="Go to Dashboard"
-          onClick={handleLogoClick}
-        >
-          <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-            <TrendingUp className="h-5 w-5 text-white" />
-          </div>
-          {state !== "collapsed" && (
-            <div>
-              <div className="text-sm font-semibold">Forlab+</div>
-              <div className="text-xs text-muted-foreground">MoH Platform</div>
+      <SidebarHeader className="p-0 border-b border-border/50">
+        <div className="flex items-center justify-between px-3 py-3">
+          <div 
+            className="flex items-center gap-3 hover:bg-muted/50 rounded-md p-2 -m-2 transition-colors cursor-pointer flex-1"
+            title="Go to Dashboard"
+            onClick={handleLogoClick}
+          >
+            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
-          )}
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <div className="p-2 flex justify-end">
-          <Button variant="ghost" size="icon" aria-label="Toggle sidebar" onClick={toggleSidebar}>
+            {state !== "collapsed" && (
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-foreground">Forlab+</div>
+                <div className="text-xs text-muted-foreground">MoH Platform</div>
+              </div>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            aria-label="Toggle sidebar" 
+            onClick={toggleSidebar}
+            className="h-8 w-8 hover:bg-muted/70"
+          >
             <Collapser className="h-4 w-4" />
           </Button>
         </div>
+      </SidebarHeader>
+      <SidebarContent className="pt-2">
         
-        <Group label="" items={dashboardItems} />
+        <Group label="Dashboard" items={dashboardItems} />
         {permissions.canViewOwnFacility && <Group label="Data Capture" items={dataCapture} />}
         {permissions.canGenerateForecast && <Group label="Forecasting" items={forecasting} />}
         {permissions.canViewAnalytics && <Group label="Supply Planning" items={supplyPlanning} />}
