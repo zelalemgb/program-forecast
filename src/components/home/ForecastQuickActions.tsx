@@ -228,50 +228,57 @@ const CriticalQuickActions: React.FC = () => {
 
   return (
     <>
-      <div className="w-full space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <Package className="w-5 h-5" />
-          <h2 className="text-lg font-semibold">{getRoleTitle()}</h2>
+      <div className="w-full space-y-6">
+        <div className="flex items-center gap-3">
+          <Package className="w-6 h-6" />
+          <h2 className="text-2xl font-bold">Quick Actions</h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {quickTasks.map((task) => {
-            const Icon = task.icon;
-            return (
-              <Button
-                key={task.title}
-                variant={task.variant || "outline"}
-                className="h-auto min-h-[120px] p-6 flex flex-col items-center gap-3 text-center justify-center relative hover:shadow-lg transition-all duration-200 border-2 overflow-hidden group"
-                onClick={() => handleTaskClick(task)}
-              >
-                <div className="flex flex-col items-center gap-3 w-full">
-                  <div className="relative">
-                    <Icon className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
-                    {task.badge && task.badge > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-2 -right-2 flex items-center gap-1 text-xs min-w-[20px] h-5"
-                      >
-                        <AlertTriangle className="w-3 h-3" />
-                        {task.badge}
-                      </Badge>
-                    )}
-                  </div>
+        <div className="space-y-4">
+          <h3 className="text-lg text-muted-foreground font-medium">Quick Tasks</h3>
+          
+          <div className="flex flex-wrap gap-3">
+            {quickTasks.map((task, index) => {
+              const Icon = task.icon;
+              const isFirst = index === 0;
+              
+              return (
+                <Button
+                  key={task.title}
+                  variant={isFirst ? "default" : "outline"}
+                  className={`
+                    relative h-12 px-6 py-3 rounded-full flex items-center gap-3 text-sm font-medium
+                    hover:shadow-md transition-all duration-200 border
+                    ${isFirst ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-background hover:bg-muted'}
+                  `}
+                  onClick={() => handleTaskClick(task)}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="whitespace-nowrap">{task.title}</span>
                   
-                  <div className="space-y-1 w-full">
-                    <span className="font-semibold text-sm leading-tight block">
-                      {task.title}
-                    </span>
-                    {task.description && (
-                      <span className="block text-xs text-muted-foreground leading-tight">
-                        {task.description}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Button>
-            );
-          })}
+                  {task.badge && task.badge > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 flex items-center gap-1 text-xs min-w-[20px] h-5 rounded-full"
+                    >
+                      <AlertTriangle className="w-3 h-3" />
+                      {task.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+          
+          {/* Additional info row if needed */}
+          <div className="text-sm text-muted-foreground">
+            {quickTasks.find(t => t.badge && t.badge > 0) && (
+              <span className="flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" />
+                Outstanding requests require attention
+              </span>
+            )}
+          </div>
         </div>
       </div>
       
