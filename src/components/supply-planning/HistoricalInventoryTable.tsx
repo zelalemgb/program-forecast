@@ -27,7 +27,9 @@ export const HistoricalInventoryTable: React.FC<HistoricalInventoryTableProps> =
         periods: {}
       };
     }
-    const periodName = new Date(item.period_start).toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
+    const monthIndex = parseInt(item.period_start.split('-')[1], 10);
+    const ethioMonthsMap: Record<number, string> = { 7: 'hamle', 8: 'nehase', 9: 'meskerem', 10: 'tekemet', 11: 'hedar', 12: 'tahsas', 1: 'tir', 2: 'yekatit', 3: 'megabit', 4: 'miazia', 5: 'ginbot', 6: 'sene' };
+    const periodName = ethioMonthsMap[monthIndex];
     acc[item.product_id].periods[periodName] = item;
     return acc;
   }, {} as Record<string, { name: string; periods: Record<string, HistoricalInventoryData> }>);

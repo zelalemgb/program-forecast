@@ -49,11 +49,12 @@ export const useHistoricalInventoryData = (
     if (type === 'monthly') {
       const months = ['hamle', 'nehase', 'meskerem', 'tekemet', 'hedar', 'tahsas', 
                      'tir', 'yekatit', 'megabit', 'miazia', 'ginbot', 'sene'];
-      
       months.forEach((month, index) => {
-        const periodYear = index >= 0 && index <= 1 ? year : year + 1;
-        const startDate = `${periodYear}-${String(index + 7).padStart(2, '0')}-01`;
-        const endDate = `${periodYear}-${String(index + 7).padStart(2, '0')}-30`;
+        const isFirstHalf = index < 6; // Hamle..Tahsas map to Jul..Dec of base year
+        const periodYear = isFirstHalf ? year : year + 1;
+        const monthNumber = isFirstHalf ? index + 7 : index - 5; // 7..12 then 1..6
+        const startDate = `${periodYear}-${String(monthNumber).padStart(2, '0')}-01`;
+        const endDate = `${periodYear}-${String(monthNumber).padStart(2, '0')}-30`;
         periods.push({ start: startDate, end: endDate, name: month });
       });
     }
