@@ -73,45 +73,7 @@ const Landing: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      {/* User Profile Card */}
-      <UserProfileBadge />
 
-      {/* Header with Role & Context */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <RoleIcon className="h-6 w-6 text-primary" />
-                Welcome back!
-              </CardTitle>
-              <CardDescription className="mt-1">
-                {facilityInfo.facilityName ? (
-                  <span>
-                    {facilityInfo.facilityName} • {facilityInfo.locationDisplay}
-                  </span>
-                ) : (
-                  "Health Supply Chain Management Platform"
-                )}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant={roleDisplay.variant} className="flex items-center gap-1">
-                <RoleIcon className="h-3 w-3" />
-                {roleDisplay.title}
-              </Badge>
-              {userRole?.role === "admin" && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/admin">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Admin Panel
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
 
       {/* Role-based Content */}
       <div className="space-y-6">
