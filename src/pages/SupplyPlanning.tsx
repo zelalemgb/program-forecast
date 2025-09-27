@@ -138,23 +138,6 @@ const SupplyPlanning: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      {/* Streamlined Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <FileText className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold">Supply Planning</h1>
-            <Badge variant="outline" className="text-xs">
-              Annual Analysis
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {facility?.facility_name || "No facility selected"} • Inventory-based forecasting
-          </p>
-        </div>
-        {actions}
-      </div>
-
       {/* Compact Controls */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
