@@ -16,10 +16,14 @@ import {
   Send
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import QuickTasks from "./QuickTasks";
 
 const DashboardWidgets: React.FC = () => {
   return (
     <div className="grid gap-6">
+      {/* Quick Tasks - Role-based daily tasks */}
+      <QuickTasks />
+      
       {/* Top row - Status cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Data Submission Status */}
@@ -141,7 +145,7 @@ const DashboardWidgets: React.FC = () => {
       </Card>
 
       {/* AI Assistant */}
-      <Card className="surface-brand">
+      <Card className="surface-brand" data-ai-assistant>
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
