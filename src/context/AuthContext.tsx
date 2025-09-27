@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface AuthContextValue {
   user: User | null;
@@ -19,18 +20,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!isMounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
+    const MAX_RETRIES = 3;
 
-    return () => subscription.unsubscribe();
+    const fetchSession = async () => {
+      for (let attempt = 1; attempt <= MAX_RETRIES && isMounted; attempt++) {
+        let shouldRetry = false;
+        try {
+          const { data, error } = await supabase.auth.getSession();
+
+          if (error) {
+            throw error;
+          }
+
+          if (!isMounted) {
+            return;
+          }
+
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+          return;
+        } catch (error) {
+          console.error("Failed to fetch auth session:", error);
+          shouldRetry = attempt < MAX_RETRIES;
+
+          if (shouldRetry) {
+            if (attempt === 1) {
+              toast({
+                title: "Restoring session…",
+                description: "We're reconnecting to Supabase. You can refresh if this takes too long.",
+              });
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+          } else {
+            toast({
+              title: "Unable to restore session",
+              description: "Please refresh the page to try again.",
+              variant: "destructive",
+            });
+          }
+        } finally {
+          if (!shouldRetry && isMounted) {
+            setLoading(false);
+          }
+        }
+      }
+    };
+
+    fetchSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn: AuthContextValue["signIn"] = async (email, password) => {
