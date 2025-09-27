@@ -40,6 +40,9 @@ const CriticalQuickActions: React.FC = () => {
   const getTasksByRole = (): QuickTask[] => {
     const role = userRole?.role;
     const adminLevel = userRole?.admin_level;
+    
+    // Debug logging to see current user role
+    console.log('Current user role:', role, 'admin level:', adminLevel);
 
     // Facility Logistic Officer tasks - reordered as requested
     if (role === "viewer" && adminLevel === "logistic_officer") {
@@ -154,32 +157,40 @@ const CriticalQuickActions: React.FC = () => {
       ];
     }
 
-    // Default/General user tasks
+    // Default/General user tasks - Updated with new arrangement
     return [
       {
-        title: "View Dashboard",
-        icon: TrendingUp,
-        path: "/dashboard",
-        description: "Access your dashboard",
+        title: "Receive Stock",
+        icon: Download,
+        path: "/dagu",
+        description: "Process incoming stock deliveries",
         variant: "default"
       },
       {
-        title: "Check Stock Status",
-        icon: Package,
+        title: "Issue Stock to Wards",
+        icon: Upload,
         path: "/dagu",
-        description: "Monitor inventory levels"
+        description: "Distribute stock to departments",
+        badge: requests.length,
+        onClick: () => setShowOutstandingModal(true)
       },
       {
-        title: "Submit Request",
+        title: "Submit Procurement Request",
         icon: Send,
         path: "/requests",
-        description: "Request supplies"
+        description: "Request supplies from EPSS"
       },
       {
         title: "View Reports",
         icon: FileText,
-        path: "/forecast-analysis",
-        description: "Access reports"
+        path: "/run-forecast",
+        description: "Generate and view reports"
+      },
+      {
+        title: "View Dashboard",
+        icon: TrendingUp,
+        path: "/dashboard",
+        description: "Access your dashboard"
       }
     ];
   };
