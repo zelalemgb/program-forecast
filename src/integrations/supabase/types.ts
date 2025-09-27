@@ -3238,6 +3238,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      save_forecast_summary: {
+        Args: { summary_data: Json; items_data: Json }
+        Returns: Json
+      }
       has_admin_scope_for_region: {
         Args: { _region_id: number; _user_id: string }
         Returns: boolean

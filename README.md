@@ -80,3 +80,12 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Manual test checklist: Forecast summary RPC
+
+Use the following checklist to ensure the `save_forecast_summary` RPC does not create partial data when any insert fails:
+
+1. Open a Supabase SQL session (or connect with psql) using an authenticated user context.
+2. Run the RPC with intentionally invalid item data, for example setting `product_name` to `null`, and confirm the call returns an error.
+3. Query `forecast_summaries`, `forecast_rows`, and `forecast_summary_items` to verify that no new records were added when the RPC failed.
+4. Run the RPC again with valid data and confirm that all three tables receive the expected records in a single call.
