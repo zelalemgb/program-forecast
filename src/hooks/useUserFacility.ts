@@ -151,9 +151,9 @@ export const useUserFacility = (): UserFacilityInfo => {
           .select(
             `
               woreda_name,
-              zone:zone_id (
+              zone!woreda_zone_id_fkey (
                 zone_name,
-                region:region_id (
+                region!zone_region_id_fkey (
                   region_name
                 )
               )
@@ -172,7 +172,7 @@ export const useUserFacility = (): UserFacilityInfo => {
           .select(
             `
               zone_name,
-              region:region_id (
+              region!zone_region_id_fkey (
                 region_name
               )
             `

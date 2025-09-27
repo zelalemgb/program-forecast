@@ -91,7 +91,7 @@ export const useForecastSummary = () => {
         description: "Forecast summary saved successfully",
       });
 
-      return (data as SaveForecastSummaryResponse)?.summary;
+      return (data as unknown as SaveForecastSummaryResponse)?.summary;
     } catch (error: any) {
       toast({
         title: "Error",
