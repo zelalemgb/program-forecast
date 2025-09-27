@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus, Eye, FileText, ArrowLeft, Truck, BarChart3, ShoppingCart } from "lucide-react";
-import { ReceivingModule } from "./ReceivingModule";
+import { FacilityReceivingModule } from "./FacilityReceivingModule";
 import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
@@ -18,9 +18,18 @@ type InventoryAction = "overview" | "receive" | "issue" | "adjust" | null;
 export const SimpleInventoryManager: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<InventoryAction>(null);
   const [showForecastFlow, setShowForecastFlow] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { userRole } = useUserRole();
   const facilityId = userRole?.facility_id || 1; // Get from user context or fallback
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'receiving') {
+      setSelectedAction('receive');
+    }
+  }, [searchParams]);
 
   const handleActionSelect = (action: InventoryAction) => {
     setSelectedAction(action);
@@ -159,7 +168,7 @@ export const SimpleInventoryManager: React.FC = () => {
 
       {selectedAction === "overview" && <StockOverview facilityId={facilityId} />}
       
-      {selectedAction === "receive" && <ReceivingModule />}
+      {selectedAction === "receive" && <FacilityReceivingModule />}
       
       {selectedAction === "issue" && <IssuingModule />}
       
