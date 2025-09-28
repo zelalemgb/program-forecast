@@ -1,7 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
-import { SimpleInventoryManager } from "@/components/inventory/SimpleInventoryManager";
+import InventoryLaunchBoard from "@/components/inventory/InventoryLaunchBoard";
 
 const Dagu: React.FC = () => {
   const location = useLocation();
@@ -18,7 +18,7 @@ const Dagu: React.FC = () => {
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <SimpleInventoryManager />
+      <InventoryLaunchBoard />
     </>
   );
 };
