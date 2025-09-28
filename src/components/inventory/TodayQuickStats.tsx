@@ -114,20 +114,27 @@ export const TodayQuickStats: React.FC = () => {
 
           // Get product names for the transactions
           if (receivedTransactions && receivedTransactions.length > 0) {
-            const productIds = receivedTransactions.map(t => t.product_id).filter(Boolean);
-            const { data: products } = await supabase
-              .from('product_reference')
-              .select('id, canonical_name')
-              .in('id', productIds);
+            const productIds = receivedTransactions
+              .map(t => t.product_id)
+              .filter(id => id && typeof id === 'string' && id.length > 0);
+            
+            let productMap: Record<string, string> = {};
+            
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('product_reference')
+                .select('id, canonical_name')
+                .in('id', productIds);
 
-            const productMap = products?.reduce((acc, p) => {
-              acc[p.id] = p.canonical_name;
-              return acc;
-            }, {} as Record<string, string>) || {};
+              productMap = products?.reduce((acc, p) => {
+                acc[p.id] = p.canonical_name;
+                return acc;
+              }, {} as Record<string, string>) || {};
+            }
 
             data = receivedTransactions.map(item => ({
               id: item.id,
-              name: productMap[item.product_id] || 'Unknown Product',
+              name: (item.product_id && productMap[item.product_id]) || 'Unknown Product',
               quantity: item.quantity,
               transactionDate: item.transaction_date,
               transactionType: 'receipt',
@@ -145,20 +152,27 @@ export const TodayQuickStats: React.FC = () => {
 
           // Get product names for the transactions
           if (issuedTransactions && issuedTransactions.length > 0) {
-            const productIds = issuedTransactions.map(t => t.product_id).filter(Boolean);
-            const { data: products } = await supabase
-              .from('product_reference')
-              .select('id, canonical_name')
-              .in('id', productIds);
+            const productIds = issuedTransactions
+              .map(t => t.product_id)
+              .filter(id => id && typeof id === 'string' && id.length > 0);
+            
+            let productMap: Record<string, string> = {};
+            
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('product_reference')
+                .select('id, canonical_name')
+                .in('id', productIds);
 
-            const productMap = products?.reduce((acc, p) => {
-              acc[p.id] = p.canonical_name;
-              return acc;
-            }, {} as Record<string, string>) || {};
+              productMap = products?.reduce((acc, p) => {
+                acc[p.id] = p.canonical_name;
+                return acc;
+              }, {} as Record<string, string>) || {};
+            }
 
             data = issuedTransactions.map(item => ({
               id: item.id,
-              name: productMap[item.product_id] || 'Unknown Product',
+              name: (item.product_id && productMap[item.product_id]) || 'Unknown Product',
               quantity: item.quantity,
               transactionDate: item.transaction_date,
               transactionType: 'issue',
@@ -174,23 +188,30 @@ export const TodayQuickStats: React.FC = () => {
           
           // Get product names for critical items
           if (criticalBalances && criticalBalances.length > 0) {
-            const productIds = criticalBalances.map(b => b.product_id).filter(Boolean);
-            const { data: products } = await supabase
-              .from('product_reference')
-              .select('id, canonical_name')
-              .in('id', productIds);
+            const productIds = criticalBalances
+              .map(b => b.product_id)
+              .filter(id => id && typeof id === 'string' && id.length > 0);
+            
+            let productMap: Record<string, string> = {};
+            
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('product_reference')
+                .select('id, canonical_name')
+                .in('id', productIds);
 
-            const productMap = products?.reduce((acc, p) => {
-              acc[p.id] = p.canonical_name;
-              return acc;
-            }, {} as Record<string, string>) || {};
+              productMap = products?.reduce((acc, p) => {
+                acc[p.id] = p.canonical_name;
+                return acc;
+              }, {} as Record<string, string>) || {};
+            }
 
             // Filter critical items (current stock <= reorder level)
             data = criticalBalances
               .filter(item => (item.current_stock || 0) <= (item.reorder_level || 0))
               .map(item => ({
                 id: item.id,
-                name: productMap[item.product_id] || 'Unknown Product',
+                name: (item.product_id && productMap[item.product_id]) || 'Unknown Product',
                 currentStock: item.current_stock,
                 reorderLevel: item.reorder_level
               }));
@@ -204,16 +225,23 @@ export const TodayQuickStats: React.FC = () => {
           
           // Get product names for low stock items
           if (lowStockBalances && lowStockBalances.length > 0) {
-            const productIds = lowStockBalances.map(b => b.product_id).filter(Boolean);
-            const { data: products } = await supabase
-              .from('product_reference')
-              .select('id, canonical_name')
-              .in('id', productIds);
+            const productIds = lowStockBalances
+              .map(b => b.product_id)
+              .filter(id => id && typeof id === 'string' && id.length > 0);
+            
+            let productMap: Record<string, string> = {};
+            
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('product_reference')
+                .select('id, canonical_name')
+                .in('id', productIds);
 
-            const productMap = products?.reduce((acc, p) => {
-              acc[p.id] = p.canonical_name;
-              return acc;
-            }, {} as Record<string, string>) || {};
+              productMap = products?.reduce((acc, p) => {
+                acc[p.id] = p.canonical_name;
+                return acc;
+              }, {} as Record<string, string>) || {};
+            }
 
             // Filter low stock items (current stock > reorder level but <= minimum * 1.2)
             data = lowStockBalances
@@ -225,7 +253,7 @@ export const TodayQuickStats: React.FC = () => {
               })
               .map(item => ({
                 id: item.id,
-                name: productMap[item.product_id] || 'Unknown Product',
+                name: (item.product_id && productMap[item.product_id]) || 'Unknown Product',
                 currentStock: item.current_stock,
                 reorderLevel: item.reorder_level,
                 minimumLevel: item.minimum_stock_level
@@ -241,20 +269,27 @@ export const TodayQuickStats: React.FC = () => {
           
           // Get product names for all stock items
           if (allStockBalances && allStockBalances.length > 0) {
-            const productIds = allStockBalances.map(b => b.product_id).filter(Boolean);
-            const { data: products } = await supabase
-              .from('product_reference')
-              .select('id, canonical_name')
-              .in('id', productIds);
+            const productIds = allStockBalances
+              .map(b => b.product_id)
+              .filter(id => id && typeof id === 'string' && id.length > 0);
+            
+            let productMap: Record<string, string> = {};
+            
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('product_reference')
+                .select('id, canonical_name')
+                .in('id', productIds);
 
-            const productMap = products?.reduce((acc, p) => {
-              acc[p.id] = p.canonical_name;
-              return acc;
-            }, {} as Record<string, string>) || {};
+              productMap = products?.reduce((acc, p) => {
+                acc[p.id] = p.canonical_name;
+                return acc;
+              }, {} as Record<string, string>) || {};
+            }
 
             data = allStockBalances.map(item => ({
               id: item.id,
-              name: productMap[item.product_id] || 'Unknown Product',
+              name: (item.product_id && productMap[item.product_id]) || 'Unknown Product',
               currentStock: item.current_stock
             }));
           }
