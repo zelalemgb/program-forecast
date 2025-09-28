@@ -1315,34 +1315,6 @@ export type Database = {
             referencedRelation: "facility"
             referencedColumns: ["facility_id"]
           },
-          {
-            foreignKeyName: "inventory_transactions_destination_facility_id_fkey"
-            columns: ["destination_facility_id"]
-            isOneToOne: false
-            referencedRelation: "facility"
-            referencedColumns: ["facility_id"]
-          },
-          {
-            foreignKeyName: "inventory_transactions_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facility"
-            referencedColumns: ["facility_id"]
-          },
-          {
-            foreignKeyName: "inventory_transactions_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_transactions_source_facility_id_fkey"
-            columns: ["source_facility_id"]
-            isOneToOne: false
-            referencedRelation: "facility"
-            referencedColumns: ["facility_id"]
-          },
         ]
       }
       outbound_events: {
