@@ -1173,20 +1173,6 @@ export type Database = {
             referencedRelation: "product_reference"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "inventory_balances_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facility"
-            referencedColumns: ["facility_id"]
-          },
-          {
-            foreignKeyName: "inventory_balances_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
         ]
       }
       inventory_transactions: {
