@@ -282,6 +282,20 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_consumption_analytics_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "fk_consumption_analytics_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
         ]
       }
       countries: {
@@ -372,6 +386,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "departments_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "fk_departments_facility"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facility"
@@ -1139,6 +1160,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_inventory_balances_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_balances_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_balances_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
@@ -1252,6 +1287,34 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_inventory_transactions_dest_facility"
+            columns: ["destination_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transactions_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transactions_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_reference"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_inventory_transactions_source_facility"
+            columns: ["source_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
           {
             foreignKeyName: "inventory_transactions_destination_facility_id_fkey"
             columns: ["destination_facility_id"]
@@ -2191,6 +2254,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_profiles_preferred_facility"
+            columns: ["preferred_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
             foreignKeyName: "profiles_preferred_facility_fk"
             columns: ["preferred_facility_id"]
             isOneToOne: false
@@ -2748,6 +2818,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_storage_locations_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+          {
             foreignKeyName: "storage_locations_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
@@ -2808,7 +2885,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_facility_memberships_facility"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facility"
+            referencedColumns: ["facility_id"]
+          },
+        ]
       }
       user_role_requests: {
         Row: {
