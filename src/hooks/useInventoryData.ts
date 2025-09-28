@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface InventoryTransaction {
@@ -66,7 +66,7 @@ export const useInventoryData = (facilityId?: number) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchInventoryData = async () => {
+  const fetchInventoryData = useCallback(async () => {
     if (!facilityId) return;
     
     try {
@@ -139,7 +139,7 @@ export const useInventoryData = (facilityId?: number) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [facilityId]);
 
   const addTransaction = async (transaction: Omit<InventoryTransaction, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'products'>) => {
     try {
@@ -180,7 +180,7 @@ export const useInventoryData = (facilityId?: number) => {
 
   useEffect(() => {
     fetchInventoryData();
-  }, [facilityId]);
+  }, [fetchInventoryData]);
 
   return {
     transactions,

@@ -11,6 +11,7 @@ import { FacilityWorkflow } from "@/components/workflow/FacilityWorkflow";
 import { RegionalWorkflow } from "@/components/workflow/RegionalWorkflow";
 import { NationalWorkflow } from "@/components/workflow/NationalWorkflow";
 import UserProfileBadge from "@/components/auth/UserProfileBadge";
+import { TodayQuickStats } from "@/components/inventory/TodayQuickStats";
 import { useAuth } from "@/context/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUserFacility } from "@/hooks/useUserFacility";
@@ -75,6 +76,9 @@ const Landing: React.FC = () => {
       </Helmet>
 
 
+
+      {/* Today's Quick Stats */}
+      <TodayQuickStats />
 
       {/* Critical Quick Actions */}
       <CriticalQuickActions />
