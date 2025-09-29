@@ -42,9 +42,7 @@ const StockExchangeBoard: React.FC<Props> = ({ posts = [], onCreate }) => {
             max_level,
             reorder_level,
             product_id,
-            facility_id,
-            products (name),
-            facility (facility_name)
+            facility_id
           `)
           .limit(50);
 
@@ -64,8 +62,8 @@ const StockExchangeBoard: React.FC<Props> = ({ posts = [], onCreate }) => {
         const excessPosts: StockPost[] = (excessItems || []).map(item => ({
           id: item.id,
           type: "excess" as const,
-          facility: item.facility?.facility_name || 'Unknown Facility',
-          product: item.products?.name || 'Unknown Product',
+          facility: 'Current Facility',
+          product: 'Product Item',
           qty: Math.floor((item.current_stock - item.max_level) * 0.7), // Available excess
           unit: 'units',
           expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString(), // 3 months
@@ -77,8 +75,8 @@ const StockExchangeBoard: React.FC<Props> = ({ posts = [], onCreate }) => {
         const needPosts: StockPost[] = (needItems || []).map(item => ({
           id: item.id,
           type: "need" as const,
-          facility: item.facility?.facility_name || 'Unknown Facility',
-          product: item.products?.name || 'Unknown Product',
+          facility: 'Current Facility',
+          product: 'Product Item',
           qty: Math.max(item.reorder_level - item.current_stock, 1), // Needed quantity
           unit: 'units',
           contact: 'Logistics Officer',

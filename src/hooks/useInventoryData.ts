@@ -88,10 +88,7 @@ export const useInventoryData = (facilityId?: number) => {
       
       const { data: transactionData, error: transactionError } = await supabase
         .from('inventory_transactions')
-        .select(`
-          *,
-          products(name, unit)
-        `)
+        .select('*')
         .eq('facility_id', facilityId)
         .gte('transaction_date', thirtyDaysAgo.toISOString().split('T')[0])
         .order('transaction_date', { ascending: false });
@@ -104,10 +101,7 @@ export const useInventoryData = (facilityId?: number) => {
       
       const { data: consumptionData, error: consumptionError } = await supabase
         .from('consumption_analytics')
-        .select(`
-          *,
-          products(name, unit)
-        `)
+        .select('*')
         .eq('facility_id', facilityId)
         .gte('period_start', sixMonthsAgo.toISOString().split('T')[0])
         .order('period_start', { ascending: false });
@@ -132,8 +126,20 @@ export const useInventoryData = (facilityId?: number) => {
       console.log('Fetched consumption:', consumptionData);
       
       setBalances(balanceData as InventoryBalance[] || []);
-      setTransactions(transactionData as InventoryTransaction[] || []);
-      setConsumption(consumptionData as ConsumptionAnalytics[] || []);
+      setTransactions(transactionData?.map(t => ({
+        ...t,
+        products: {
+          name: 'Product',
+          unit: 'units'
+        }
+      })) as InventoryTransaction[] || []);
+      setConsumption(consumptionData?.map(c => ({
+        ...c,
+        products: {
+          name: 'Product',
+          unit: 'units'
+        }
+      })) as ConsumptionAnalytics[] || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch inventory data');
     } finally {
