@@ -220,7 +220,7 @@ export const useRolePermissions = (): RolePermissions => {
     }
     
     // System administrators and analysts
-    if (isAdmin() || isAnalyst()) {
+    if (isAdmin || isAnalyst) {
       return {
         canEditFacilityData: true,
         canEditWoredasData: true,

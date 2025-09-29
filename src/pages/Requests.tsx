@@ -9,8 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
 
 const years = Array.from({ length: 6 }, (_, i) => `${2024 + i}`);
 
@@ -19,7 +17,7 @@ type Request = Database["public"]["Tables"]["procurement_requests"]["Row"];
 
 export default function RequestsPage() {
   const navigate = useNavigate();
-  const { user, getUserId, isAdmin, isAnalyst } = useCurrentUser();
+  const { user, userId, isAdmin, isAnalyst } = useCurrentUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>(years[0]);
@@ -36,8 +34,9 @@ export default function RequestsPage() {
       let q = supabase.from("procurement_requests").select("*").order("created_at", { ascending: false });
       
       // Filter by user unless admin/analyst
-      if (!isAdmin() && !isAnalyst()) {
-        q = q.eq("user_id", getUserId());
+      if (!isAdmin && !isAnalyst) {
+        if (!userId) return;
+        q = q.eq("user_id", userId);
       }
       
       if (selectedProgramId && selectedProgramId !== "__all__") q = q.eq("program_id", selectedProgramId);
@@ -46,7 +45,7 @@ export default function RequestsPage() {
       setRows(data || []);
     };
     fetchRows();
-  }, [selectedProgramId, selectedYear, user, getUserId, isAdmin, isAnalyst]);
+  }, [selectedProgramId, selectedYear, user, userId, isAdmin, isAnalyst]);
 
   const programMap = useMemo(() => Object.fromEntries(programs.map(p => [p.id, p.name])), [programs]);
 
@@ -61,7 +60,7 @@ export default function RequestsPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Procurement Requests</h1>
           <p className="text-muted-foreground mt-1 max-w-3xl">
-            {!isAdmin() && !isAnalyst() 
+            {!isAdmin && !isAnalyst
               ? `Showing your requests only (${user?.email})`
               : "Manage all procurement requests"}
           </p>

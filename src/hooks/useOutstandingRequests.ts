@@ -15,7 +15,7 @@ export interface OutstandingRequest {
 export const useOutstandingRequests = () => {
   const [requests, setRequests] = useState<OutstandingRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const { getFacilityId } = useCurrentUser();
+  const { facilityId } = useCurrentUser();
 
   const fetchOutstandingRequests = async () => {
     setLoading(true);
@@ -65,10 +65,10 @@ export const useOutstandingRequests = () => {
   };
 
   useEffect(() => {
-    if (getFacilityId()) {
+    if (facilityId != null) {
       fetchOutstandingRequests();
     }
-  }, [getFacilityId]);
+  }, [facilityId]);
 
   return {
     requests: requests.filter(r => r.status === 'pending'),
