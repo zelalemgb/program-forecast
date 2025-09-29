@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
 
 export type StockPost = {
   id: string;
@@ -25,7 +24,6 @@ interface Props {
 }
 
 const StockExchangeBoard: React.FC<Props> = ({ posts = [], onCreate }) => {
-  const { userRole } = useUserRole();
   const [realExcess, setRealExcess] = useState<StockPost[]>([]);
   const [realNeeds, setRealNeeds] = useState<StockPost[]>([]);
   const [loading, setLoading] = useState(true);

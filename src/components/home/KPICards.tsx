@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, PackageOpen, Timer } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 import type { LucideIcon } from "lucide-react";
 
@@ -38,8 +38,8 @@ const KPICards: React.FC<KPIsProps> = ({
   items,
   isLoading,
 }) => {
-  const { userRole } = useUserRole();
-  const { balances, loading: inventoryLoading } = useInventoryData(userRole?.facility_id);
+  const { facilityId } = useCurrentUser();
+  const { balances, loading: inventoryLoading } = useInventoryData(facilityId ?? undefined);
 
   const hasCustomItems = Boolean(items && items.length > 0);
   const loading = isLoading ?? (hasCustomItems ? false : inventoryLoading);

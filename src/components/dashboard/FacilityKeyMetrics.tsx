@@ -12,7 +12,7 @@ import {
   MapPin
 } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface MetricCardProps {
   title: string;
@@ -73,8 +73,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, status, descripti
 };
 
 export const FacilityKeyMetrics: React.FC = () => {
-  const { userRole } = useUserRole();
-  const { balances, loading } = useInventoryData(userRole?.facility_id);
+  const { facilityId } = useCurrentUser();
+  const { balances, loading } = useInventoryData(facilityId ?? undefined);
 
   // Calculate metrics
   const metrics = React.useMemo(() => {

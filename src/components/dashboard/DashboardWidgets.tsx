@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface DashboardStats {
   dataSubmissionRate: number;
@@ -36,7 +36,7 @@ interface CommodityStatus {
 }
 
 const DashboardWidgets: React.FC = () => {
-  const { userRole } = useUserRole();
+  const { userRole } = useCurrentUser();
   const [stats, setStats] = useState<DashboardStats>({
     dataSubmissionRate: 0,
     pendingFacilities: 0,

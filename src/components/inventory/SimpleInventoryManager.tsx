@@ -9,7 +9,7 @@ import { IssuingModule } from "./IssuingModule";
 import { StockOverview } from "./StockOverview";
 import { AdjustmentModule } from "./AdjustmentModule";
 import { TodayQuickStats } from "./TodayQuickStats";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import GuidedForecastingFlow from "@/components/forecast/GuidedForecastingFlow";
 
 
@@ -20,8 +20,8 @@ export const SimpleInventoryManager: React.FC = () => {
   const [showForecastFlow, setShowForecastFlow] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
-  const facilityId = userRole?.facility_id || 1; // Get from user context or fallback
+  const { facilityId: resolvedFacilityId } = useCurrentUser();
+  const facilityId = resolvedFacilityId || 1; // Get from user context or fallback
 
   // Handle tab parameter from URL
   useEffect(() => {

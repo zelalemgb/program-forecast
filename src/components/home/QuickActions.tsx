@@ -12,7 +12,7 @@ import {
   Search
 } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 import type { LucideIcon } from "lucide-react";
 
@@ -37,8 +37,8 @@ interface Props {
 
 const QuickActions: React.FC<Props> = ({ onAnnounce, actions }) => {
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
-  const { balances, loading: inventoryLoading } = useInventoryData(userRole?.facility_id);
+  const { facilityId } = useCurrentUser();
+  const { balances, loading: inventoryLoading } = useInventoryData(facilityId ?? undefined);
 
   // Calculate inventory stats from real data
   const inventoryStats = React.useMemo(() => {

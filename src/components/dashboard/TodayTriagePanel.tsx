@@ -13,7 +13,7 @@ import {
   Calendar
 } from "lucide-react";
 import { useInventoryData } from "@/hooks/useInventoryData";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface TriageItem {
   id: string;
@@ -28,8 +28,8 @@ interface TriageItem {
 
 export const TodayTriagePanel: React.FC = () => {
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
-  const { balances, loading } = useInventoryData(userRole?.facility_id);
+  const { facilityId } = useCurrentUser();
+  const { balances, loading } = useInventoryData(facilityId ?? undefined);
 
   // Calculate real-time counts
   const triageStats = React.useMemo(() => {

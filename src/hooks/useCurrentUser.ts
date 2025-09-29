@@ -33,22 +33,30 @@ export const useCurrentUser = () => {
   const facilityInfo = facilityQuery.data ?? defaultFacilityInfo;
   const facilityLoading = facilityQuery.isPending || facilityQuery.isFetching;
 
+  const roleDetails = resolvedRole;
+  const facilityRole = facilityInfo.role ?? roleDetails?.role ?? null;
+  const facilityAdminLevel = facilityInfo.adminLevel ?? roleDetails?.admin_level ?? null;
+
   return {
     // Authentication data
     user,
     isAuthenticated: !!user,
 
     // Role data
-    userRole: resolvedRole?.role,
-    adminLevel: resolvedRole?.admin_level,
-    facilityId: resolvedRole?.facility_id,
-    woredaId: resolvedRole?.woreda_id,
-    zoneId: resolvedRole?.zone_id,
-    regionId: resolvedRole?.region_id,
+    roleDetails,
+    userRole: roleDetails?.role ?? null,
+    adminLevel: roleDetails?.admin_level ?? null,
+    facilityId: roleDetails?.facility_id ?? null,
+    woredaId: roleDetails?.woreda_id ?? null,
+    zoneId: roleDetails?.zone_id ?? null,
+    regionId: roleDetails?.region_id ?? null,
 
     // Facility data
+    facilityInfo,
     facilityName: facilityInfo.facilityName,
     facilityType: facilityInfo.facilityType,
+    facilityRole,
+    facilityAdminLevel,
     locationDisplay: facilityInfo.locationDisplay,
 
     // Loading states
@@ -61,15 +69,15 @@ export const useCurrentUser = () => {
       facilityInfo.error,
 
     // Helper functions
-    isAdmin: () => resolvedRole?.role === 'admin',
-    isAnalyst: () => resolvedRole?.role === 'analyst',
-    isViewer: () => resolvedRole?.role === 'viewer',
+    isAdmin: () => roleDetails?.role === 'admin',
+    isAnalyst: () => roleDetails?.role === 'analyst',
+    isViewer: () => roleDetails?.role === 'viewer',
 
     // Get user ID for forms
     getUserId: () => user?.id,
 
     // Get facility ID for facility-specific forms
-    getFacilityId: () => resolvedRole?.facility_id ?? null,
+    getFacilityId: () => roleDetails?.facility_id ?? null,
   };
 };
 

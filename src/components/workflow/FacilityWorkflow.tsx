@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Package, TrendingUp, FileText, Truck, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface UpcomingTask {
   title: string;
@@ -27,7 +27,7 @@ const getPriorityColor = (priority: "high" | "medium" | "low") => {
 };
 
 export const FacilityWorkflow: React.FC = () => {
-  const { userRole } = useUserRole();
+  const { facilityId } = useCurrentUser();
   const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[]>([]);
   const [workflowSteps, setWorkflowSteps] = useState([
     {
@@ -78,7 +78,7 @@ export const FacilityWorkflow: React.FC = () => {
 
   useEffect(() => {
     const fetchTasks = async () => {
-      if (!userRole?.facility_id) return;
+      if (!facilityId) return;
 
       try {
         // Get real data about pending tasks
@@ -92,28 +92,28 @@ export const FacilityWorkflow: React.FC = () => {
           supabase
             .from('inventory_balances')
             .select('id')
-            .eq('facility_id', userRole.facility_id)
+            .eq('facility_id', facilityId)
             .eq('current_stock', 0),
           
           // Low stock items  
           supabase
             .from('inventory_balances')
             .select('current_stock, reorder_level')
-            .eq('facility_id', userRole.facility_id)
+            .eq('facility_id', facilityId)
             .gt('current_stock', 0),
           
           // Recent transactions
           supabase
             .from('inventory_transactions')
             .select('id')
-            .eq('facility_id', userRole.facility_id)
+            .eq('facility_id', facilityId)
             .gte('transaction_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]),
           
           // Near expiry (this would need product expiry data)
           supabase
             .from('inventory_transactions')
             .select('id')
-            .eq('facility_id', userRole.facility_id)
+            .eq('facility_id', facilityId)
             .lt('expiry_date', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         ]);
 
@@ -174,7 +174,7 @@ export const FacilityWorkflow: React.FC = () => {
     };
 
     fetchTasks();
-  }, [userRole?.facility_id]);
+  }, [facilityId]);
 
   return (
     <div className="space-y-6">

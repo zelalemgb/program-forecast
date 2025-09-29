@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useOutstandingRequests } from "@/hooks/useOutstandingRequests";
 import OutstandingRequestsModal from "./OutstandingRequestsModal";
 import {
@@ -33,19 +33,19 @@ interface QuickTask {
 
 const CriticalQuickActions: React.FC = () => {
   const navigate = useNavigate();
-  const { userRole } = useUserRole();
+  const { userRole, adminLevel } = useCurrentUser();
   const { requests } = useOutstandingRequests();
   const [showOutstandingModal, setShowOutstandingModal] = useState(false);
 
   const getTasksByRole = (): QuickTask[] => {
-    const role = userRole?.role;
-    const adminLevel = userRole?.admin_level;
-    
+    const role = userRole;
+    const level = adminLevel;
+
     // Debug logging to see current user role
-    console.log('Current user role:', role, 'admin level:', adminLevel);
+    console.log('Current user role:', role, 'admin level:', level);
 
     // Facility Logistic Officer tasks - reordered as requested
-    if (role === "viewer" && adminLevel === "logistic_officer") {
+    if (role === "viewer" && level === "logistic_officer") {
       return [
         {
           title: "Receive Stock",
@@ -221,16 +221,13 @@ const CriticalQuickActions: React.FC = () => {
   };
 
   const getRoleTitle = () => {
-    const role = userRole?.role;
-    const adminLevel = userRole?.admin_level;
-    
-    if (role === "viewer" && adminLevel === "logistic_officer") {
+    if (userRole === "viewer" && adminLevel === "logistic_officer") {
       return "Logistic Officer Daily Tasks";
     }
-    if (role === "analyst") {
+    if (userRole === "analyst") {
       return "Regional Manager Tasks";
     }
-    if (role === "admin") {
+    if (userRole === "admin") {
       return "National Administrator Tasks";
     }
     return "Quick Tasks";

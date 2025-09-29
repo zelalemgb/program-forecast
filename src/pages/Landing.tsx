@@ -13,8 +13,7 @@ import { NationalWorkflow } from "@/components/workflow/NationalWorkflow";
 import UserProfileBadge from "@/components/auth/UserProfileBadge";
 import { TodayQuickStats } from "@/components/inventory/TodayQuickStats";
 import { useAuth } from "@/context/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useUserFacility } from "@/hooks/useUserFacility";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { MapPin, Users, Globe, Building, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -22,8 +21,7 @@ const Landing: React.FC = () => {
   const location = useLocation();
   const canonical = `${window.location.origin}${location.pathname}`;
   const { user } = useAuth();
-  const { userRole, loading: roleLoading } = useUserRole();
-  const facilityInfo = useUserFacility();
+  const { loading, userRole, facilityRole } = useCurrentUser();
 
   const getRoleDisplay = (role: string | undefined) => {
     switch (role) {
@@ -39,7 +37,7 @@ const Landing: React.FC = () => {
   };
 
   const renderRoleBasedView = () => {
-    switch (userRole?.role) {
+    switch (userRole) {
       case "admin":
         return <NationalWorkflow />;
       case "analyst":
@@ -51,7 +49,7 @@ const Landing: React.FC = () => {
     }
   };
 
-  if (roleLoading || facilityInfo.loading) {
+  if (loading) {
     return (
       <main className="container py-6">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -64,7 +62,7 @@ const Landing: React.FC = () => {
     );
   }
 
-  const roleDisplay = getRoleDisplay(userRole?.role);
+  const roleDisplay = getRoleDisplay(userRole ?? facilityRole ?? undefined);
   const RoleIcon = roleDisplay.icon;
 
   return (
@@ -89,7 +87,7 @@ const Landing: React.FC = () => {
       </div>
 
       {/* Legacy Dashboard Widgets (for admin/analyst overview) */}
-      {(userRole?.role === "admin" || userRole?.role === "analyst") && (
+      {(userRole === "admin" || userRole === "analyst") && (
         <Tabs defaultValue="workflow" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="workflow">Workflow Overview</TabsTrigger>
@@ -105,7 +103,7 @@ const Landing: React.FC = () => {
       )}
 
       {/* Show message if user has no role assigned */}
-      {!userRole?.role && !roleLoading && (
+      {!userRole && !loading && (
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <CardTitle className="text-amber-800">Role Assignment Pending</CardTitle>
