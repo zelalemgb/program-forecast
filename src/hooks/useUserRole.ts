@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,49 +11,54 @@ export interface UserRole {
   region_id?: number;
 }
 
+export const userRoleQueryKey = (userId?: string) => ['user-role', userId] as const;
+
+export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
+  console.debug(`[react-query] fetching user role for user ${userId}`);
+
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role, admin_level, facility_id, woreda_id, zone_id, region_id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  return (data as UserRole | null) ?? null;
+};
+
+export const createUserRoleQueryOptions = (userId?: string) => ({
+  queryKey: userRoleQueryKey(userId),
+  queryFn: async () => {
+    if (!userId) {
+      return null;
+    }
+
+    return fetchUserRole(userId);
+  },
+  staleTime: 5 * 60 * 1000,
+  gcTime: 30 * 60 * 1000,
+});
+
 export const useUserRole = () => {
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) {
-        setUserRole(null);
-        setLoading(false);
-        return;
-      }
+  const query = useQuery<UserRole | null, Error>({
+    ...createUserRoleQueryOptions(user?.id),
+    enabled: !!user?.id,
+  });
 
-      try {
-        setLoading(true);
-        setError(null);
+  const userRole = query.data ?? null;
+  const isQueryLoading = query.isPending || query.isFetching;
 
-        // Fetch user role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role, admin_level, facility_id, woreda_id, zone_id, region_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (roleError && roleError.code !== 'PGRST116') {
-          throw roleError;
-        }
-
-        setUserRole(roleData);
-      } catch (err) {
-        console.error('Error fetching user role:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch user role');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, [user]);
-
-  return { userRole, loading, error };
+  return {
+    userRole,
+    loading: !!user?.id ? isQueryLoading : false,
+    error: query.error?.message ?? null,
+  };
 };
 
 export default useUserRole;
