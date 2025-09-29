@@ -35,6 +35,25 @@ interface CommodityStatus {
   trend: 'stable' | 'declining' | 'increasing' | 'critical';
 }
 
+interface DashboardInventoryStatsRow {
+  today_received: number | null;
+  today_issued: number | null;
+  total_stock: number | null;
+  critical_items: number | null;
+  low_stock_items: number | null;
+  stock_ok: number | null;
+  stock_low: number | null;
+  stock_out: number | null;
+  commodity_statuses: unknown;
+}
+
+type CommodityStatusRow = {
+  name?: unknown;
+  status?: unknown;
+  trend?: unknown;
+  avg_days_of_stock?: unknown;
+};
+
 const DashboardWidgets: React.FC = () => {
   const { userRole } = useUserRole();
   const [stats, setStats] = useState<DashboardStats>({
@@ -51,90 +70,20 @@ const DashboardWidgets: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Get inventory data across the scope based on user role
-        const { data: inventoryBalances } = await supabase
-          .from('inventory_balances')
-          .select(`
-            current_stock,
-            reorder_level,
-            minimum_stock_level,
-            product_id,
-            facility_id,
-            products (name),
-            facility (facility_name, facility_type)
-          `);
+        const { data, error } = await supabase.rpc('get_dashboard_inventory_stats', {
+          limit_commodities: 6,
+        });
 
-        if (inventoryBalances) {
-          const stockOk = inventoryBalances.filter(b => 
-            b.current_stock > (b.reorder_level || 0)
-          ).length;
-          
-          const stockLow = inventoryBalances.filter(b => 
-            b.current_stock > 0 && 
-            b.current_stock <= (b.reorder_level || 0) &&
-            b.current_stock > (b.minimum_stock_level || 0) * 0.5
-          ).length;
-          
-          const stockOut = inventoryBalances.filter(b => 
-            b.current_stock === 0
-          ).length;
+        if (error) {
+          throw error;
+        }
 
-          // Create commodity status based on real data
-          const commodityMap = new Map();
-          inventoryBalances.forEach(balance => {
-            if (!balance.products?.name) return;
-            
-            const productName = balance.products.name;
-            if (!commodityMap.has(productName)) {
-              commodityMap.set(productName, {
-                name: productName,
-                totalStock: 0,
-                facilities: 0,
-                lowStock: 0,
-                stockouts: 0
-              });
-            }
-            
-            const commodity = commodityMap.get(productName);
-            commodity.totalStock += balance.current_stock;
-            commodity.facilities++;
-            
-            if (balance.current_stock === 0) {
-              commodity.stockouts++;
-            } else if (balance.current_stock <= (balance.reorder_level || 0)) {
-              commodity.lowStock++;
-            }
-          });
+        const [row] = (data as DashboardInventoryStatsRow[]) || [];
 
-          const commodityStatuses: CommodityStatus[] = Array.from(commodityMap.values())
-            .map(commodity => {
-              const stockoutRate = commodity.stockouts / commodity.facilities;
-              const lowStockRate = commodity.lowStock / commodity.facilities;
-              
-              let status: 'ok' | 'warning' | 'critical';
-              let trend: 'stable' | 'declining' | 'increasing' | 'critical';
-              
-              if (stockoutRate > 0.2) {
-                status = 'critical';
-                trend = 'critical';
-              } else if (lowStockRate > 0.3) {
-                status = 'warning';
-                trend = 'declining';
-              } else {
-                status = 'ok';
-                trend = 'stable';
-              }
-
-              const avgDaysOfStock = Math.floor(commodity.totalStock / commodity.facilities / 10); // Rough estimate
-              
-              return {
-                name: commodity.name,
-                status,
-                stock: `${avgDaysOfStock} days`,
-                trend
-              };
-            })
-            .slice(0, 6); // Show top 6 commodities
+        if (row) {
+          const stockOk = Number(row.stock_ok ?? 0);
+          const stockLow = Number(row.stock_low ?? 0);
+          const stockOut = Number(row.stock_out ?? 0);
 
           setStats({
             dataSubmissionRate: Math.floor(Math.random() * 20 + 80), // Simulate submission rate
@@ -144,7 +93,31 @@ const DashboardWidgets: React.FC = () => {
             stockOut,
             forecastAccuracy: Math.floor(Math.random() * 10 + 85) // Simulate forecast accuracy
           });
-          
+
+          const commodityStatusesRaw = Array.isArray(row.commodity_statuses)
+            ? (row.commodity_statuses as CommodityStatusRow[])
+            : [];
+
+          const commodityStatuses: CommodityStatus[] = commodityStatusesRaw.map(item => {
+            const name = typeof item.name === 'string' ? item.name : 'Unknown Commodity';
+            const status =
+              item.status === 'critical' || item.status === 'warning'
+                ? (item.status as CommodityStatus['status'])
+                : 'ok';
+            const trend =
+              item.trend === 'critical' || item.trend === 'declining' || item.trend === 'increasing'
+                ? (item.trend as CommodityStatus['trend'])
+                : 'stable';
+            const avgDays = Number(item.avg_days_of_stock ?? 0);
+
+            return {
+              name,
+              status,
+              stock: `${Math.max(0, Math.floor(avgDays))} days`,
+              trend,
+            };
+          });
+
           setCommodities(commodityStatuses);
         }
       } catch (error) {

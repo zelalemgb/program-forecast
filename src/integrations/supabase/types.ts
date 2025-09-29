@@ -3251,6 +3251,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_dashboard_inventory_stats: {
+        Args: {
+          limit_commodities?: number | null
+        }
+        Returns: {
+          today_received: number | null
+          today_issued: number | null
+          total_stock: number | null
+          critical_items: number | null
+          low_stock_items: number | null
+          stock_ok: number | null
+          stock_low: number | null
+          stock_out: number | null
+          commodity_statuses: Json | null
+        }[]
+      }
       get_procurement_summary: {
         Args: {
           p_fiscal_year?: number

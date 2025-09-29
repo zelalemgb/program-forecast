@@ -25,6 +25,18 @@ interface DetailedItem {
   transactionType?: string;
 }
 
+interface DashboardInventoryStatsRow {
+  today_received: number | null;
+  today_issued: number | null;
+  total_stock: number | null;
+  critical_items: number | null;
+  low_stock_items: number | null;
+  stock_ok: number | null;
+  stock_low: number | null;
+  stock_out: number | null;
+  commodity_statuses?: unknown;
+}
+
 type ModalType = 'received' | 'issued' | 'critical' | 'lowStock' | 'totalStock' | null;
 
 export const TodayQuickStats: React.FC = () => {
@@ -43,49 +55,25 @@ export const TodayQuickStats: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Get today's transactions
-        const { data: todayTransactions } = await supabase
-          .from('inventory_transactions')
-          .select('transaction_type, quantity')
-          .eq('transaction_date', today);
-
-        // Get inventory balances for stock levels
-        const { data: inventoryBalances } = await supabase
-          .from('inventory_balances')
-          .select('current_stock, reorder_level, minimum_stock_level');
-
-        // Calculate stats
-        const todayReceived = todayTransactions
-          ?.filter(t => t.transaction_type === 'receipt')
-          ?.reduce((sum, t) => sum + (t.quantity || 0), 0) || 0;
-
-        const todayIssued = todayTransactions
-          ?.filter(t => t.transaction_type === 'issue')
-          ?.reduce((sum, t) => sum + (t.quantity || 0), 0) || 0;
-
-        const totalStock = inventoryBalances
-          ?.reduce((sum, b) => sum + (b.current_stock || 0), 0) || 0;
-
-        const criticalItems = inventoryBalances
-          ?.filter(b => (b.current_stock || 0) <= (b.reorder_level || 0))
-          ?.length || 0;
-
-        const lowStockItems = inventoryBalances
-          ?.filter(b => 
-            (b.current_stock || 0) > (b.reorder_level || 0) && 
-            (b.current_stock || 0) <= ((b.minimum_stock_level || 0) * 1.2)
-          )
-          ?.length || 0;
-
-        setStats({
-          todayReceived,
-          todayIssued,
-          totalStock,
-          criticalItems,
-          lowStockItems,
+        const { data, error } = await supabase.rpc('get_dashboard_inventory_stats', {
+          limit_commodities: 6,
         });
+
+        if (error) {
+          throw error;
+        }
+
+        const [row] = (data as DashboardInventoryStatsRow[]) || [];
+
+        if (row) {
+          setStats({
+            todayReceived: Number(row.today_received ?? 0),
+            todayIssued: Number(row.today_issued ?? 0),
+            totalStock: Number(row.total_stock ?? 0),
+            criticalItems: Number(row.critical_items ?? 0),
+            lowStockItems: Number(row.low_stock_items ?? 0),
+          });
+        }
       } catch (error) {
         console.error('Error fetching stats:', error);
       } finally {
