@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { useAuth } from '@/context/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useUserFacility } from '@/hooks/useUserFacility';
@@ -11,18 +13,28 @@ export const useCurrentUser = () => {
   const { userRole, loading: roleLoading } = useUserRole();
   const facilityInfo = useUserFacility();
 
+  const userId = useMemo(() => user?.id ?? null, [user?.id]);
+  const facilityId = useMemo(() => userRole?.facility_id ?? null, [userRole?.facility_id]);
+  const woredaId = useMemo(() => userRole?.woreda_id ?? null, [userRole?.woreda_id]);
+  const zoneId = useMemo(() => userRole?.zone_id ?? null, [userRole?.zone_id]);
+  const regionId = useMemo(() => userRole?.region_id ?? null, [userRole?.region_id]);
+  const isAdmin = useMemo(() => userRole?.role === 'admin', [userRole?.role]);
+  const isAnalyst = useMemo(() => userRole?.role === 'analyst', [userRole?.role]);
+  const isViewer = useMemo(() => userRole?.role === 'viewer', [userRole?.role]);
+  const isAuthenticated = useMemo(() => !!user, [user]);
+
   return {
     // Authentication data
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     
     // Role data
     userRole: userRole?.role,
     adminLevel: userRole?.admin_level,
-    facilityId: userRole?.facility_id,
-    woredaId: userRole?.woreda_id,
-    zoneId: userRole?.zone_id,
-    regionId: userRole?.region_id,
+    facilityId,
+    woredaId,
+    zoneId,
+    regionId,
     
     // Facility data
     facilityName: facilityInfo.facilityName,
@@ -35,16 +47,13 @@ export const useCurrentUser = () => {
     // Error states
     error: facilityInfo.error,
     
-    // Helper functions
-    isAdmin: () => userRole?.role === 'admin',
-    isAnalyst: () => userRole?.role === 'analyst',
-    isViewer: () => userRole?.role === 'viewer',
-    
-    // Get user ID for forms
-    getUserId: () => user?.id,
-    
-    // Get facility ID for facility-specific forms
-    getFacilityId: () => userRole?.facility_id || null,
+    // Helper flags
+    isAdmin,
+    isAnalyst,
+    isViewer,
+
+    // Identifiers for forms
+    userId,
   };
 };
 
